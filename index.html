@@ -9,25 +9,25 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d0f14;
-      --bg2: #151820;
-      --bg3: #1c2030;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.16);
-      --text: #e8eaf0;
-      --muted: #6b7280;
-      --accent: #f97316;
-      --accent2: #fb923c;
-      --green: #22c55e;
+      --bg:       #0d0f14;
+      --bg2:      #151820;
+      --bg3:      #1c2030;
+      --border:   rgba(255,255,255,0.08);
+      --border2:  rgba(255,255,255,0.16);
+      --text:     #e8eaf0;
+      --muted:    #6b7280;
+      --accent:   #f97316;
+      --accent2:  #fb923c;
+      --green:    #22c55e;
       --green-bg: rgba(34,197,94,0.12);
       --green-br: rgba(34,197,94,0.3);
-      --red: #ef4444;
-      --red-bg: rgba(239,68,68,0.1);
-      --red-br: rgba(239,68,68,0.3);
-      --blue: #3b82f6;
-      --blue-bg: rgba(59,130,246,0.12);
-      --blue-br: rgba(59,130,246,0.3);
-      --amber: #f59e0b;
+      --red:      #ef4444;
+      --red-bg:   rgba(239,68,68,0.1);
+      --red-br:   rgba(239,68,68,0.3);
+      --blue:     #3b82f6;
+      --blue-bg:  rgba(59,130,246,0.12);
+      --blue-br:  rgba(59,130,246,0.3);
+      --amber:    #f59e0b;
       --amber-bg: rgba(245,158,11,0.12);
       --amber-br: rgba(245,158,11,0.3);
       --r: 8px;
@@ -118,10 +118,96 @@
 
     /* ── DEADLINE LOCK OVERLAY ── */
     .bracket-locked-msg { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--red-bg); border:1px solid var(--red-br); border-radius:var(--r); margin-bottom:14px; font-size:12px; color:var(--red); }
+
+    /* ── LEADERBOARD ── */
+    .lb-controls { display:flex; gap:8px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
+    .lb-controls input { flex:1; min-width:180px; padding:7px 12px; font-size:13px; font-family:var(--fb); border:1px solid var(--border2); border-radius:var(--r); background:var(--bg2); color:var(--text); }
+    .lb-controls input:focus { outline:none; border-color:var(--accent); }
+    table.lb { width:100%; border-collapse:collapse; font-size:13px; }
+    table.lb th { font-family:var(--fh); font-weight:700; letter-spacing:.06em; font-size:11px; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; }
+    table.lb td { padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text); }
+    table.lb tr:hover td { background:var(--bg2); }
+    .rank-badge { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:11px; font-weight:700; font-family:var(--fh); background:var(--bg3); color:var(--muted); }
+    .rank-badge.gold   { background:rgba(250,199,117,.2); color:#FAC775; }
+    .rank-badge.silver { background:rgba(156,163,175,.2); color:#9ca3af; }
+    .rank-badge.bronze { background:rgba(180,120,90,.2);  color:#b4785a; }
+    .pts-big { font-family:var(--fh); font-size:15px; font-weight:700; color:var(--accent); }
+    .bonus-cell { color:var(--green); font-size:12px; }
+    .detail-cell { color:var(--muted); font-size:12px; }
+
+    /* ── ADMIN / MISC ── */
+    .admin-section { margin-bottom:24px; }
+    .admin-section h3 { font-family:var(--fh); font-size:15px; font-weight:700; letter-spacing:.05em; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+    .admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+    .admin-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
+    .admin-card .ac-title { font-family:var(--fh); font-weight:700; font-size:13px; letter-spacing:.03em; margin-bottom:3px; }
+    .admin-card .ac-sub { color:var(--muted); font-size:11px; line-height:1.5; }
+    .admin-card .ac-val { color:var(--accent); font-family:var(--fh); font-weight:700; font-size:12px; margin-top:3px; }
+    .pts-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .pts-table th { font-family:var(--fh); font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--muted); padding:6px 10px; border-bottom:1px solid var(--border); text-align:left; }
+    .pts-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
+    .pts-table td:nth-child(2) { color:var(--accent); font-family:var(--fh); font-weight:600; }
+    .pts-table td:nth-child(3) { color:var(--green); font-family:var(--fh); font-weight:600; }
+
+    /* ── MY BRACKET ── */
+    .pseudo-input { display:flex; gap:8px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
+    .pseudo-input input { padding:7px 12px; font-size:13px; font-family:var(--fb); border:1px solid var(--border2); border-radius:var(--r); background:var(--bg2); color:var(--text); width:220px; }
+    .pseudo-input input:focus { outline:none; border-color:var(--accent); }
+    .progress-bg { background:var(--bg3); border-radius:4px; height:4px; margin-bottom:5px; }
+    .progress-fill { background:var(--accent); height:4px; border-radius:4px; transition:width .3s; }
+    .progress-label { font-size:11px; color:var(--muted); margin-bottom:14px; }
+    .save-bar { display:flex; gap:10px; align-items:center; margin-top:14px; flex-wrap:wrap; }
+    .save-msg { font-size:12px; color:var(--green); }
+
+    /* ── BTN ── */
+    .btn { padding:7px 14px; font-size:12px; font-family:var(--fb); border-radius:var(--r); cursor:pointer; transition:all .15s; border:1px solid var(--border2); background:transparent; color:var(--text); }
+    .btn:hover { background:var(--bg3); }
+    .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:500; }
+    .btn.primary:hover { background:var(--accent2); }
+    .btn:disabled { opacity:.4; cursor:default; }
+    .hint { font-size:11px; color:var(--muted); margin-top:10px; padding:8px 12px; background:var(--bg2); border-radius:var(--r); border-left:3px solid var(--border2); }
   </style>
 </head>
 <body>
 
+<!-- ================================================================
+     ⚙️  CONFIGURATION — TOUT MODIFIER ICI CHAQUE ANNÉE
+     ================================================================ -->
+<script>
+// ── 1. URL CSV du Google Sheet publié ──────────────────────────────
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
+
+// ── 2. Date limite de saisie des brackets ─────────────────────────
+//    Format ISO 8601, heure de Paris (Europe/Paris)
+//    Mettre la veille du 1er match des playoffs, 18h00
+//    2026 : play-in 14-17 avril → deadline 17 avril 18h
+const DEADLINE = '2026-04-17T18:00:00'; // ← MODIFIER CHAQUE ANNÉE
+
+// ── 3. Équipes EST — ordre des matchups R1 ────────────────────────
+//    (seed1 vs seed8), (seed4 vs seed5), (seed3 vs seed6), (seed2 vs seed7)
+//    À remplir APRÈS le play-in tournament (résultats connus ~17 avril)
+const EAST_TEAMS = [
+  {seed:1, name:'Cavaliers'},  {seed:8, name:'Heat'},
+  {seed:4, name:'Pacers'},     {seed:5, name:'Bucks'},
+  {seed:3, name:'Knicks'},     {seed:6, name:'Pistons'},
+  {seed:2, name:'Celtics'},    {seed:7, name:'Magic'}
+];
+
+// ── 4. Équipes OUEST — même ordre ────────────────────────────────
+const WEST_TEAMS = [
+  {seed:1, name:'Thunder'},       {seed:8, name:'Grizzlies'},
+  {seed:4, name:'Nuggets'},       {seed:5, name:'Clippers'},
+  {seed:3, name:'Timberwolves'},  {seed:6, name:'Warriors'},
+  {seed:2, name:'Rockets'},       {seed:7, name:'Lakers'}
+];
+
+// ── 5. Barème des points ──────────────────────────────────────────
+const ROUND_PTS   = [10, 12, 15, 20]; // R1, R2, R3 conf, Finals
+const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
+</script>
+<!-- ================================================================ -->
+
+<!-- HEADER -->
 <div class="header">
   <div>
     <div class="header-title">🏀 Bracket <span>Des Frates</span> 2026</div>
@@ -155,54 +241,208 @@
   <button class="tab" onclick="showTab('admin')">Admin</button>
 </div>
 
+<!-- BRACKET OFFICIEL -->
 <div class="panel active" id="panel-bracket">
   <div class="bracket-wrap">
     <div class="bracket" id="main-bracket"></div>
+  </div>
+  <div class="hint">💡 Résultats API verrouillés (badge vert). Saisie manuelle possible pour les matchs à venir.</div>
+</div>
+
+<!-- MON BRACKET -->
+<div class="panel" id="panel-my-bracket">
+  <div id="deadline-locked-msg" class="bracket-locked-msg" style="display:none">
+    🔒 La date limite de saisie est passée — les brackets sont verrouillés. Bonne chance à tous !
+  </div>
+  <div class="pseudo-input">
+    <input type="text" id="pseudo-field" placeholder="Votre prénom / pseudo">
+    <button class="btn primary" id="pseudo-btn" onclick="setPseudo()">OK</button>
+  </div>
+  <div class="progress-bg"><div class="progress-fill" id="my-progress" style="width:0%"></div></div>
+  <div class="progress-label" id="my-progress-label">0 / 15 matchs pronostiqués</div>
+  <div id="my-bracket-hint" style="font-size:13px;color:var(--muted);margin-bottom:14px">Entrez votre pseudo pour commencer.</div>
+  <div class="bracket-wrap"><div class="bracket" id="my-bracket-render"></div></div>
+  <div class="save-bar">
+    <button class="btn primary" id="save-btn" onclick="saveMyBracket()">Enregistrer mon bracket</button>
+    <span class="save-msg" id="save-msg"></span>
+  </div>
+</div>
+
+<!-- CLASSEMENT -->
+<div class="panel" id="panel-leaderboard">
+  <div class="lb-controls">
+    <input type="text" id="search-lb" placeholder="Rechercher un participant…" oninput="renderLeaderboard()">
+  </div>
+  <table class="lb">
+    <thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Bonus scores</th><th>Précision</th><th>Champion pronostiqué</th></tr></thead>
+    <tbody id="lb-body"></tbody>
+  </table>
+</div>
+
+<!-- ADMIN -->
+<div class="panel" id="panel-admin">
+  <div class="admin-section">
+    <h3>Participants</h3>
+    <div class="lb-controls">
+      <input type="text" id="new-participant" placeholder="Nom du participant" style="padding:7px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);width:220px">
+      <button class="btn" onclick="addParticipant()">+ Ajouter</button>
+    </div>
+    <div class="admin-grid" id="participant-list"></div>
+  </div>
+  <div class="admin-section">
+    <h3>Paramètres du concours</h3>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <div class="ac-title">Date limite de saisie</div>
+        <div class="ac-sub">Configurable dans la section CONFIG du fichier HTML</div>
+        <div class="ac-val" id="admin-deadline"></div>
+      </div>
+      <div class="admin-card">
+        <div class="ac-title">Phase actuelle</div>
+        <div class="ac-sub">Calculée automatiquement selon la date limite</div>
+        <div class="ac-val" id="admin-phase"></div>
+      </div>
+      <div class="admin-card">
+        <div class="ac-title">Google Sheet</div>
+        <div class="ac-sub">Source des résultats — sync 7h + 8h (Paris)</div>
+        <button class="btn" style="margin-top:8px" onclick="window.open(SHEET_CSV.replace('/pub?','/../edit?'),'_blank')">Ouvrir le Sheet</button>
+      </div>
+    </div>
+  </div>
+  <div class="admin-section">
+    <h3>Barème des points</h3>
+    <table class="pts-table">
+      <thead><tr><th>Tour</th><th>Bon gagnant</th><th>Bonus score exact</th></tr></thead>
+      <tbody>
+        <tr><td>1er tour</td><td>10 pts</td><td>+2 pts</td></tr>
+        <tr><td>Demi-finales de conf.</td><td>12 pts</td><td>+2 pts</td></tr>
+        <tr><td>Finales de conf.</td><td>15 pts</td><td>+2 pts</td></tr>
+        <tr><td>Finales NBA</td><td>20 pts</td><td>+2 pts</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="admin-section">
+    <h3>Actions</h3>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <div class="ac-title">Export CSV</div>
+        <div class="ac-sub">Télécharger le classement complet</div>
+        <button class="btn" style="margin-top:8px" onclick="exportCSV()">Télécharger</button>
+      </div>
+      <div class="admin-card">
+        <div class="ac-title">Réinitialiser résultats</div>
+        <div class="ac-sub">Efface les résultats officiels (pas les brackets)</div>
+        <button class="btn" style="margin-top:8px" onclick="resetOfficial()">Réinitialiser</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 // ============================================================
-// CONFIG
+//  HELPERS
 // ============================================================
-const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/TON_ID/pub?gid=0&single=true&output=csv';
-const DEADLINE = '2026-04-17T18:00:00';
-const EAST_TEAMS = [
-  {seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},
-  {seed:4,name:'Pacers'},{seed:5,name:'Bucks'},
-  {seed:3,name:'Knicks'},{seed:6,name:'Pistons'},
-  {seed:2,name:'Celtics'},{seed:7,name:'Magic'}
-];
-const WEST_TEAMS = [
-  {seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},
-  {seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},
-  {seed:3,name:'Timberwolves'},{seed:6,name:'Warriors'},
-  {seed:2,name:'Rockets'},{seed:7,name:'Lakers'}
-];
-const ROUND_PTS = [10,12,15,20];
-const SCORE_BONUS = 2;
+const SCORES = ['4-0','4-1','4-2','4-3'];
+const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
+function normName(n){ return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase())||n.trim(); }
+function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
 
 // ============================================================
-<script>
+//  PHASE — deadline
+// ============================================================
+function isPastDeadline(){
+  // Compare en heure locale Paris
+  const dl = new Date(DEADLINE);
+  return new Date() >= dl;
+}
+
+function updatePhaseUI(){
+  const past = isPastDeadline();
+  const badge = document.getElementById('phase-badge');
+  const text  = document.getElementById('phase-text');
+  const cdEl  = document.getElementById('countdown');
+  const noteEl= document.getElementById('deadline-note');
+  const saveBtn= document.getElementById('save-btn');
+  const deadlineLockedMsg = document.getElementById('deadline-locked-msg');
+
+  const dl = new Date(DEADLINE);
+  const dlStr = dl.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})
+              + ' à '
+              + dl.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+  document.getElementById('admin-deadline').textContent = dlStr;
+
+  if(past){
+    badge.className = 'phase-badge locked';
+    text.textContent = 'BRACKETS VERROUILLÉS';
+    badge.querySelector('.phase-dot').classList.remove('pulse');
+    cdEl.innerHTML = '';
+    noteEl.textContent = 'Deadline passée le ' + dlStr;
+    document.getElementById('admin-phase').textContent = 'Phase suivi (brackets fermés)';
+    if(saveBtn) saveBtn.disabled = true;
+    if(deadlineLockedMsg) deadlineLockedMsg.style.display='flex';
+  } else {
+    // Compte à rebours
+    const now = new Date();
+    const diff = dl - now;
+    const days  = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins  = Math.floor((diff % 3600000) / 60000);
+    const secs  = Math.floor((diff % 60000) / 1000);
+
+    let cdStr = '';
+    if(days > 0) cdStr += `<span class="cd-val">${days}j</span> `;
+    cdStr += `<span class="cd-val">${String(hours).padStart(2,'0')}h</span> `
+           + `<span class="cd-val">${String(mins).padStart(2,'0')}m</span> `
+           + `<span class="cd-val">${String(secs).padStart(2,'0')}s</span>`;
+
+    if(days < 1){
+      badge.className = 'phase-badge soon';
+      text.textContent = 'FERMETURE IMMINENTE';
+    } else {
+      badge.className = 'phase-badge open';
+      text.textContent = 'SAISIE OUVERTE';
+    }
+    cdEl.innerHTML = 'Fermeture dans ' + cdStr;
+    noteEl.textContent = 'Deadline : ' + dlStr;
+    document.getElementById('admin-phase').textContent = 'Phase saisie (brackets ouverts)';
+    if(saveBtn) saveBtn.disabled = false;
+    if(deadlineLockedMsg) deadlineLockedMsg.style.display='none';
+  }
+}
+
+// Mise à jour toutes les secondes
+setInterval(updatePhaseUI, 1000);
+
 // ============================================================
 //  STATE
 // ============================================================
-let official = {
-  east:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
-  west:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
-  final: {winner:null,score:null,fromApi:false}
-};
+let official = emptyOfficial();
+// ⚠️  Remplacer par les vrais participants avant de partager le lien
+let participants = [
+  {name:'Alice',   picks: emptyPicks()},
+  {name:'Bob',     picks: emptyPicks()},
+  {name:'Charlie', picks: emptyPicks()}
+];
+let myName = '', myPicks = emptyPicks();
 
-// Liste des noms officiels pour normalisation
-const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
-
-// normalisation du nom
-function normName(n){
-  return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase()) || n.trim();
+function emptyOfficial(){
+  return {
+    east:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+    west:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+    final: {winner:null,score:null,fromApi:false}
+  };
+}
+function emptyPicks(){
+  return {
+    east:  Array(7).fill(null).map(()=>({winner:null,score:null})),
+    west:  Array(7).fill(null).map(()=>({winner:null,score:null})),
+    final: {winner:null,score:null}
+  };
 }
 
 // ============================================================
-//  FETCH GOOGLE SHEET CSV
+//  FETCH SHEET via proxy CORS
 // ============================================================
 async function fetchCSV(){
   const proxies = [
@@ -212,134 +452,340 @@ async function fetchCSV(){
   for(const url of proxies){
     try{
       const res = await fetch(url);
-      if(res.ok){
-        const t = await res.text();
-        if(t && t.length>10) return t;
-      }
+      if(res.ok){ const t=await res.text(); if(t&&t.length>10) return t; }
     }catch(e){}
   }
-  throw new Error('Erreur Google Sheet');
+  throw new Error('Impossible de contacter le Google Sheet. Réessayez ou ouvrez le fichier depuis un serveur web.');
 }
 
 async function loadFromSheet(){
-  const statusEl = document.getElementById('sync-status');
-  statusEl.textContent = "⏳ Synchronisation…"; 
-  statusEl.className = 'sync-status';
-
+  const st = document.getElementById('sync-status');
+  st.className='sync-status'; st.innerHTML='<span class="spin">⟳</span>';
+  setBanner('info','<span class="spin">⟳</span>&nbsp; Connexion au Google Sheet…');
   try{
     const text = await fetchCSV();
     const rows = parseCSV(text);
-    const data = rows[0][0].toLowerCase()==='winner' ? rows.slice(1) : rows;
+    if(!rows.length) throw new Error('Feuille vide');
+    const hasHeader = rows[0][0].toLowerCase()==='winner';
+    const data = hasHeader ? rows.slice(1) : rows;
 
-    let pending = data.map(r=>({winner:normName(r[0]),score:r[1]}));
+    official.east.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
+    official.west.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
+    if(official.final.fromApi){official.final.winner=null;official.final.score=null;official.final.fromApi=false;}
 
-    let passes = 6;
-    while(pending.length && passes--){
-      pending = pending.filter(r=>!applyResult(r.winner,r.score));
+    let pending=data.filter(r=>r[0]&&r[1]).map(r=>({winner:normName(r[0]),score:r[1].trim()}));
+    let applied=0, passes=6;
+    while(pending.length&&passes-->0){
+      const still=[];
+      for(const row of pending){ if(applyResult(row.winner,row.score)) applied++; else still.push(row); }
+      if(still.length===pending.length) break;
+      pending=still;
     }
-
-    statusEl.textContent = "✔ Résultats synchronisés";
-    statusEl.className = 'sync-status ok';
-    console.log("OFFICIAL =", official);
-
+    const now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`);
+    st.className='sync-status ok'; st.textContent='✓ '+now;
   }catch(e){
-    console.error(e);
-    statusEl.textContent = "❌ Erreur de sync";
-    statusEl.className = 'sync-status err';
+    setBanner('warn',`⚠ ${e.message}`);
+    st.className='sync-status err'; st.textContent='Erreur';
   }
+  renderOfficialBracket();
+  renderLeaderboard();
 }
 
 function parseCSV(text){
-  return text.trim().split('\n').map(l=>l.split(','));
-}
-
-// ============================================================
-//  APPLY RESULTS
-// ============================================================
-function applyResult(winner, score){
-  winner = normName(winner);
-  let applied = false;
-
-  ['east','west'].forEach(conf=>{
-    official[conf].forEach((m,i)=>{
-      const candidates = getMatchCandidates(conf,i);
-      if(candidates.includes(winner)){
-        if(!m.fromApi){
-          m.winner = winner;
-          m.score = score;
-          m.fromApi = true;
-          cascade(official,conf);
-        }
-        applied = true;
-      }
-    });
+  return text.trim().split('\n').map(line=>{
+    const cells=[]; let cur='',inQ=false;
+    for(const ch of line){
+      if(ch==='"') inQ=!inQ;
+      else if(ch===','&&!inQ){cells.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    cells.push(cur.trim()); return cells;
   });
-
-  // Finale
-  const finalists = [official.east[6].winner, official.west[6].winner].filter(Boolean);
-  if(finalists.includes(winner)){
-    official.final.winner = winner;
-    official.final.score = score;
-    official.final.fromApi = true;
-    applied = true;
-  }
-
-  return applied;
 }
 
-// ============================================================
-//  MATCH CANDIDATES
-// ============================================================
-function getMatchCandidates(conf, idx){
-  if(idx<4){
-    const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
-    return [teams[idx*2].name,teams[idx*2+1].name].map(normName);
-  }
-  if(idx<6){
-    return [
-      official[conf][(idx-4)*2].winner,
-      official[conf][(idx-4)*2+1].winner
-    ].filter(Boolean);
-  }
-  return [
-    official[conf][4].winner,
-    official[conf][5].winner
-  ].filter(Boolean);
-}
-
-// ============================================================
-//  CASCADE
-// ============================================================
-function cascade(picks,conf){
-  // R2 reset
-  for(let m=0;m<2;m++){
-    const t1 = picks[conf][m*2].winner;
-    const t2 = picks[conf][m*2+1].winner;
-    const r2 = picks[conf][4+m];
-    if(r2.winner && r2.winner!==t1 && r2.winner!==t2){
-      r2.winner=null; r2.score=null; r2.fromApi=false;
+function applyResult(winner,score){
+  const confs=[{conf:'east',teams:EAST_TEAMS},{conf:'west',teams:WEST_TEAMS}];
+  for(const {conf,teams} of confs){
+    for(let i=0;i<4;i++){
+      if(winner===teams[i*2].name||winner===teams[i*2+1].name){
+        if(!official[conf][i].fromApi){official[conf][i].winner=winner;official[conf][i].score=score;official[conf][i].fromApi=true;cascade(official,conf);}
+        return true;
+      }
     }
   }
-
-  // R3 reset
-  const r3 = picks[conf][6];
-  if(r3.winner &&
-     r3.winner!==picks[conf][4].winner &&
-     r3.winner!==picks[conf][5].winner){
-    r3.winner=null; r3.score=null; r3.fromApi=false;
+  for(const {conf} of confs){
+    for(let i=0;i<2;i++){
+      const t1=official[conf][i*2].winner,t2=official[conf][i*2+1].winner;
+      if(t1&&t2&&(winner===t1||winner===t2)){
+        if(!official[conf][4+i].fromApi){official[conf][4+i].winner=winner;official[conf][4+i].score=score;official[conf][4+i].fromApi=true;cascade(official,conf);}
+        return true;
+      }
+    }
   }
-
-  // Finale
-  const eastWinner = picks.east[6].winner;
-  const westWinner = picks.west[6].winner;
-  if(picks.final.winner &&
-     ![eastWinner, westWinner].includes(picks.final.winner)){
-    picks.final.winner = null; picks.final.score = null; picks.final.fromApi = false;
+  for(const {conf} of confs){
+    const t1=official[conf][4].winner,t2=official[conf][5].winner;
+    if(t1&&t2&&(winner===t1||winner===t2)){
+      if(!official[conf][6].fromApi){official[conf][6].winner=winner;official[conf][6].score=score;official[conf][6].fromApi=true;cascade(official,conf);}
+      return true;
+    }
   }
+  const ef=official.east[6].winner,wf=official.west[6].winner;
+  if(ef&&wf&&(winner===ef||winner===wf)){
+    if(!official.final.fromApi){official.final.winner=winner;official.final.score=score;official.final.fromApi=true;}
+    return true;
+  }
+  return false;
+}
+
+function setBanner(type,html){
+  const b=document.getElementById('main-banner'); b.style.display=''; b.className='banner '+type; b.innerHTML=html;
 }
 
 // ============================================================
-//  INITIAL LOAD
+//  BRACKET BUILDER
+//  Layout visuel : [West R1 | West R2 | West R3] | Finals | [East R3 | East R2 | East R1]
+//  → West progresse de gauche vers le centre
+//  → East progresse de droite vers le centre
 // ============================================================
+function buildBracket(containerId, picks, onUpdate, readOnly){
+  const c=document.getElementById(containerId); c.innerHTML='';
+
+  // West à gauche : R1 (extrême gauche) → R2 → R3 (proche du centre)
+  const ws=el('div','conf-section west');
+  buildConf(ws,'west',picks,onUpdate,readOnly);
+
+  // Finales au centre
+  const fs=el('div','finals-col');
+  buildFinals(fs,picks,onUpdate,readOnly);
+
+  // East à droite : R3 (proche du centre) → R2 → R1 (extrême droite)
+  const es=el('div','conf-section east');
+  buildConf(es,'east',picks,onUpdate,readOnly);
+
+  c.appendChild(ws); c.appendChild(fs); c.appendChild(es);
+}
+
+function buildConf(section, conf, picks, onUpdate, readOnly){
+  const teams = conf==='east' ? EAST_TEAMS : WEST_TEAMS;
+
+  const r1=makeCol('1er tour');
+  for(let m=0;m<4;m++){
+    r1.appendChild(buildMatchup(
+      picks[conf][m],
+      {seed:teams[m*2].seed,   name:teams[m*2].name},
+      {seed:teams[m*2+1].seed, name:teams[m*2+1].name},
+      (w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},
+      readOnly, 0
+    ));
+    r1.appendChild(el('div','matchup-gap'));
+  }
+
+  const r2=makeCol('Demi-finales');
+  for(let m=0;m<2;m++){
+    const t1={seed:null,name:picks[conf][m*2].winner||'?'};
+    const t2={seed:null,name:picks[conf][m*2+1].winner||'?'};
+    r2.appendChild(buildMatchup(
+      picks[conf][4+m], t1, t2,
+      (w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},
+      readOnly||!picks[conf][m*2].winner||!picks[conf][m*2+1].winner, 1
+    ));
+    r2.appendChild(el('div','matchup-gap'));
+  }
+
+  const r3=makeCol('Finale conf.');
+  const tf1={seed:null,name:picks[conf][4].winner||'?'};
+  const tf2={seed:null,name:picks[conf][5].winner||'?'};
+  r3.appendChild(buildMatchup(
+    picks[conf][6], tf1, tf2,
+    (w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},
+    readOnly||!picks[conf][4].winner||!picks[conf][5].winner, 2
+  ));
+
+  if(conf==='west'){
+    // West : R1 à gauche, R3 proche du centre
+    section.appendChild(r1); section.appendChild(r2); section.appendChild(r3);
+  } else {
+    // East : R3 proche du centre, R1 à droite
+    section.appendChild(r3); section.appendChild(r2); section.appendChild(r1);
+  }
+}
+
+function buildFinals(sec, picks, onUpdate, readOnly){
+  const col=el('div','finals-col-inner');
+  const lbl=el('div','');
+  lbl.style.cssText='font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;text-align:center';
+  lbl.textContent='FINALES NBA';
+  col.appendChild(lbl);
+  const wf=picks.west[6].winner, ef=picks.east[6].winner;
+  col.appendChild(buildMatchup(
+    picks.final,
+    {seed:null, name:wf||'?'},
+    {seed:null, name:ef||'?'},
+    (w,s)=>{picks.final.winner=w;picks.final.score=s;onUpdate();},
+    readOnly||!wf||!ef, 3
+  ));
+  const cb=el('div','champion-box');
+  cb.innerHTML=`<div class="trophy">🏆</div><div class="champ-label">CHAMPION NBA</div><div class="champ-name">${picks.final.winner||'?'}</div>${picks.final.score?`<div class="champ-score">${picks.final.score}</div>`:''}`;
+  col.appendChild(cb); sec.appendChild(col);
+}
+
+function buildMatchup(md,t1,t2,onSet,locked,ri){
+  // En phase de saisie, readOnly = isPastDeadline() pour le bracket perso
+  const wrap=el('div','matchup'+(md.fromApi?' synced':''));
+  const w=md.winner,s=md.score,api=md.fromApi;
+  const tbd1=t1.name==='?',tbd2=t2.name==='?';
+
+  const mkRow=(t,isW,isE,isTbd)=>{
+    const r=el('div','team-row'+(isW?' winner':isE?' eliminated':'')+(locked||isTbd?' locked':'')+(isTbd?' tbd':''));
+    r.innerHTML=`<span class="seed">${t.seed||''}</span><span class="tname">${t.name}</span>${isW&&api?'<span class="api-badge">LIVE</span>':isW?'<span class="check">✓</span>':''}`;
+    if(!locked&&!isTbd&&!api) r.onclick=()=>onSet(t.name,md.score);
+    return r;
+  };
+  wrap.appendChild(mkRow(t1,w===t1.name,w&&w!==t1.name,tbd1));
+  wrap.appendChild(el('div','divider-h'));
+  wrap.appendChild(mkRow(t2,w===t2.name,w&&w!==t2.name,tbd2));
+
+  if(w&&!tbd1&&!tbd2){
+    const sr=el('div','score-row');
+    const sl=el('span','score-label'); sl.textContent='SCORE'; sr.appendChild(sl);
+    const sb=el('div','score-btns');
+    SCORES.forEach(sc=>{
+      const dlLocked = locked && !api;
+      const b=el('button','sbtn'+(s===sc?' active':'')+(api?' api-locked':dlLocked?' deadline-locked':''));
+      b.textContent=sc;
+      if(!api&&!dlLocked) b.onclick=(e)=>{e.stopPropagation();onSet(w,sc);};
+      sb.appendChild(b);
+    });
+    sr.appendChild(sb);
+    if(api){const lk=el('span','lock-icon'); lk.textContent='🔒'; sr.appendChild(lk);}
+    wrap.appendChild(sr);
+  }
+  return wrap;
+}
+
+function cascade(picks,conf){
+  for(let m=0;m<2;m++){
+    const t1w=picks[conf][m*2].winner,t2w=picks[conf][m*2+1].winner,r2=picks[conf][4+m];
+    if(r2.winner&&r2.winner!==t1w&&r2.winner!==t2w){r2.winner=null;r2.score=null;r2.fromApi=false;}
+  }
+  const r3=picks[conf][6];
+  if(r3.winner&&r3.winner!==picks[conf][4].winner&&r3.winner!==picks[conf][5].winner){r3.winner=null;r3.score=null;r3.fromApi=false;}
+}
+function makeCol(label){const c=el('div','round-col');const l=el('div','round-label');l.textContent=label.toUpperCase();c.appendChild(l);return c;}
+
+// ============================================================
+//  SCORING
+// ============================================================
+function computeScore(p){
+  let pts=0,bonus=0,correct=0,total=0;
+  const chk=(pm,om,ri)=>{
+    if(!om.winner) return; total++;
+    if(pm.winner===om.winner){pts+=ROUND_PTS[ri];correct++;if(pm.score&&pm.score===om.score){pts+=SCORE_BONUS;bonus++;}}
+  };
+  for(let i=0;i<7;i++){const ri=i<4?0:i<6?1:2;chk(p.picks.east[i],official.east[i],ri);chk(p.picks.west[i],official.west[i],ri);}
+  chk(p.picks.final,official.final,3);
+  return{pts,bonus,correct,total};
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+function renderOfficialBracket(){buildBracket('main-bracket',official,()=>{renderOfficialBracket();renderLeaderboard();},false);}
+function renderMyBracket(){
+  if(!myName){document.getElementById('my-bracket-render').innerHTML='';return;}
+  // Verrouillé si deadline passée
+  const ro = isPastDeadline();
+  buildBracket('my-bracket-render',myPicks,()=>{updateProgress();renderMyBracket();},ro);
+  updateProgress();
+}
+function updateProgress(){
+  let done=0;
+  for(let i=0;i<7;i++){if(myPicks.east[i].winner)done++;if(myPicks.west[i].winner)done++;}
+  if(myPicks.final.winner)done++;
+  document.getElementById('my-progress').style.width=Math.round(done/15*100)+'%';
+  document.getElementById('my-progress-label').textContent=`${done} / 15 matchs pronostiqués`;
+}
+function renderLeaderboard(){
+  const search=(document.getElementById('search-lb')||{value:''}).value.toLowerCase();
+  const sorted=participants.map(p=>({...p,sc:computeScore(p)})).sort((a,b)=>b.sc.pts-a.sc.pts);
+  const tbody=document.getElementById('lb-body'); tbody.innerHTML='';
+  sorted.filter(p=>!search||p.name.toLowerCase().includes(search)).forEach((p,i)=>{
+    const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const acc=p.sc.total?`${p.sc.correct}/${p.sc.total}`:'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="rank-badge ${rc}">${i+1}</span></td><td>${p.name}</td><td><span class="pts-big">${p.sc.pts}</span> pts</td><td class="bonus-cell">+${p.sc.bonus*SCORE_BONUS} pts (${p.sc.bonus})</td><td class="detail-cell">${acc}</td><td>${p.picks.final.winner||'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function renderAdmin(){
+  const list=document.getElementById('participant-list'); list.innerHTML='';
+  participants.forEach((p,i)=>{
+    const sc=computeScore(p); const card=el('div','admin-card');
+    card.innerHTML=`<div class="ac-title">${p.name}</div><div class="ac-sub">${sc.pts} pts • ${sc.correct}/${sc.total} bons pronostics<br>Champion : ${p.picks.final.winner||'—'}</div><button class="btn" style="margin-top:8px" onclick="removeParticipant(${i})">Supprimer</button>`;
+    list.appendChild(card);
+  });
+}
+
+// ============================================================
+//  ACTIONS
+// ============================================================
+function showTab(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.tab')[['bracket','my-bracket','leaderboard','admin'].indexOf(id)].classList.add('active');
+  if(id==='leaderboard') renderLeaderboard();
+  if(id==='admin')       renderAdmin();
+  if(id==='my-bracket')  renderMyBracket();
+}
+
+function setPseudo(){
+  if(isPastDeadline()){ alert('La date limite est passée — les brackets sont verrouillés.'); return; }
+  const n=document.getElementById('pseudo-field').value.trim(); if(!n) return;
+  myName=n;
+  document.getElementById('my-bracket-hint').textContent=`Bonjour ${n} ! Cliquez sur chaque équipe gagnante puis choisissez le score de la série.`;
+  const ex=participants.find(p=>p.name===n);
+  myPicks=ex?JSON.parse(JSON.stringify(ex.picks)):emptyPicks();
+  renderMyBracket();
+}
+
+function saveMyBracket(){
+  if(isPastDeadline()){ alert('La date limite est passée — impossible d\'enregistrer.'); return; }
+  if(!myName){ alert('Entrez votre pseudo d\'abord'); return; }
+  const idx=participants.findIndex(p=>p.name===myName);
+  const copy=JSON.parse(JSON.stringify(myPicks));
+  if(idx>=0) participants[idx].picks=copy; else participants.push({name:myName,picks:copy});
+  document.getElementById('save-msg').textContent='✓ Bracket enregistré !';
+  setTimeout(()=>document.getElementById('save-msg').textContent='',2500);
+}
+
+function addParticipant(){
+  const input=document.getElementById('new-participant'); const n=input.value.trim();
+  if(!n||participants.find(p=>p.name===n)) return;
+  participants.push({name:n,picks:emptyPicks()}); input.value=''; renderAdmin();
+}
+function removeParticipant(i){
+  if(!confirm(`Supprimer ${participants[i].name} ?`)) return;
+  participants.splice(i,1); renderAdmin();
+}
+function resetOfficial(){
+  if(!confirm('Réinitialiser tous les résultats officiels ?')) return;
+  official=emptyOfficial(); renderOfficialBracket();
+  setBanner('info','Résultats réinitialisés.');
+}
+function exportCSV(){
+  let csv='Participant,Points,Bonus scores,Bons pronostics,Champion\n';
+  participants.forEach(p=>{const s=computeScore(p);csv+=`${p.name},${s.pts},${s.bonus*SCORE_BONUS},${s.correct}/${s.total},${p.picks.final.winner||''}\n`;});
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='nba_bracket_2026.csv'; a.click();
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+updatePhaseUI();
+renderOfficialBracket();
 loadFromSheet();
 </script>
+</body>
+</html>
