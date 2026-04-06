@@ -571,8 +571,12 @@ function buildConf(section,conf,picks,onUpdate,readOnly){
   const tf1={seed:null,name:picks[conf][4].winner||'?'},tf2={seed:null,name:picks[conf][5].winner||'?'};
   r3.appendChild(buildMatchup(picks[conf][6],tf1,tf2,(w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},readOnly||!picks[conf][4].winner||!picks[conf][5].winner,2));
 
-  if(conf==='east'){section.appendChild(r1);section.appendChild(r2);section.appendChild(r3);}
-  else            {section.appendChild(r3);section.appendChild(r2);section.appendChild(r1);}
+  if (conf === 'east') {
+  section.append(r1, r2, r3);
+} else {
+  // 👉 1er tour à droite, finale au centre
+  section.append(r3, r2, r1);
+}
 }
 
 function buildFinals(sec,picks,onUpdate,readOnly){
