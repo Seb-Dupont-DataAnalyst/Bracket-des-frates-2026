@@ -547,9 +547,9 @@ function setBanner(type,html){
 // ============================================================
 function buildBracket(containerId, picks, onUpdate, readOnly){
   const c=document.getElementById(containerId); c.innerHTML='';
-  const es=el('div','conf-section east'), ws=el('div','conf-section west'), fs=el('div','finals-col');
-  buildConf(es,'east',picks,onUpdate,readOnly);
+  const es=el('div','conf-section west'), ws=el('div','conf-section east'), fs=el('div','finals-col');
   buildConf(ws,'west',picks,onUpdate,readOnly);
+  buildConf(es,'east',picks,onUpdate,readOnly);
   buildFinals(fs,picks,onUpdate,readOnly);
   c.appendChild(es); c.appendChild(fs); c.appendChild(ws);
 }
