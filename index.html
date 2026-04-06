@@ -546,98 +546,65 @@ function setBanner(type,html){
 //  BRACKET BUILDER
 // ============================================================
 function buildBracket(containerId, picks, onUpdate, readOnly){
-  const c=document.getElementById(containerId); c.innerHTML='';
-  const es=el('div','conf-section west'), ws=el('div','conf-section east'), fs=el('div','finals-col');
-  buildConf(ws,'west',picks,onUpdate,readOnly);
-  buildConf(es,'east',picks,onUpdate,readOnly);
-  buildFinals(fs,picks,onUpdate,readOnly);
-  c.appendChild(ws); c.appendChild(fs); c.appendChild(es);
+  const c = document.getElementById(containerId); 
+  c.innerHTML = '';
+
+  const westSection = el('div','conf-section west');   // West à gauche
+  const eastSection = el('div','conf-section east');   // East à droite
+  const finalsSection = el('div','finals-col');        // Finales au centre
+
+  buildConf(westSection,'west',picks,onUpdate,readOnly);
+  buildConf(eastSection,'east',picks,onUpdate,readOnly);
+  buildFinals(finalsSection,picks,onUpdate,readOnly);
+
+  // Append dans l’ordre visuel : West | Finals | East
+  c.appendChild(westSection); 
+  c.appendChild(finalsSection); 
+  c.appendChild(eastSection);
 }
 
-function buildConf(section,conf,picks,onUpdate,readOnly){
-  const teams = (conf==='east'?EAST_TEAMS:WEST_TEAMS).slice(0, 8);
-  function getPlayIn(conf) {
-  const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
-  return teams.slice(6, 10); // seeds 7-10
-}
-  const r1=makeCol('1er tour');
-  for(let m=0;m<4;m++){
-    r1.appendChild(buildMatchup(picks[conf][m],{seed:teams[m*2].seed,name:teams[m*2].name},{seed:teams[m*2+1].seed,name:teams[m*2+1].name},(w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},readOnly,0));
+function buildConf(section, conf, picks, onUpdate, readOnly){
+  const teams = (conf==='east' ? EAST_TEAMS : WEST_TEAMS).slice(0, 8);
+
+  const r1 = makeCol('1er tour');
+  for(let m=0; m<4; m++){
+    r1.appendChild(buildMatchup(
+      picks[conf][m],
+      {seed: teams[m*2].seed, name: teams[m*2].name},
+      {seed: teams[m*2+1].seed, name: teams[m*2+1].name},
+      (w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},
+      readOnly,
+      0
+    ));
     r1.appendChild(el('div','matchup-gap'));
   }
-  const r2=makeCol('Demi-finales');
-  for(let m=0;m<2;m++){
-    const t1={seed:null,name:picks[conf][m*2].winner||'?'},t2={seed:null,name:picks[conf][m*2+1].winner||'?'};
-    r2.appendChild(buildMatchup(picks[conf][4+m],t1,t2,(w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},readOnly||!picks[conf][m*2].winner||!picks[conf][m*2+1].winner,1));
+
+  const r2 = makeCol('Demi-finales');
+  for(let m=0; m<2; m++){
+    const t1 = {seed:null, name: picks[conf][m*2].winner || '?'};
+    const t2 = {seed:null, name: picks[conf][m*2+1].winner || '?'};
+    r2.appendChild(buildMatchup(
+      picks[conf][4+m], t1, t2,
+      (w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},
+      readOnly || !picks[conf][m*2].winner || !picks[conf][m*2+1].winner,
+      1
+    ));
     r2.appendChild(el('div','matchup-gap'));
   }
-  const r3=makeCol('Finale conf.');
-  const tf1={seed:null,name:picks[conf][4].winner||'?'},tf2={seed:null,name:picks[conf][5].winner||'?'};
-  r3.appendChild(buildMatchup(picks[conf][6],tf1,tf2,(w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},readOnly||!picks[conf][4].winner||!picks[conf][5].winner,2));
 
-  if (conf === 'east') {
+  const r3 = makeCol('Finale conf.');
+  const tf1 = {seed:null, name: picks[conf][4].winner || '?'};
+  const tf2 = {seed:null, name: picks[conf][5].winner || '?'};
+  r3.appendChild(buildMatchup(
+    picks[conf][6], tf1, tf2,
+    (w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},
+    readOnly || !picks[conf][4].winner || !picks[conf][5].winner,
+    2
+  ));
+
+  // Append dans l’ordre normal : 1er tour → Demi-finales → Finale conf
   section.append(r1, r2, r3);
-} else {
-  // 👉 1er tour à droite, finale au centre
-  section.append(r3, r2, r1);
 }
-}
-
-function buildFinals(sec,picks,onUpdate,readOnly){
-  const col=el('div','finals-col-inner');
-  const lbl=el('div',''); lbl.style.cssText='font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;text-align:center'; lbl.textContent='FINALES NBA';
-  col.appendChild(lbl);
-  const ef=picks.east[6].winner,wf=picks.west[6].winner;
-  col.appendChild(buildMatchup(picks.final,{seed:null,name:ef||'?'},{seed:null,name:wf||'?'},(w,s)=>{picks.final.winner=w;picks.final.score=s;onUpdate();},readOnly||!ef||!wf,3));
-  const cb=el('div','champion-box');
-  cb.innerHTML=`<div class="trophy">🏆</div><div class="champ-label">CHAMPION NBA</div><div class="champ-name">${picks.final.winner||'?'}</div>${picks.final.score?`<div class="champ-score">${picks.final.score}</div>`:''}`;
-  col.appendChild(cb); sec.appendChild(col);
-}
-
-function buildMatchup(md,t1,t2,onSet,locked,ri){
-  // En phase de saisie, readOnly = isPastDeadline() pour le bracket perso
-  const wrap=el('div','matchup'+(md.fromApi?' synced':''));
-  const w=md.winner,s=md.score,api=md.fromApi;
-  const tbd1=t1.name==='?',tbd2=t2.name==='?';
-
-  const mkRow=(t,isW,isE,isTbd)=>{
-    const r=el('div','team-row'+(isW?' winner':isE?' eliminated':'')+(locked||isTbd?' locked':'')+(isTbd?' tbd':''));
-    r.innerHTML=`<span class="seed">${t.seed||''}</span><span class="tname">${t.name}</span>${isW&&api?'<span class="api-badge">LIVE</span>':isW?'<span class="check">✓</span>':''}`;
-    if(!locked&&!isTbd&&!api) r.onclick=()=>onSet(t.name,md.score);
-    return r;
-  };
-  wrap.appendChild(mkRow(t1,w===t1.name,w&&w!==t1.name,tbd1));
-  wrap.appendChild(el('div','divider-h'));
-  wrap.appendChild(mkRow(t2,w===t2.name,w&&w!==t2.name,tbd2));
-
-  if(w&&!tbd1&&!tbd2){
-    const sr=el('div','score-row');
-    const sl=el('span','score-label'); sl.textContent='SCORE'; sr.appendChild(sl);
-    const sb=el('div','score-btns');
-    SCORES.forEach(sc=>{
-      const dlLocked = locked && !api;
-      const b=el('button','sbtn'+(s===sc?' active':'')+(api?' api-locked':dlLocked?' deadline-locked':''));
-      b.textContent=sc;
-      if(!api&&!dlLocked) b.onclick=(e)=>{e.stopPropagation();onSet(w,sc);};
-      sb.appendChild(b);
-    });
-    sr.appendChild(sb);
-    if(api){const lk=el('span','lock-icon'); lk.textContent='🔒'; sr.appendChild(lk);}
-    wrap.appendChild(sr);
-  }
-  return wrap;
-}
-
-function cascade(picks,conf){
-  for(let m=0;m<2;m++){
-    const t1w=picks[conf][m*2].winner,t2w=picks[conf][m*2+1].winner,r2=picks[conf][4+m];
-    if(r2.winner&&r2.winner!==t1w&&r2.winner!==t2w){r2.winner=null;r2.score=null;r2.fromApi=false;}
-  }
-  const r3=picks[conf][6];
-  if(r3.winner&&r3.winner!==picks[conf][4].winner&&r3.winner!==picks[conf][5].winner){r3.winner=null;r3.score=null;r3.fromApi=false;}
-}
-function makeCol(label){const c=el('div','round-col');const l=el('div','round-label');l.textContent=label.toUpperCase();c.appendChild(l);return c;}
-
 // ============================================================
 //  SCORING
 // ============================================================
