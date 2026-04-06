@@ -2,15 +2,20 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bracket des frates 2026</title>
 </head>
-<body>
 
-<h2>Bracket debug (console)</h2>
+<body style="background:#111;color:white;font-family:sans-serif">
+
+<h2>Bracket NBA 2026 (version clean)</h2>
+<button onclick="loadFromSheet()">🔄 Sync résultats</button>
+
+<pre id="output"></pre>
 
 <script>
 // ============================================================
-//  CONFIG (UNE SEULE FOIS !!!)
+// CONFIG (UNE SEULE FOIS)
 // ============================================================
 const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
 
@@ -29,7 +34,7 @@ const WEST_TEAMS = [
 ];
 
 // ============================================================
-//  HELPERS
+// HELPERS
 // ============================================================
 const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
 
@@ -39,7 +44,7 @@ function normName(n){
 }
 
 // ============================================================
-//  STATE
+// STATE
 // ============================================================
 let official = emptyOfficial();
 
@@ -52,7 +57,7 @@ function emptyOfficial(){
 }
 
 // ============================================================
-//  FETCH CSV
+// FETCH CSV
 // ============================================================
 async function fetchCSV(){
   const proxies = [
@@ -73,7 +78,6 @@ async function fetchCSV(){
   throw new Error('Erreur Google Sheet');
 }
 
-// CSV robuste
 function parseCSV(text){
   return text.trim().split('\n').map(line=>{
     const cells=[]; let cur=''; let inQ=false;
@@ -92,10 +96,12 @@ function parseCSV(text){
 }
 
 // ============================================================
-//  LOAD DATA
+// LOAD
 // ============================================================
 async function loadFromSheet(){
   try{
+    official = emptyOfficial(); // reset propre
+
     const text = await fetchCSV();
     const rows = parseCSV(text);
 
@@ -115,17 +121,15 @@ async function loadFromSheet(){
       pending = pending.filter(r=>!applyResult(r.winner,r.score));
     }
 
-    console.log("✅ Résultats chargés");
+    render();
 
   }catch(e){
-    console.error("❌ Erreur:", e);
+    console.error(e);
   }
-
-  console.log("OFFICIAL =", official);
 }
 
 // ============================================================
-//  APPLY RESULT
+// APPLY RESULT
 // ============================================================
 function applyResult(winner, score){
   winner = normName(winner);
@@ -148,7 +152,6 @@ function applyResult(winner, score){
     });
   });
 
-  // 🔥 finale sécurisée
   const finalists = [
     official.east[6].winner,
     official.west[6].winner
@@ -165,7 +168,7 @@ function applyResult(winner, score){
 }
 
 // ============================================================
-//  MATCH CANDIDATES
+// MATCH CANDIDATES
 // ============================================================
 function getMatchCandidates(conf, idx){
 
@@ -191,7 +194,7 @@ function getMatchCandidates(conf, idx){
 }
 
 // ============================================================
-//  CASCADE (FIX FINAL BUG)
+// CASCADE (FIX FINAL BUG)
 // ============================================================
 function cascade(picks, conf){
 
@@ -231,7 +234,15 @@ function cascade(picks, conf){
 }
 
 // ============================================================
-//  INIT
+// RENDER SIMPLE
+// ============================================================
+function render(){
+  document.getElementById('output').textContent =
+    JSON.stringify(official, null, 2);
+}
+
+// ============================================================
+// INIT
 // ============================================================
 loadFromSheet();
 
