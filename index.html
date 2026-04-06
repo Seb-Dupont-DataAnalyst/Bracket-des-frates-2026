@@ -442,17 +442,48 @@ function emptyPicks(){
 //  FETCH SHEET via proxy CORS
 // ============================================================
 async function fetchCSV(){
-  const proxies = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`,
-    `https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`
-  ];
-  for(const url of proxies){
-    try{
-      const res = await fetch(url);
-      if(res.ok){ const t=await res.text(); if(t&&t.length>10) return t; }
-    }catch(e){}
-  }
-  throw new Error('Impossible de contacter le Google Sheet. Réessayez ou ouvrez le fichier depuis un serveur web.');
+  // Stratégie 1 : fetch direct (fonctionne si hébergé sur un vrai serveur)
+  try {
+    const res = await fetch(SHEET_CSV + '&t=' + Date.now());
+    if(res.ok){ const t=await res.text(); if(t&&t.length>10&&!t.trim().startsWith('<')) return t; }
+  } catch(e){}
+
+  // Stratégie 2 : proxy allorigins
+  try {
+    const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`);
+    if(res.ok){ const t=await res.text(); if(t&&t.length>10&&!t.trim().startsWith('<')) return t; }
+  } catch(e){}
+
+  // Stratégie 3 : proxy corsproxy.io
+  try {
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`);
+    if(res.ok){ const t=await res.text(); if(t&&t.length>10&&!t.trim().startsWith('<')) return t; }
+  } catch(e){}
+
+  // Stratégie 4 : iframe (dernier recours, contourne CORS sur file://)
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'display:none;position:fixed;top:-9999px';
+    iframe.src = SHEET_CSV;
+    let done = false;
+    iframe.onload = () => {
+      try {
+        const body = iframe.contentDocument
+          ? iframe.contentDocument.body.innerText
+          : iframe.contentWindow.document.body.innerText;
+        done = true;
+        document.body.removeChild(iframe);
+        if(body && body.length > 10 && !body.trim().startsWith('<')) resolve(body);
+        else reject(new Error('Contenu iframe invalide'));
+      } catch(e) {
+        try{document.body.removeChild(iframe);}catch(_){}
+        reject(new Error('CORS bloqué même en iframe. Hébergez le fichier sur GitHub Pages ou Netlify.'));
+      }
+    };
+    iframe.onerror = () => { try{document.body.removeChild(iframe);}catch(_){} reject(new Error('Erreur iframe')); };
+    setTimeout(() => { if(!done){ try{document.body.removeChild(iframe);}catch(_){} reject(new Error('Timeout — vérifiez que le Sheet est bien publié en CSV.')); }}, 8000);
+    document.body.appendChild(iframe);
+  });
 }
 
 async function loadFromSheet(){
@@ -463,27 +494,36 @@ async function loadFromSheet(){
     const text = await fetchCSV();
     const rows = parseCSV(text);
     if(!rows.length) throw new Error('Feuille vide');
+
     const hasHeader = rows[0][0].toLowerCase()==='winner';
     const data = hasHeader ? rows.slice(1) : rows;
+
+    if(!data.length) throw new Error('Aucune donnée dans le Sheet (seulement le header)');
+
+    // Debug — affiche les lignes reçues dans la console navigateur
+    console.log('[Bracket] CSV reçu (' + data.length + ' lignes) :');
+    data.forEach((r,i) => console.log('  ligne ' + (i+1) + ':', r[0], '|', r[1]));
 
     official.east.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
     official.west.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
     if(official.final.fromApi){official.final.winner=null;official.final.score=null;official.final.fromApi=false;}
 
-    let pending=data.filter(r=>r[0]&&r[1]).map(r=>({winner:normName(r[0]),score:r[1].trim()}));
-    let applied=0, passes=6;
-    while(pending.length&&passes-->0){
-      const still=[];
-      for(const row of pending){ if(applyResult(row.winner,row.score)) applied++; else still.push(row); }
-      if(still.length===pending.length) break;
-      pending=still;
-    }
+    // Applique tous les résultats en ordre strict R1→R2→R3→Finals
+    const applied = applyAllResults(data);
+    console.log('[Bracket] Résultats appliqués : ' + applied + '/' + data.length);
+
     const now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`);
-    st.className='sync-status ok'; st.textContent='✓ '+now;
+    if(applied > 0){
+      setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`);
+      st.className='sync-status ok'; st.textContent='✓ '+now;
+    } else {
+      setBanner('warn',`⚠ Sheet lu (${data.length} ligne(s)) mais 0 résultat appliqué. Vérifiez les noms d'équipes dans la CONFIG.`);
+      st.className='sync-status err'; st.textContent='0 appliqué';
+    }
   }catch(e){
     setBanner('warn',`⚠ ${e.message}`);
     st.className='sync-status err'; st.textContent='Erreur';
+    console.error('[Bracket] Erreur sync:', e);
   }
   renderOfficialBracket();
   renderLeaderboard();
@@ -501,39 +541,75 @@ function parseCSV(text){
   });
 }
 
-function applyResult(winner,score){
-  const confs=[{conf:'east',teams:EAST_TEAMS},{conf:'west',teams:WEST_TEAMS}];
+// Applique TOUS les résultats d'un coup en respectant l'ordre R1→R2→R3→Finals
+function applyAllResults(rows) {
+  const confs = [{conf:'east',teams:EAST_TEAMS},{conf:'west',teams:WEST_TEAMS}];
+
+  // Indexe tous les résultats par nom de gagnant pour accès rapide
+  const byWinner = {};
+  rows.forEach(r => { if(r[0]&&r[1]) byWinner[normName(r[0])] = r[1].trim(); });
+
+  let applied = 0;
+
+  // ── R1 : gagnants connus depuis les équipes de départ ──
   for(const {conf,teams} of confs){
     for(let i=0;i<4;i++){
-      if(winner===teams[i*2].name||winner===teams[i*2+1].name){
-        if(!official[conf][i].fromApi){official[conf][i].winner=winner;official[conf][i].score=score;official[conf][i].fromApi=true;cascade(official,conf);}
-        return true;
+      const t1=teams[i*2].name, t2=teams[i*2+1].name;
+      const w = byWinner[t1]!==undefined ? t1 : byWinner[t2]!==undefined ? t2 : null;
+      if(w && !official[conf][i].fromApi){
+        official[conf][i].winner=w;
+        official[conf][i].score=byWinner[w];
+        official[conf][i].fromApi=true;
+        applied++;
       }
     }
   }
+
+  // ── R2 : gagnants connus depuis les gagnants R1 ──
   for(const {conf} of confs){
     for(let i=0;i<2;i++){
-      const t1=official[conf][i*2].winner,t2=official[conf][i*2+1].winner;
-      if(t1&&t2&&(winner===t1||winner===t2)){
-        if(!official[conf][4+i].fromApi){official[conf][4+i].winner=winner;official[conf][4+i].score=score;official[conf][4+i].fromApi=true;cascade(official,conf);}
-        return true;
+      const t1=official[conf][i*2].winner, t2=official[conf][i*2+1].winner;
+      if(!t1||!t2) continue;
+      const w = byWinner[t1]!==undefined ? t1 : byWinner[t2]!==undefined ? t2 : null;
+      if(w && !official[conf][4+i].fromApi){
+        official[conf][4+i].winner=w;
+        official[conf][4+i].score=byWinner[w];
+        official[conf][4+i].fromApi=true;
+        applied++;
       }
     }
   }
+
+  // ── R3 : finales de conférence ──
   for(const {conf} of confs){
-    const t1=official[conf][4].winner,t2=official[conf][5].winner;
-    if(t1&&t2&&(winner===t1||winner===t2)){
-      if(!official[conf][6].fromApi){official[conf][6].winner=winner;official[conf][6].score=score;official[conf][6].fromApi=true;cascade(official,conf);}
-      return true;
+    const t1=official[conf][4].winner, t2=official[conf][5].winner;
+    if(!t1||!t2) continue;
+    const w = byWinner[t1]!==undefined ? t1 : byWinner[t2]!==undefined ? t2 : null;
+    if(w && !official[conf][6].fromApi){
+      official[conf][6].winner=w;
+      official[conf][6].score=byWinner[w];
+      official[conf][6].fromApi=true;
+      applied++;
     }
   }
-  const ef=official.east[6].winner,wf=official.west[6].winner;
-  if(ef&&wf&&(winner===ef||winner===wf)){
-    if(!official.final.fromApi){official.final.winner=winner;official.final.score=score;official.final.fromApi=true;}
-    return true;
+
+  // ── Finales NBA ──
+  const ef=official.east[6].winner, wf=official.west[6].winner;
+  if(ef&&wf){
+    const w = byWinner[ef]!==undefined ? ef : byWinner[wf]!==undefined ? wf : null;
+    if(w && !official.final.fromApi){
+      official.final.winner=w;
+      official.final.score=byWinner[w];
+      official.final.fromApi=true;
+      applied++;
+    }
   }
-  return false;
+
+  return applied;
 }
+
+// Gardée pour compatibilité mais plus utilisée directement
+function applyResult(winner,score){ return false; }
 
 function setBanner(type,html){
   const b=document.getElementById('main-banner'); b.style.display=''; b.className='banner '+type; b.innerHTML=html;
