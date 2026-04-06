@@ -116,6 +116,76 @@
     .champ-name { font-family:var(--fh); font-size:16px; font-weight:700; color:var(--accent); min-height:22px; letter-spacing:.04em; }
     .champ-score { font-size:11px; color:var(--muted); margin-top:2px; }
 
+    /* Container général du bracket */
+#bracket-container {
+  display: flex;
+  justify-content: center; /* centre les finales */
+  align-items: flex-start;
+  gap: 20px; /* espace entre conférences et finales */
+}
+
+/* Sections conférences */
+.conf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* espace entre colonnes de rounds */
+}
+
+/* Section finale */
+.finals-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Colonnes de rounds */
+.round-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Matchup individuel */
+.matchup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+/* Ligne équipe */
+.team-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.team-row.winner { font-weight: bold; color: green; }
+.team-row.eliminated { color: gray; }
+.team-row.locked { opacity: 0.6; cursor: not-allowed; }
+
+/* Score row */
+.score-row {
+  display: flex;
+  flex-direction: column;
+  margin-top: 5px;
+  font-size: 11px;
+}
+.sbtn { margin: 2px; padding: 2px 5px; cursor: pointer; }
+.sbtn.active { background-color: #007bff; color: white; }
+
+/* Champion NBA */
+.champion-box {
+  margin-top: 15px;
+  text-align: center;
+}
+.champion-box .trophy { font-size: 24px; }
+.champion-box .champ-label { font-weight: bold; }
+
     /* ── DEADLINE LOCK OVERLAY ── */
     .bracket-locked-msg { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--red-bg); border:1px solid var(--red-br); border-radius:var(--r); margin-bottom:14px; font-size:12px; color:var(--red); }
 
