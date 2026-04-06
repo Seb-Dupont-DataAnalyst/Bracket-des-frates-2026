@@ -504,16 +504,58 @@ function parseCSV(text){
   });
 }
 
-function applyResult(winner,score){
-  const confs=[{conf:'east',teams:EAST_TEAMS},{conf:'west',teams:WEST_TEAMS}];
-  for(const {conf,teams} of confs){
-    for(let i=0;i<4;i++){
-      if(winner===teams[i*2].name||winner===teams[i*2+1].name){
-        if(!official[conf][i].fromApi){official[conf][i].winner=winner;official[conf][i].score=score;official[conf][i].fromApi=true;cascade(official,conf);}
+function applyResult(winner, score){
+  const confs = ['east','west'];
+
+  for(const conf of confs){
+    // 1️⃣ Parcours tous les matchs du premier tour, demi, finale conf
+    for(let i=0;i<official[conf].length;i++){
+      const match = official[conf][i];
+      // Déterminer les joueurs possibles de ce match
+      const candidates = getMatchCandidates(conf,i);
+      if(candidates.includes(winner)){
+        // On applique si pas déjà depuis API
+        if(!match.fromApi){
+          match.winner = winner;
+          match.score = score;
+          match.fromApi = true;
+          cascade(official, conf); // mise à jour propagation
+        }
         return true;
       }
     }
   }
+
+  // 2️⃣ Finale NBA
+  const finalCandidates = [official.east[6].winner, official.west[6].winner].filter(Boolean);
+  if(finalCandidates.includes(winner)){
+    if(!official.final.fromApi){
+      official.final.winner = winner;
+      official.final.score = score;
+      official.final.fromApi = true;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+// Retourne tous les noms possibles pour un match donné selon l'indice
+function getMatchCandidates(conf,idx){
+  const round = idx<4 ? 0 : idx<6 ? 1 : 2; // 0=R1, 1=R2, 2=R3
+  if(round===0) return [EAST_TEAMS[idx*2].name, EAST_TEAMS[idx*2+1].name].map(normName);
+  if(round===1){
+    const t1 = official[conf][(idx-4)*2].winner;
+    const t2 = official[conf][(idx-4)*2+1].winner;
+    return [t1,t2].filter(Boolean).map(normName);
+  }
+  if(round===2){
+    const t1 = official[conf][4].winner;
+    const t2 = official[conf][5].winner;
+    return [t1,t2].filter(Boolean).map(normName);
+  }
+  return [];
+}
   for(const {conf} of confs){
     for(let i=0;i<2;i++){
       const t1=official[conf][i*2].winner,t2=official[conf][i*2+1].winner;
