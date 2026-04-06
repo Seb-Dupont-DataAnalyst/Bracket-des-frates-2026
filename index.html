@@ -551,7 +551,7 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
   buildConf(ws,'west',picks,onUpdate,readOnly);
   buildConf(es,'east',picks,onUpdate,readOnly);
   buildFinals(fs,picks,onUpdate,readOnly);
-  c.appendChild(es); c.appendChild(fs); c.appendChild(ws);
+  c.appendChild(ws); c.appendChild(fs); c.appendChild(es);
 }
 
 function buildConf(section,conf,picks,onUpdate,readOnly){
