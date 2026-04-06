@@ -506,25 +506,57 @@ function parseCSV(text){
 
 function applyResult(winner, score){
   const confs = ['east','west'];
+  let applied = false; // pour savoir si on a appliqué
 
   for(const conf of confs){
-    // 1️⃣ Parcours tous les matchs du premier tour, demi, finale conf
     for(let i=0;i<official[conf].length;i++){
       const match = official[conf][i];
-      // Déterminer les joueurs possibles de ce match
       const candidates = getMatchCandidates(conf,i);
-      if(candidates.includes(winner)){
-        // On applique si pas déjà depuis API
+      if(candidates.includes(normName(winner))){
         if(!match.fromApi){
-          match.winner = winner;
+          match.winner = normName(winner);
           match.score = score;
           match.fromApi = true;
-          cascade(official, conf); // mise à jour propagation
+          cascade(official, conf);
         }
-        return true;
+        applied = true;
       }
     }
   }
+
+  // Finale NBA
+  const finalCandidates = [official.east[6].winner, official.west[6].winner].filter(Boolean);
+  if(finalCandidates.includes(normName(winner))){
+    if(!official.final.fromApi){
+      official.final.winner = normName(winner);
+      official.final.score = score;
+      official.final.fromApi = true;
+    }
+    applied = true;
+  }
+
+  return applied;
+}
+
+// Retourne tous les noms possibles pour un match donné selon l'indice
+function getMatchCandidates(conf,idx){
+  if(idx<4){
+    // R1
+    return [conf==='east'?EAST_TEAMS[idx*2].name:EAST_TEAMS[idx*2].name,
+            conf==='east'?EAST_TEAMS[idx*2+1].name:EAST_TEAMS[idx*2+1].name].map(normName);
+  } else if(idx<6){
+    // R2
+    const t1 = official[conf][(idx-4)*2].winner;
+    const t2 = official[conf][(idx-4)*2+1].winner;
+    return [t1,t2].filter(Boolean).map(normName);
+  } else if(idx===6){
+    // R3
+    const t1 = official[conf][4].winner;
+    const t2 = official[conf][5].winner;
+    return [t1,t2].filter(Boolean).map(normName);
+  }
+  return [];
+}
 
   // 2️⃣ Finale NBA
   const finalCandidates = [official.east[6].winner, official.west[6].winner].filter(Boolean);
