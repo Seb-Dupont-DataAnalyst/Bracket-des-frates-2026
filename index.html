@@ -174,196 +174,13 @@
      ⚙️  CONFIGURATION — TOUT MODIFIER ICI CHAQUE ANNÉE
      ================================================================ -->
 <script>
-// ── 1. URL CSV du Google Sheet publié ──────────────────────────────
-const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
-
-// ── 2. Date limite de saisie des brackets ─────────────────────────
-//    Format ISO 8601, heure de Paris (Europe/Paris)
-//    Mettre la veille du 1er match des playoffs, 18h00
-//    2026 : play-in 14-17 avril → deadline 17 avril 18h
-const DEADLINE = '2026-04-17T18:00:00'; // ← MODIFIER CHAQUE ANNÉE
-
-// ── 3. Équipes EST — ordre des matchups R1 ────────────────────────
-//    (seed1 vs seed8), (seed4 vs seed5), (seed3 vs seed6), (seed2 vs seed7)
-//    À remplir APRÈS le play-in tournament (résultats connus ~17 avril)
-const EAST_TEAMS = [
-  {seed:1, name:'Cavaliers'},  {seed:8, name:'Heat'},
-  {seed:4, name:'Pacers'},     {seed:5, name:'Bucks'},
-  {seed:3, name:'Knicks'},     {seed:6, name:'Pistons'},
-  {seed:2, name:'Celtics'},    {seed:7, name:'Magic'}
-];
-
-// ── 4. Équipes OUEST — même ordre ────────────────────────────────
-const WEST_TEAMS = [
-  {seed:1, name:'Thunder'},       {seed:8, name:'Grizzlies'},
-  {seed:4, name:'Nuggets'},       {seed:5, name:'Clippers'},
-  {seed:3, name:'Timberwolves'},  {seed:6, name:'Warriors'},
-  {seed:2, name:'Rockets'},       {seed:7, name:'Lakers'}
-];
-
-// ── 5. Barème des points ──────────────────────────────────────────
-const ROUND_PTS   = [10, 12, 15, 20]; // R1, R2, R3 conf, Finals
-const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
-</script>
-<!-- ================================================================ -->
-
-<!-- HEADER -->
-<div class="header">
-  <div>
-    <div class="header-title">🏀 Bracket <span>Des Frates</span> 2026</div>
-    <div class="header-sub">Concours de pronostics — gagnant + score de série</div>
-  </div>
-  <div class="header-right">
-    <button class="btn primary" onclick="loadFromSheet()">⟳ Sync résultats</button>
-    <span class="sync-status" id="sync-status"></span>
-  </div>
-</div>
-
-<!-- PHASE BAR -->
-<div class="phase-bar">
-  <div id="phase-badge" class="phase-badge open">
-    <span class="phase-dot pulse"></span>
-    <span id="phase-text">SAISIE OUVERTE</span>
-  </div>
-  <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-    <div class="countdown" id="countdown"></div>
-    <div class="deadline-note" id="deadline-note"></div>
-  </div>
-</div>
-
-<div id="main-banner" class="banner info" style="display:none"></div>
-
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab active" onclick="showTab('bracket')">Bracket officiel</button>
-  <button class="tab" onclick="showTab('my-bracket')">Mon bracket</button>
-  <button class="tab" onclick="showTab('leaderboard')">Classement</button>
-  <button class="tab" onclick="showTab('admin')">Admin</button>
-</div>
-
-<!-- BRACKET OFFICIEL -->
-<div class="panel active" id="panel-bracket">
-  <div class="bracket-wrap">
-    <div class="bracket" id="main-bracket"></div>
-  </div>
-  <div class="hint">💡 Résultats API verrouillés (badge vert). Saisie manuelle possible pour les matchs à venir.</div>
-</div>
-
-<!-- MON BRACKET -->
-<div class="panel" id="panel-my-bracket">
-  <div id="deadline-locked-msg" class="bracket-locked-msg" style="display:none">
-    🔒 La date limite de saisie est passée — les brackets sont verrouillés. Bonne chance à tous !
-  </div>
-  <div class="pseudo-input">
-    <input type="text" id="pseudo-field" placeholder="Votre prénom / pseudo">
-    <button class="btn primary" id="pseudo-btn" onclick="setPseudo()">OK</button>
-  </div>
-  <div class="progress-bg"><div class="progress-fill" id="my-progress" style="width:0%"></div></div>
-  <div class="progress-label" id="my-progress-label">0 / 15 matchs pronostiqués</div>
-  <div id="my-bracket-hint" style="font-size:13px;color:var(--muted);margin-bottom:14px">Entrez votre pseudo pour commencer.</div>
-  <div class="bracket-wrap"><div class="bracket" id="my-bracket-render"></div></div>
-  <div class="save-bar">
-    <button class="btn primary" id="save-btn" onclick="saveMyBracket()">Enregistrer mon bracket</button>
-    <span class="save-msg" id="save-msg"></span>
-  </div>
-</div>
-
-<!-- CLASSEMENT -->
-<div class="panel" id="panel-leaderboard">
-  <div class="lb-controls">
-    <input type="text" id="search-lb" placeholder="Rechercher un participant…" oninput="renderLeaderboard()">
-  </div>
-  <table class="lb">
-    <thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Bonus scores</th><th>Précision</th><th>Champion pronostiqué</th></tr></thead>
-    <tbody id="lb-body"></tbody>
-  </table>
-</div>
-
-<!-- ADMIN -->
-<div class="panel" id="panel-admin">
-  <div class="admin-section">
-    <h3>Participants</h3>
-    <div class="lb-controls">
-      <input type="text" id="new-participant" placeholder="Nom du participant" style="padding:7px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);width:220px">
-      <button class="btn" onclick="addParticipant()">+ Ajouter</button>
-    </div>
-    <div class="admin-grid" id="participant-list"></div>
-  </div>
-  <div class="admin-section">
-    <h3>Paramètres du concours</h3>
-    <div class="admin-grid">
-      <div class="admin-card">
-        <div class="ac-title">Date limite de saisie</div>
-        <div class="ac-sub">Configurable dans la section CONFIG du fichier HTML</div>
-        <div class="ac-val" id="admin-deadline"></div>
-      </div>
-      <div class="admin-card">
-        <div class="ac-title">Phase actuelle</div>
-        <div class="ac-sub">Calculée automatiquement selon la date limite</div>
-        <div class="ac-val" id="admin-phase"></div>
-      </div>
-      <div class="admin-card">
-        <div class="ac-title">Google Sheet</div>
-        <div class="ac-sub">Source des résultats — sync 7h + 8h (Paris)</div>
-        <button class="btn" style="margin-top:8px" onclick="window.open(SHEET_CSV.replace('/pub?','/../edit?'),'_blank')">Ouvrir le Sheet</button>
-      </div>
-    </div>
-  </div>
-  <div class="admin-section">
-    <h3>Barème des points</h3>
-    <table class="pts-table">
-      <thead><tr><th>Tour</th><th>Bon gagnant</th><th>Bonus score exact</th></tr></thead>
-      <tbody>
-        <tr><td>1er tour</td><td>10 pts</td><td>+2 pts</td></tr>
-        <tr><td>Demi-finales de conf.</td><td>12 pts</td><td>+2 pts</td></tr>
-        <tr><td>Finales de conf.</td><td>15 pts</td><td>+2 pts</td></tr>
-        <tr><td>Finales NBA</td><td>20 pts</td><td>+2 pts</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="admin-section">
-    <h3>Actions</h3>
-    <div class="admin-grid">
-      <div class="admin-card">
-        <div class="ac-title">Export CSV</div>
-        <div class="ac-sub">Télécharger le classement complet</div>
-        <button class="btn" style="margin-top:8px" onclick="exportCSV()">Télécharger</button>
-      </div>
-      <div class="admin-card">
-        <div class="ac-title">Réinitialiser résultats</div>
-        <div class="ac-sub">Efface les résultats officiels (pas les brackets)</div>
-        <button class="btn" style="margin-top:8px" onclick="resetOfficial()">Réinitialiser</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
 // ============================================================
 //  HELPERS
 // ============================================================
-const EAST_TEAMS = [
-  {name:'Team East 1', seed:1}, {name:'Team East 2', seed:8},
-  {name:'Team East 3', seed:4}, {name:'Team East 4', seed:5},
-  {name:'Team East 5', seed:2}, {name:'Team East 6', seed:7},
-  {name:'Team East 7', seed:3}, {name:'Team East 8', seed:6}
-];
-
-const WEST_TEAMS = [
-  {name:'Team West 1', seed:1}, {name:'Team West 2', seed:8},
-  {name:'Team West 3', seed:4}, {name:'Team West 4', seed:5},
-  {name:'Team West 5', seed:2}, {name:'Team West 6', seed:7},
-  {name:'Team West 7', seed:3}, {name:'Team West 8', seed:6}
-];
-
-const DEADLINE = '2026-04-15T20:00:00';
-const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/TON_ID/export?format=csv';
-const ROUND_PTS = [1,2,3];
-const SCORE_BONUS = 1;
-const SCORES = ['4-0','4-1','4-2','4-3'];
-
 const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
+
 function normName(n){
+  if(!n) return '';
   return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase()) || n.trim();
 }
 
@@ -381,36 +198,67 @@ function emptyOfficial(){
 }
 
 // ============================================================
-//  FETCH
+//  FETCH CSV
 // ============================================================
 async function fetchCSV(){
   const proxies = [
     `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`,
     `https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`
   ];
+
   for(const url of proxies){
     try{
       const res = await fetch(url);
       if(res.ok){
-        const t = await res.text();
-        if(t && t.length>10) return t;
+        const text = await res.text();
+        if(text && text.length > 10) return text;
       }
     }catch(e){}
   }
+
   throw new Error('Erreur Google Sheet');
 }
 
+// CSV robuste (gère les virgules dans quotes)
+function parseCSV(text){
+  return text.trim().split('\n').map(line=>{
+    const cells=[]; let cur=''; let inQ=false;
+
+    for(const ch of line){
+      if(ch === '"') inQ = !inQ;
+      else if(ch === ',' && !inQ){
+        cells.push(cur.trim());
+        cur='';
+      } else cur+=ch;
+    }
+
+    cells.push(cur.trim());
+    return cells;
+  });
+}
+
+// ============================================================
+//  LOAD DATA
+// ============================================================
 async function loadFromSheet(){
   try{
     const text = await fetchCSV();
     const rows = parseCSV(text);
-    const data = rows[0][0].toLowerCase()==='winner' ? rows.slice(1) : rows;
 
-    let pending = data.map(r=>({winner:normName(r[0]),score:r[1]}));
+    const hasHeader = rows[0][0].toLowerCase() === 'winner';
+    const data = hasHeader ? rows.slice(1) : rows;
+
+    let pending = data
+      .filter(r => r[0] && r[1])
+      .map(r => ({
+        winner: normName(r[0]),
+        score: r[1].trim()
+      }));
 
     let passes = 6;
+
     while(pending.length && passes--){
-      pending = pending.filter(r=>!applyResult(r.winner,r.score));
+      pending = pending.filter(r => !applyResult(r.winner, r.score));
     }
 
   }catch(e){
@@ -420,34 +268,31 @@ async function loadFromSheet(){
   console.log("OFFICIAL =", official);
 }
 
-function parseCSV(text){
-  return text.trim().split('\n').map(l=>l.split(','));
-}
-
 // ============================================================
-//  APPLY RESULT (FIX)
+//  APPLY RESULT
 // ============================================================
 function applyResult(winner, score){
   winner = normName(winner);
   let applied = false;
 
   ['east','west'].forEach(conf=>{
-    official[conf].forEach((m,i)=>{
+    official[conf].forEach((match,i)=>{
       const candidates = getMatchCandidates(conf,i);
 
       if(candidates.includes(winner)){
-        if(!m.fromApi){
-          m.winner = winner;
-          m.score = score;
-          m.fromApi = true;
-          cascade(official,conf);
+        if(!match.fromApi){
+          match.winner = winner;
+          match.score = score;
+          match.fromApi = true;
+
+          cascade(official, conf);
         }
         applied = true;
       }
     });
   });
 
-  // 🔥 Finale sécurisée
+  // 🔥 Finale SÉCURISÉE
   const finalists = [
     official.east[6].winner,
     official.west[6].winner
@@ -467,28 +312,37 @@ function applyResult(winner, score){
 //  MATCH CANDIDATES
 // ============================================================
 function getMatchCandidates(conf, idx){
-  if(idx<4){
-    const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
-    return [teams[idx*2].name,teams[idx*2+1].name].map(normName);
+
+  // R1
+  if(idx < 4){
+    const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
+    return [
+      teams[idx*2].name,
+      teams[idx*2+1].name
+    ].map(normName);
   }
-  if(idx<6){
+
+  // R2
+  if(idx < 6){
     return [
       official[conf][(idx-4)*2].winner,
       official[conf][(idx-4)*2+1].winner
-    ].filter(Boolean);
+    ].filter(Boolean).map(normName);
   }
+
+  // R3
   return [
     official[conf][4].winner,
     official[conf][5].winner
-  ].filter(Boolean);
+  ].filter(Boolean).map(normName);
 }
 
 // ============================================================
-//  CASCADE (FIX FINAL BUG)
+//  CASCADE (FIX COMPLET)
 // ============================================================
-function cascade(picks,conf){
+function cascade(picks, conf){
 
-  // R2 reset
+  // ---- R2 reset ----
   for(let m=0;m<2;m++){
     const t1 = picks[conf][m*2].winner;
     const t2 = picks[conf][m*2+1].winner;
@@ -501,7 +355,7 @@ function cascade(picks,conf){
     }
   }
 
-  // R3 reset
+  // ---- R3 reset ----
   const r3 = picks[conf][6];
   if(r3.winner &&
     r3.winner!==picks[conf][4].winner &&
@@ -511,7 +365,7 @@ function cascade(picks,conf){
     r3.fromApi=false;
   }
 
-  // 🔥 FIX FINAL (CRITIQUE)
+  // ---- 🔥 FINAL FIX ----
   const eastWinner = picks.east[6].winner;
   const westWinner = picks.west[6].winner;
 
@@ -527,5 +381,4 @@ function cascade(picks,conf){
 //  INIT
 // ============================================================
 loadFromSheet();
-
 </script>
