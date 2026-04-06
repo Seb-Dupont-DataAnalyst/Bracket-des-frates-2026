@@ -370,7 +370,7 @@ function normName(n){ return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowe
 function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
 
 // ============================================================
-//  PHASE & DEADLINE
+//  PHASE — deadline
 // ============================================================
 function isPastDeadline(){
   const dl = new Date(DEADLINE);
@@ -388,7 +388,8 @@ function updatePhaseUI(){
 
   const dl = new Date(DEADLINE);
   const dlStr = dl.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})
-              + ' à ' + dl.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+              + ' à '
+              + dl.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 
   document.getElementById('admin-deadline').textContent = dlStr;
 
@@ -415,13 +416,9 @@ function updatePhaseUI(){
            + `<span class="cd-val">${String(mins).padStart(2,'0')}m</span> `
            + `<span class="cd-val">${String(secs).padStart(2,'0')}s</span>`;
 
-    if(days < 1){
-      badge.className = 'phase-badge soon';
-      text.textContent = 'FERMETURE IMMINENTE';
-    } else {
-      badge.className = 'phase-badge open';
-      text.textContent = 'SAISIE OUVERTE';
-    }
+    badge.className = days < 1 ? 'phase-badge soon' : 'phase-badge open';
+    text.textContent = days < 1 ? 'FERMETURE IMMINENTE' : 'SAISIE OUVERTE';
+
     cdEl.innerHTML = 'Fermeture dans ' + cdStr;
     noteEl.textContent = 'Deadline : ' + dlStr;
     document.getElementById('admin-phase').textContent = 'Phase saisie (brackets ouverts)';
@@ -429,7 +426,7 @@ function updatePhaseUI(){
     if(deadlineLockedMsg) deadlineLockedMsg.style.display='none';
   }
 }
-setInterval(updatePhaseUI,1000);
+setInterval(updatePhaseUI, 1000);
 
 // ============================================================
 //  STATE
@@ -449,7 +446,6 @@ function emptyOfficial(){
     final: {winner:null,score:null,fromApi:false}
   };
 }
-
 function emptyPicks(){
   return {
     east:  Array(7).fill(null).map(()=>({winner:null,score:null})),
@@ -459,8 +455,139 @@ function emptyPicks(){
 }
 
 // ============================================================
+//  FETCH SHEET
+// ============================================================
+async function fetchCSV(){
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`,
+    `https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`
+  ];
+  for(const url of proxies){
+    try{
+      const res = await fetch(url);
+      if(res.ok){ const t=await res.text(); if(t&&t.length>10) return t; }
+    }catch(e){}
+  }
+  throw new Error('Erreur Google Sheet');
+}
+
+async function loadFromSheet(){
+  try{
+    const text = await fetchCSV();
+    const rows = parseCSV(text);
+    const data = rows[0][0].toLowerCase()==='winner' ? rows.slice(1) : rows;
+
+    let pending=data.map(r=>({winner:normName(r[0]),score:r[1]}));
+    let passes=6;
+    while(pending.length&&passes--){
+      pending = pending.filter(r=>!applyResult(r.winner,r.score));
+    }
+  }catch(e){console.error(e);}
+
+  renderOfficialBracket();
+  renderLeaderboard();
+}
+
+function parseCSV(text){
+  return text.trim().split('\n').map(l=>l.split(','));
+}
+
+// ============================================================
+//  APPLY RESULT (FIX)
+// ============================================================
+function applyResult(winner, score){
+  winner = normName(winner);
+  let applied = false;
+
+  ['east','west'].forEach(conf=>{
+    official[conf].forEach((m,i)=>{
+      const c = getMatchCandidates(conf,i);
+      if(c.includes(winner)){
+        if(!m.fromApi){
+          m.winner = winner;
+          m.score = score;
+          m.fromApi = true;
+          cascade(official,conf);
+        }
+        applied = true;
+      }
+    });
+  });
+
+  const finals=[official.east[6].winner,official.west[6].winner].filter(Boolean);
+  if(finals.includes(winner)){
+    official.final.winner = winner;
+    official.final.score = score;
+    official.final.fromApi = true;
+    applied = true;
+  }
+
+  return applied;
+}
+
+function getMatchCandidates(conf, idx){
+  if(idx<4){
+    const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
+    return [teams[idx*2].name,teams[idx*2+1].name].map(normName);
+  }
+  if(idx<6){
+    return [official[conf][(idx-4)*2].winner,official[conf][(idx-4)*2+1].winner].filter(Boolean);
+  }
+  return [official[conf][4].winner,official[conf][5].winner].filter(Boolean);
+}
+
+// ============================================================
+//  CASCADE (FIX FINAL BUG)
+// ============================================================
+function cascade(picks,conf){
+  for(let m=0;m<2;m++){
+    const t1=picks[conf][m*2].winner;
+    const t2=picks[conf][m*2+1].winner;
+    const r2=picks[conf][4+m];
+    if(r2.winner && r2.winner!==t1 && r2.winner!==t2){
+      r2.winner=null; r2.score=null; r2.fromApi=false;
+    }
+  }
+
+  const r3=picks[conf][6];
+  if(r3.winner && r3.winner!==picks[conf][4].winner && r3.winner!==picks[conf][5].winner){
+    r3.winner=null; r3.score=null; r3.fromApi=false;
+  }
+
+  // 🔥 FIX FINAL
+  const west = picks.west[6].winner;
+  const east = picks.east[6].winner;
+  if(picks.final.winner && ![west,east].includes(picks.final.winner)){
+    picks.final.winner=null;
+    picks.final.score=null;
+    picks.final.fromApi=false;
+  }
+}
+
+// ============================================================
+//  SCORING
+// ============================================================
+function computeScore(p){
+  let pts=0;
+  for(let i=0;i<7;i++){
+    if(p.picks.east[i].winner===official.east[i].winner) pts++;
+    if(p.picks.west[i].winner===official.west[i].winner) pts++;
+  }
+  if(p.picks.final.winner===official.final.winner) pts+=2;
+  return {pts};
+}
+
+// ============================================================
+//  RENDER (simplifié)
+// ============================================================
+function renderOfficialBracket(){console.log("render official", official);}
+function renderLeaderboard(){console.log("leaderboard");}
+
+// ============================================================
 //  INIT
 // ============================================================
 updatePhaseUI();
 renderOfficialBracket();
 loadFromSheet();
+
+</script>
