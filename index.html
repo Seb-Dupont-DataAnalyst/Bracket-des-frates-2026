@@ -505,16 +505,17 @@ function parseCSV(text){
 }
 
 function applyResult(winner, score){
+  winner = normName(winner);
   const confs = ['east','west'];
-  let applied = false; // pour savoir si on a appliqué
+  let applied = false;
 
   for(const conf of confs){
     for(let i=0;i<official[conf].length;i++){
       const match = official[conf][i];
       const candidates = getMatchCandidates(conf,i);
-      if(candidates.includes(normName(winner))){
+      if(candidates.includes(winner)){
         if(!match.fromApi){
-          match.winner = normName(winner);
+          match.winner = winner;
           match.score = score;
           match.fromApi = true;
           cascade(official, conf);
@@ -526,9 +527,9 @@ function applyResult(winner, score){
 
   // Finale NBA
   const finalCandidates = [official.east[6].winner, official.west[6].winner].filter(Boolean);
-  if(finalCandidates.includes(normName(winner))){
+  if(finalCandidates.includes(winner)){
     if(!official.final.fromApi){
-      official.final.winner = normName(winner);
+      official.final.winner = winner;
       official.final.score = score;
       official.final.fromApi = true;
     }
@@ -539,18 +540,18 @@ function applyResult(winner, score){
 }
 
 // Retourne tous les noms possibles pour un match donné selon l'indice
-function getMatchCandidates(conf,idx){
+function getMatchCandidates(conf, idx){
   if(idx<4){
-    // R1
-    return [conf==='east'?EAST_TEAMS[idx*2].name:EAST_TEAMS[idx*2].name,
-            conf==='east'?EAST_TEAMS[idx*2+1].name:EAST_TEAMS[idx*2+1].name].map(normName);
+    // Premier tour
+    const teams = conf==='east' ? EAST_TEAMS : WEST_TEAMS;
+    return [teams[idx*2].name, teams[idx*2+1].name].map(normName);
   } else if(idx<6){
-    // R2
+    // Demi-finales
     const t1 = official[conf][(idx-4)*2].winner;
     const t2 = official[conf][(idx-4)*2+1].winner;
     return [t1,t2].filter(Boolean).map(normName);
   } else if(idx===6){
-    // R3
+    // Finale conférence
     const t1 = official[conf][4].winner;
     const t2 = official[conf][5].winner;
     return [t1,t2].filter(Boolean).map(normName);
