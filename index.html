@@ -449,13 +449,10 @@ async function fetchCSV(){
   for(const url of proxies){
     try{
       const res = await fetch(url);
-      if(!res.ok) continue;
-      const t = await res.text();
-      // Vérifier que c'est bien du CSV et pas une page HTML d'erreur
-      if(t && t.length > 10 && !t.trim().startsWith('<')) return t;
+      if(res.ok){ const t=await res.text(); if(t&&t.length>10) return t; }
     }catch(e){}
   }
-  throw new Error('Proxies CORS indisponibles — essayez d\'héberger le fichier sur GitHub Pages ou Netlify pour contourner ce problème.');
+  throw new Error('Impossible de contacter le Google Sheet. Réessayez ou ouvrez le fichier depuis un serveur web.');
 }
 
 async function loadFromSheet(){
@@ -466,15 +463,8 @@ async function loadFromSheet(){
     const text = await fetchCSV();
     const rows = parseCSV(text);
     if(!rows.length) throw new Error('Feuille vide');
-
     const hasHeader = rows[0][0].toLowerCase()==='winner';
     const data = hasHeader ? rows.slice(1) : rows;
-
-    if(!data.length) throw new Error('Aucune donnée dans le Sheet (seulement le header)');
-
-    // Debug — affiche les lignes reçues dans la console navigateur
-    console.log('[Bracket] CSV reçu (' + data.length + ' lignes) :');
-    data.forEach((r,i) => console.log('  ligne ' + (i+1) + ':', r[0], '|', r[1]));
 
     official.east.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
     official.west.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
@@ -488,22 +478,12 @@ async function loadFromSheet(){
       if(still.length===pending.length) break;
       pending=still;
     }
-
-    console.log('[Bracket] Résultats appliqués : ' + applied + '/' + data.length);
-    if(pending.length) console.warn('[Bracket] Non appliqués :', pending.map(r=>r.winner));
-
     const now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    if(applied > 0){
-      setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`);
-      st.className='sync-status ok'; st.textContent='✓ '+now;
-    } else {
-      setBanner('warn',`⚠ Sheet lu (${data.length} ligne(s)) mais 0 résultat appliqué. Ouvrez la console (F12) pour le détail.`);
-      st.className='sync-status err'; st.textContent='0 appliqué';
-    }
+    setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`);
+    st.className='sync-status ok'; st.textContent='✓ '+now;
   }catch(e){
     setBanner('warn',`⚠ ${e.message}`);
     st.className='sync-status err'; st.textContent='Erreur';
-    console.error('[Bracket] Erreur sync:', e);
   }
   renderOfficialBracket();
   renderLeaderboard();
