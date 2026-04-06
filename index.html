@@ -1,32 +1,172 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bracket des frates 2026</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bracket des frates 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f14;
+      --bg2: #151820;
+      --bg3: #1c2030;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.16);
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --accent: #f97316;
+      --accent2: #fb923c;
+      --green: #22c55e;
+      --green-bg: rgba(34,197,94,0.12);
+      --green-br: rgba(34,197,94,0.3);
+      --red: #ef4444;
+      --red-bg: rgba(239,68,68,0.1);
+      --red-br: rgba(239,68,68,0.3);
+      --blue: #3b82f6;
+      --blue-bg: rgba(59,130,246,0.12);
+      --blue-br: rgba(59,130,246,0.3);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245,158,11,0.12);
+      --amber-br: rgba(245,158,11,0.3);
+      --r: 8px;
+      --fh: 'Barlow Condensed', sans-serif;
+      --fb: 'Barlow', sans-serif;
+    }
+    body { background:var(--bg); color:var(--text); font-family:var(--fb); font-size:14px; min-height:100vh; }
 
-<style>
-body{background:#0d0f14;color:white;font-family:sans-serif;padding:20px}
-.bracket{display:flex;gap:20px}
-.col{display:flex;flex-direction:column;gap:10px}
-.match{border:1px solid #333;padding:6px;border-radius:6px}
-.winner{color:#22c55e;font-weight:bold}
-</style>
+    /* ── HEADER ── */
+    .header { background:var(--bg2); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .header-title { font-family:var(--fh); font-size:26px; font-weight:700; letter-spacing:.04em; }
+    .header-title span { color:var(--accent); }
+    .header-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+    .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .sync-status { font-size:11px; font-weight:500; }
+    .sync-status.ok  { color:var(--green); }
+    .sync-status.err { color:var(--red); }
+    .spin { display:inline-block; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── PHASE BANNER ── */
+    .phase-bar { padding:10px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--border); }
+    .phase-badge { display:inline-flex; align-items:center; gap:7px; padding:5px 12px; border-radius:20px; font-family:var(--fh); font-weight:700; font-size:12px; letter-spacing:.06em; }
+    .phase-badge.open   { background:var(--green-bg); border:1px solid var(--green-br); color:var(--green); }
+    .phase-badge.locked { background:var(--red-bg);   border:1px solid var(--red-br);   color:var(--red); }
+    .phase-badge.soon   { background:var(--amber-bg); border:1px solid var(--amber-br); color:var(--amber); }
+    .phase-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+    .phase-dot.pulse { animation:pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .countdown { font-family:var(--fh); font-size:13px; font-weight:600; color:var(--muted); letter-spacing:.04em; }
+    .countdown .cd-val { color:var(--amber); }
+    .deadline-note { font-size:11px; color:var(--muted); }
+
+    /* ── BANNER ── */
+    .banner { margin:10px 24px 0; padding:9px 14px; border-radius:var(--r); font-size:12px; line-height:1.5; }
+    .banner.success { background:var(--green-bg); border:1px solid var(--green-br); color:var(--green); }
+    .banner.warn    { background:var(--amber-bg); border:1px solid var(--amber-br); color:var(--amber); }
+    .banner.danger  { background:var(--red-bg);   border:1px solid var(--red-br);   color:var(--red); }
+    .banner.info    { background:var(--blue-bg);  border:1px solid var(--blue-br);  color:var(--blue); }
+
+    /* ── TABS ── */
+    .tabs { display:flex; border-bottom:1px solid var(--border); padding:0 24px; margin-top:14px; gap:0; }
+    .tab { padding:10px 18px; font-size:13px; font-family:var(--fh); font-weight:700; letter-spacing:.04em; cursor:pointer; border:none; background:transparent; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; }
+    .tab:hover { color:var(--text); }
+    .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+    /* ── PANELS ── */
+    .panel { display:none; padding:20px 24px; }
+    .panel.active { display:block; }
+
+    /* ── BRACKET ── */
+    .bracket-wrap { overflow-x:auto; padding-bottom:12px; }
+    .bracket { display:flex; min-width:1020px; }
+    .conf-section { flex:1; display:flex; }
+    .conf-section.east { flex-direction:row; }
+    .conf-section.west { flex-direction:row-reverse; }
+    .round-col { display:flex; flex-direction:column; justify-content:space-around; padding:4px 6px; min-width:158px; }
+    .round-label { font-family:var(--fh); font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--muted); text-align:center; margin-bottom:10px; text-transform:uppercase; }
+    .finals-col { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px 12px; min-width:155px; }
+    .finals-col-inner { display:flex; flex-direction:column; align-items:center; gap:10px; justify-content:center; flex:1; width:100%; }
+    .matchup { margin:4px 0; border:1px solid var(--border); border-radius:var(--r); overflow:hidden; background:var(--bg2); transition:border-color .2s; }
+    .matchup.synced { border-color:var(--green-br); }
+    .team-row { display:flex; align-items:center; gap:7px; padding:6px 9px; cursor:pointer; transition:background .12s; color:var(--text); }
+    .team-row:hover:not(.locked):not(.tbd) { background:var(--bg3); }
+    .team-row.winner { background:var(--bg3); font-weight:500; }
+    .team-row.eliminated { opacity:.3; }
+    .team-row.locked,.team-row.tbd { cursor:default; }
+    .team-row.tbd { color:var(--muted); }
+    .seed { font-size:10px; color:var(--muted); min-width:13px; font-family:var(--fh); }
+    .tname { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; font-family:var(--fh); font-weight:600; letter-spacing:.03em; }
+    .api-badge { font-size:9px; padding:1px 5px; border-radius:3px; background:var(--green-bg); color:var(--green); border:1px solid var(--green-br); }
+    .check { font-size:10px; color:var(--green); }
+    .lock-icon { font-size:9px; color:var(--muted); }
+    .divider-h { height:1px; background:var(--border); }
+    .score-row { display:flex; align-items:center; gap:5px; padding:5px 9px; background:var(--bg); border-top:1px solid var(--border); }
+    .score-label { font-size:10px; color:var(--muted); flex:1; font-family:var(--fh); letter-spacing:.05em; }
+    .score-btns { display:flex; gap:4px; }
+    .sbtn { padding:2px 7px; font-size:10px; font-family:var(--fh); font-weight:600; border:1px solid var(--border2); border-radius:4px; background:transparent; color:var(--muted); cursor:pointer; transition:all .12s; letter-spacing:.03em; }
+    .sbtn:hover:not(.api-locked):not(.deadline-locked) { background:var(--bg3); color:var(--text); }
+    .sbtn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .sbtn.api-locked,.sbtn.deadline-locked { cursor:default; opacity:.4; }
+    .matchup-gap { height:8px; }
+    .champion-box { text-align:center; padding:12px 8px; }
+    .trophy { font-size:28px; }
+    .champ-label { font-family:var(--fh); font-size:10px; font-weight:700; letter-spacing:.12em; color:var(--muted); margin:4px 0 3px; }
+    .champ-name { font-family:var(--fh); font-size:16px; font-weight:700; color:var(--accent); min-height:22px; letter-spacing:.04em; }
+    .champ-score { font-size:11px; color:var(--muted); margin-top:2px; }
+
+    /* ── DEADLINE LOCK OVERLAY ── */
+    .bracket-locked-msg { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--red-bg); border:1px solid var(--red-br); border-radius:var(--r); margin-bottom:14px; font-size:12px; color:var(--red); }
+  </style>
 </head>
-
 <body>
 
-<h1>🏀 Bracket des frates 2026</h1>
+<div class="header">
+  <div>
+    <div class="header-title">🏀 Bracket <span>Des Frates</span> 2026</div>
+    <div class="header-sub">Concours de pronostics — gagnant + score de série</div>
+  </div>
+  <div class="header-right">
+    <button class="btn primary" onclick="loadFromSheet()">⟳ Sync résultats</button>
+    <span class="sync-status" id="sync-status"></span>
+  </div>
+</div>
 
-<button onclick="loadFromSheet()">⟳ Charger résultats</button>
+<!-- PHASE BAR -->
+<div class="phase-bar">
+  <div id="phase-badge" class="phase-badge open">
+    <span class="phase-dot pulse"></span>
+    <span id="phase-text">SAISIE OUVERTE</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+    <div class="countdown" id="countdown"></div>
+    <div class="deadline-note" id="deadline-note"></div>
+  </div>
+</div>
 
-<div id="bracket" class="bracket"></div>
+<div id="main-banner" class="banner info" style="display:none"></div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('bracket')">Bracket officiel</button>
+  <button class="tab" onclick="showTab('my-bracket')">Mon bracket</button>
+  <button class="tab" onclick="showTab('leaderboard')">Classement</button>
+  <button class="tab" onclick="showTab('admin')">Admin</button>
+</div>
+
+<div class="panel active" id="panel-bracket">
+  <div class="bracket-wrap">
+    <div class="bracket" id="main-bracket"></div>
+  </div>
+</div>
 
 <script>
-// ==============================
+// ============================================================
 // CONFIG
-// ==============================
-const SHEET_CSV = '1R7aH9kW1E9ipZxExLqVWmNqi1mvu8_QB4WbrJyXS4RA';
+// ============================================================
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/TON_ID/pub?gid=0&single=true&output=csv';
+const DEADLINE = '2026-04-17T18:00:00';
 const EAST_TEAMS = [
   {seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},
   {seed:4,name:'Pacers'},{seed:5,name:'Bucks'},
@@ -39,174 +179,274 @@ const WEST_TEAMS = [
   {seed:3,name:'Timberwolves'},{seed:6,name:'Warriors'},
   {seed:2,name:'Rockets'},{seed:7,name:'Lakers'}
 ];
+const ROUND_PTS = [10,12,15,20];
+const SCORE_BONUS = 2;
 
-const ALL_NAMES=[...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
-
-// ==============================
+// ============================================================
 // STATE
-// ==============================
-let official={
-  east:Array(7).fill().map(()=>({winner:null,score:null,fromApi:false})),
-  west:Array(7).fill().map(()=>({winner:null,score:null,fromApi:false})),
-  final:{winner:null,score:null,fromApi:false}
-};
+// ============================================================
+let official = emptyOfficial();
 
-// ==============================
-// UTILS
-// ==============================
-function normName(n){
-  return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase())||n.trim();
+function emptyOfficial(){
+  return {
+    east:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+    west:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+    final: {winner:null,score:null,fromApi:false}
+  };
 }
 
-// ==============================
+// ============================================================
 // FETCH
-// ==============================
+// ============================================================
 async function fetchCSV(){
-  const res=await fetch(SHEET_CSV);
-  return await res.text();
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`,
+    `https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`
+  ];
+  for(const url of proxies){
+    try{
+      const res = await fetch(url);
+      if(res.ok){
+        const t = await res.text();
+        if(t && t.length>10) return t;
+      }
+    }catch(e){}
+  }
+  throw new Error('Erreur Google Sheet');
 }
 
 async function loadFromSheet(){
-  const text=await fetchCSV();
-  const rows=text.trim().split('\n').map(l=>l.split(','));
-  const data=rows[0][0].toLowerCase()==='winner'?rows.slice(1):rows;
-
-  let pending=data.map(r=>({winner:normName(r[0]),score:r[1]}));
-
-  let passes=6;
-  while(pending.length && passes--){
-    pending=pending.filter(r=>!applyResult(r.winner,r.score));
+  try{
+    const text = await fetchCSV();
+    const rows = text.trim().split('\n').map(l=>l.split(','));
+    const data = rows[0][0].toLowerCase()==='winner'?rows.slice(1):rows;
+    let pending = data.map(r=>({winner:r[0].trim(),score:r[1].trim()}));
+    let passes = 6;
+    while(pending.length && passes--){
+      pending = pending.filter(r=>!applyResult(r.winner,r.score));
+    }
+  }catch(e){
+    console.error(e);
   }
-
-  render();
+  console.log("OFFICIAL =", official);
 }
 
-// ==============================
-// APPLY RESULT
-// ==============================
-function applyResult(winner,score){
-  let applied=false;
-
+// ============================================================
+// APPLY RESULT / CASCADE
+// ============================================================
+function applyResult(winner, score){
+  let applied = false;
   ['east','west'].forEach(conf=>{
     official[conf].forEach((m,i)=>{
-      const c=getCandidates(conf,i);
-      if(c.includes(winner)){
+      const candidates = getMatchCandidates(conf,i);
+      if(candidates.includes(winner)){
         if(!m.fromApi){
-          m.winner=winner;
-          m.score=score;
-          m.fromApi=true;
+          m.winner = winner;
+          m.score = score;
+          m.fromApi = true;
           cascade(official,conf);
         }
-        applied=true;
+        applied = true;
       }
     });
   });
 
-  // 🔥 FIX FINAL
-  const finalists=[
-    official.east[6].winner,
-    official.west[6].winner
-  ].filter(Boolean);
-
+  const finalists = [official.east[6].winner,official.west[6].winner].filter(Boolean);
   if(finalists.includes(winner)){
-    official.final.winner=winner;
-    official.final.score=score;
-    official.final.fromApi=true;
-    applied=true;
+    official.final.winner = winner;
+    official.final.score = score;
+    official.final.fromApi = true;
+    applied = true;
   }
-
   return applied;
 }
 
-// ==============================
-// CANDIDATES
-// ==============================
-function getCandidates(conf,i){
-  const teams=conf==='east'?EAST_TEAMS:WEST_TEAMS;
-
-  if(i<4) return [teams[i*2].name,teams[i*2+1].name];
-
-  if(i<6) return [
-    official[conf][(i-4)*2].winner,
-    official[conf][(i-4)*2+1].winner
-  ].filter(Boolean);
-
-  return [
-    official[conf][4].winner,
-    official[conf][5].winner
-  ].filter(Boolean);
+function getMatchCandidates(conf, idx){
+  if(idx<4){
+    const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
+    return [teams[idx*2].name,teams[idx*2+1].name];
+  }
+  if(idx<6){
+    return [official[conf][(idx-4)*2].winner,official[conf][(idx-4)*2+1].winner].filter(Boolean);
+  }
+  return [official[conf][4].winner,official[conf][5].winner].filter(Boolean);
 }
 
-// ==============================
-// CASCADE FIX (🔥 IMPORTANT)
-// ==============================
 function cascade(picks,conf){
-
-  // reset R2
+  // R2 reset
   for(let m=0;m<2;m++){
-    const t1=picks[conf][m*2].winner;
-    const t2=picks[conf][m*2+1].winner;
-    const r2=picks[conf][4+m];
-
+    const t1 = picks[conf][m*2].winner;
+    const t2 = picks[conf][m*2+1].winner;
+    const r2 = picks[conf][4+m];
     if(r2.winner && r2.winner!==t1 && r2.winner!==t2){
-      r2.winner=null;
-      r2.score=null;
-      r2.fromApi=false;
+      r2.winner=null; r2.score=null; r2.fromApi
+
+<script>
+// ============================================================
+//  RENDER BRACKET
+// ============================================================
+function renderBracket(){
+  const container = document.getElementById('main-bracket');
+  container.innerHTML = '';
+  
+  const confs = ['east','west'];
+  
+  confs.forEach(conf=>{
+    const section = document.createElement('div');
+    section.className = `conf-section ${conf}`;
+    
+    for(let round=0; round<4; round++){
+      const col = document.createElement('div');
+      col.className = 'round-col';
+      
+      const label = document.createElement('div');
+      label.className = 'round-label';
+      label.textContent = round===3 ? 'Conf. Finals' : `R${round+1}`;
+      col.appendChild(label);
+      
+      let matches;
+      if(round===3){
+        matches = [official[conf][6]];
+      } else if(round===2){
+        matches = [official[conf][4], official[conf][5]];
+      } else if(round===1){
+        matches = [official[conf][0], official[conf][1], official[conf][2], official[conf][3]];
+      } else {
+        matches = conf==='east'? EAST_TEAMS.map(t=>({winner:null})) : WEST_TEAMS.map(t=>({winner:null}));
+      }
+      
+      matches.forEach(m=>{
+        const div = document.createElement('div');
+        div.className = 'matchup';
+        const row = document.createElement('div');
+        row.className = 'team-row';
+        row.textContent = m.winner || 'TBD';
+        div.appendChild(row);
+        col.appendChild(div);
+      });
+      
+      section.appendChild(col);
     }
-  }
-
-  // reset R3
-  const r3=picks[conf][6];
-  if(r3.winner &&
-     r3.winner!==picks[conf][4].winner &&
-     r3.winner!==picks[conf][5].winner){
-    r3.winner=null;
-    r3.score=null;
-    r3.fromApi=false;
-  }
-
-  // 🔥 FIX FINAL (LE BUG QUE TU AVAIS)
-  const east=picks.east[6].winner;
-  const west=picks.west[6].winner;
-
-  if(picks.final.winner &&
-     ![east,west].includes(picks.final.winner)){
-    picks.final.winner=null;
-    picks.final.score=null;
-    picks.final.fromApi=false;
-  }
-}
-
-// ==============================
-// RENDER
-// ==============================
-function render(){
-  const div=document.getElementById('bracket');
-  div.innerHTML='';
-
-  ['west','east'].forEach(conf=>{
-    const col=document.createElement('div');
-    col.className='col';
-
-    official[conf].forEach(m=>{
-      const d=document.createElement('div');
-      d.className='match';
-      d.innerHTML=m.winner?`<span class="winner">${m.winner}</span> (${m.score})`:'—';
-      col.appendChild(d);
-    });
-
-    div.appendChild(col);
+    
+    container.appendChild(section);
   });
-
-  const final=document.createElement('div');
-  final.className='col';
-  final.innerHTML='<h3>Final</h3>'+(official.final.winner||'—');
-  div.appendChild(final);
+  
+  // Finale
+  const finalsCol = document.createElement('div');
+  finalsCol.className = 'finals-col';
+  const finalsInner = document.createElement('div');
+  finalsInner.className = 'finals-col-inner';
+  const champBox = document.createElement('div');
+  champBox.className = 'champion-box';
+  champBox.innerHTML = `<div class="trophy">🏆</div>
+                        <div class="champ-label">Champion</div>
+                        <div class="champ-name">${official.final.winner||'TBD'}</div>`;
+  finalsInner.appendChild(champBox);
+  finalsCol.appendChild(finalsInner);
+  container.appendChild(finalsCol);
 }
 
-// INIT
-render();
+// ============================================================
+//  TABS
+// ============================================================
+function showTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  
+  document.querySelector(`.tab[onclick="showTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+}
 
+// ============================================================
+//  DEADLINE COUNTDOWN
+// ============================================================
+function updateCountdown(){
+  const now = new Date();
+  const end = new Date(DEADLINE);
+  const diff = end - now;
+  
+  const cdEl = document.getElementById('countdown');
+  const badgeEl = document.getElementById('phase-badge');
+  const textEl = document.getElementById('phase-text');
+  
+  if(diff>0){
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    cdEl.innerHTML = `${d}j ${h}h ${m}m ${s}s`;
+    badgeEl.className = 'phase-badge open';
+    textEl.textContent = 'SAISIE OUVERTE';
+  } else {
+    cdEl.textContent = '';
+    badgeEl.className = 'phase-badge locked';
+    textEl.textContent = 'SAISIE FERMÉE';
+    document.getElementById('deadline-locked-msg').style.display = 'flex';
+  }
+}
+
+setInterval(updateCountdown,1000);
+updateCountdown();
+
+// ============================================================
+//  ADMIN & LEADERBOARD
+// ============================================================
+let participants = [];
+
+function renderLeaderboard(){
+  const search = document.getElementById('search-lb').value.toLowerCase();
+  const tbody = document.getElementById('lb-body');
+  tbody.innerHTML = '';
+  
+  participants.forEach((p,i)=>{
+    if(search && !p.name.toLowerCase().includes(search)) return;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td>
+                    <td>${p.name}</td>
+                    <td>${p.points||0}</td>
+                    <td>${p.bonus||0}</td>
+                    <td>${p.precision||0}%</td>
+                    <td>${p.champion||'TBD'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function addParticipant(){
+  const name = document.getElementById('new-participant').value.trim();
+  if(!name) return;
+  participants.push({name});
+  document.getElementById('new-participant').value='';
+  renderParticipants();
+  renderLeaderboard();
+}
+
+function renderParticipants(){
+  const list = document.getElementById('participant-list');
+  list.innerHTML='';
+  participants.forEach(p=>{
+    const card = document.createElement('div');
+    card.className='admin-card';
+    card.innerHTML = `<div class="ac-title">${p.name}</div>`;
+    list.appendChild(card);
+  });
+}
+
+// ============================================================
+//  SAVE MY BRACKET
+// ============================================================
+function setPseudo(){
+  const pseudo = document.getElementById('pseudo-field').value.trim();
+  if(!pseudo) return;
+  document.getElementById('my-bracket-hint').textContent=`Bienvenue ${pseudo}`;
+}
+
+function saveMyBracket(){
+  document.getElementById('save-msg').textContent='✅ Bracket enregistré !';
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+renderBracket();
+renderLeaderboard();
 </script>
-</body>
-</html>
