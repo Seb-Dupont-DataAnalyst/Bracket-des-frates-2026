@@ -555,7 +555,11 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
 }
 
 function buildConf(section,conf,picks,onUpdate,readOnly){
-  const teams=conf==='east'?EAST_TEAMS:WEST_TEAMS;
+  const teams = (conf==='east'?EAST_TEAMS:WEST_TEAMS).slice(0, 8);
+  function getPlayIn(conf) {
+  const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
+  return teams.slice(6, 10); // seeds 7-10
+}
   const r1=makeCol('1er tour');
   for(let m=0;m<4;m++){
     r1.appendChild(buildMatchup(picks[conf][m],{seed:teams[m*2].seed,name:teams[m*2].name},{seed:teams[m*2+1].seed,name:teams[m*2+1].name},(w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},readOnly,0));
