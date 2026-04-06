@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bracket des frates 2026</title>
+  <title>NBA Playoffs Bracket 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -210,7 +210,7 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
 <!-- HEADER -->
 <div class="header">
   <div>
-    <div class="header-title">🏀 Bracket <span>Des Frates</span> 2026</div>
+    <div class="header-title">🏀 NBA <span>Playoffs</span> 2026</div>
     <div class="header-sub">Concours de pronostics — gagnant + score de série</div>
   </div>
   <div class="header-right">
@@ -544,87 +544,43 @@ function setBanner(type,html){
 
 // ============================================================
 //  BRACKET BUILDER
-//  Layout visuel : [West R1 | West R2 | West R3] | Finals | [East R3 | East R2 | East R1]
-//  → West progresse de gauche vers le centre
-//  → East progresse de droite vers le centre
 // ============================================================
 function buildBracket(containerId, picks, onUpdate, readOnly){
   const c=document.getElementById(containerId); c.innerHTML='';
-
-  // West à gauche : R1 (extrême gauche) → R2 → R3 (proche du centre)
-  const ws=el('div','conf-section west');
-  buildConf(ws,'west',picks,onUpdate,readOnly);
-
-  // Finales au centre
-  const fs=el('div','finals-col');
-  buildFinals(fs,picks,onUpdate,readOnly);
-
-  // East à droite : R3 (proche du centre) → R2 → R1 (extrême droite)
-  const es=el('div','conf-section east');
+  const es=el('div','conf-section east'), ws=el('div','conf-section west'), fs=el('div','finals-col');
   buildConf(es,'east',picks,onUpdate,readOnly);
-
-  c.appendChild(ws); c.appendChild(fs); c.appendChild(es);
+  buildConf(ws,'west',picks,onUpdate,readOnly);
+  buildFinals(fs,picks,onUpdate,readOnly);
+  c.appendChild(es); c.appendChild(fs); c.appendChild(ws);
 }
 
-function buildConf(section, conf, picks, onUpdate, readOnly){
-  const teams = conf==='east' ? EAST_TEAMS : WEST_TEAMS;
-
+function buildConf(section,conf,picks,onUpdate,readOnly){
+  const teams=conf==='east'?EAST_TEAMS:WEST_TEAMS;
   const r1=makeCol('1er tour');
   for(let m=0;m<4;m++){
-    r1.appendChild(buildMatchup(
-      picks[conf][m],
-      {seed:teams[m*2].seed,   name:teams[m*2].name},
-      {seed:teams[m*2+1].seed, name:teams[m*2+1].name},
-      (w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},
-      readOnly, 0
-    ));
+    r1.appendChild(buildMatchup(picks[conf][m],{seed:teams[m*2].seed,name:teams[m*2].name},{seed:teams[m*2+1].seed,name:teams[m*2+1].name},(w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},readOnly,0));
     r1.appendChild(el('div','matchup-gap'));
   }
-
   const r2=makeCol('Demi-finales');
   for(let m=0;m<2;m++){
-    const t1={seed:null,name:picks[conf][m*2].winner||'?'};
-    const t2={seed:null,name:picks[conf][m*2+1].winner||'?'};
-    r2.appendChild(buildMatchup(
-      picks[conf][4+m], t1, t2,
-      (w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},
-      readOnly||!picks[conf][m*2].winner||!picks[conf][m*2+1].winner, 1
-    ));
+    const t1={seed:null,name:picks[conf][m*2].winner||'?'},t2={seed:null,name:picks[conf][m*2+1].winner||'?'};
+    r2.appendChild(buildMatchup(picks[conf][4+m],t1,t2,(w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},readOnly||!picks[conf][m*2].winner||!picks[conf][m*2+1].winner,1));
     r2.appendChild(el('div','matchup-gap'));
   }
-
   const r3=makeCol('Finale conf.');
-  const tf1={seed:null,name:picks[conf][4].winner||'?'};
-  const tf2={seed:null,name:picks[conf][5].winner||'?'};
-  r3.appendChild(buildMatchup(
-    picks[conf][6], tf1, tf2,
-    (w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},
-    readOnly||!picks[conf][4].winner||!picks[conf][5].winner, 2
-  ));
+  const tf1={seed:null,name:picks[conf][4].winner||'?'},tf2={seed:null,name:picks[conf][5].winner||'?'};
+  r3.appendChild(buildMatchup(picks[conf][6],tf1,tf2,(w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},readOnly||!picks[conf][4].winner||!picks[conf][5].winner,2));
 
-  if(conf==='west'){
-    // West : R1 à gauche, R3 proche du centre
-    section.appendChild(r1); section.appendChild(r2); section.appendChild(r3);
-  } else {
-    // East : R3 proche du centre, R1 à droite
-    section.appendChild(r3); section.appendChild(r2); section.appendChild(r1);
-  }
+  if(conf==='east'){section.appendChild(r1);section.appendChild(r2);section.appendChild(r3);}
+  else            {section.appendChild(r3);section.appendChild(r2);section.appendChild(r1);}
 }
 
-function buildFinals(sec, picks, onUpdate, readOnly){
+function buildFinals(sec,picks,onUpdate,readOnly){
   const col=el('div','finals-col-inner');
-  const lbl=el('div','');
-  lbl.style.cssText='font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;text-align:center';
-  lbl.textContent='FINALES NBA';
+  const lbl=el('div',''); lbl.style.cssText='font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;text-align:center'; lbl.textContent='FINALES NBA';
   col.appendChild(lbl);
-  const wf=picks.west[6].winner, ef=picks.east[6].winner;
-  col.appendChild(buildMatchup(
-    picks.final,
-    {seed:null, name:wf||'?'},
-    {seed:null, name:ef||'?'},
-    (w,s)=>{picks.final.winner=w;picks.final.score=s;onUpdate();},
-    readOnly||!wf||!ef, 3
-  ));
+  const ef=picks.east[6].winner,wf=picks.west[6].winner;
+  col.appendChild(buildMatchup(picks.final,{seed:null,name:ef||'?'},{seed:null,name:wf||'?'},(w,s)=>{picks.final.winner=w;picks.final.score=s;onUpdate();},readOnly||!ef||!wf,3));
   const cb=el('div','champion-box');
   cb.innerHTML=`<div class="trophy">🏆</div><div class="champ-label">CHAMPION NBA</div><div class="champ-name">${picks.final.winner||'?'}</div>${picks.final.score?`<div class="champ-score">${picks.final.score}</div>`:''}`;
   col.appendChild(cb); sec.appendChild(col);
