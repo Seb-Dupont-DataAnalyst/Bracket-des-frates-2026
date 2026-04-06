@@ -183,20 +183,26 @@ const ROUND_PTS = [10,12,15,20];
 const SCORE_BONUS = 2;
 
 // ============================================================
-// STATE
+<script>
 // ============================================================
-let official = emptyOfficial();
+//  STATE
+// ============================================================
+let official = {
+  east:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+  west:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+  final: {winner:null,score:null,fromApi:false}
+};
 
-function emptyOfficial(){
-  return {
-    east:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
-    west:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
-    final: {winner:null,score:null,fromApi:false}
-  };
+// Liste des noms officiels pour normalisation
+const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
+
+// normalisation du nom
+function normName(n){
+  return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase()) || n.trim();
 }
 
 // ============================================================
-// FETCH
+//  FETCH GOOGLE SHEET CSV
 // ============================================================
 async function fetchCSV(){
   const proxies = [
@@ -216,26 +222,44 @@ async function fetchCSV(){
 }
 
 async function loadFromSheet(){
+  const statusEl = document.getElementById('sync-status');
+  statusEl.textContent = "⏳ Synchronisation…"; 
+  statusEl.className = 'sync-status';
+
   try{
     const text = await fetchCSV();
-    const rows = text.trim().split('\n').map(l=>l.split(','));
-    const data = rows[0][0].toLowerCase()==='winner'?rows.slice(1):rows;
-    let pending = data.map(r=>({winner:r[0].trim(),score:r[1].trim()}));
+    const rows = parseCSV(text);
+    const data = rows[0][0].toLowerCase()==='winner' ? rows.slice(1) : rows;
+
+    let pending = data.map(r=>({winner:normName(r[0]),score:r[1]}));
+
     let passes = 6;
     while(pending.length && passes--){
       pending = pending.filter(r=>!applyResult(r.winner,r.score));
     }
+
+    statusEl.textContent = "✔ Résultats synchronisés";
+    statusEl.className = 'sync-status ok';
+    console.log("OFFICIAL =", official);
+
   }catch(e){
     console.error(e);
+    statusEl.textContent = "❌ Erreur de sync";
+    statusEl.className = 'sync-status err';
   }
-  console.log("OFFICIAL =", official);
+}
+
+function parseCSV(text){
+  return text.trim().split('\n').map(l=>l.split(','));
 }
 
 // ============================================================
-// APPLY RESULT / CASCADE
+//  APPLY RESULTS
 // ============================================================
 function applyResult(winner, score){
+  winner = normName(winner);
   let applied = false;
+
   ['east','west'].forEach(conf=>{
     official[conf].forEach((m,i)=>{
       const candidates = getMatchCandidates(conf,i);
@@ -251,27 +275,41 @@ function applyResult(winner, score){
     });
   });
 
-  const finalists = [official.east[6].winner,official.west[6].winner].filter(Boolean);
+  // Finale
+  const finalists = [official.east[6].winner, official.west[6].winner].filter(Boolean);
   if(finalists.includes(winner)){
     official.final.winner = winner;
     official.final.score = score;
     official.final.fromApi = true;
     applied = true;
   }
+
   return applied;
 }
 
+// ============================================================
+//  MATCH CANDIDATES
+// ============================================================
 function getMatchCandidates(conf, idx){
   if(idx<4){
     const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
-    return [teams[idx*2].name,teams[idx*2+1].name];
+    return [teams[idx*2].name,teams[idx*2+1].name].map(normName);
   }
   if(idx<6){
-    return [official[conf][(idx-4)*2].winner,official[conf][(idx-4)*2+1].winner].filter(Boolean);
+    return [
+      official[conf][(idx-4)*2].winner,
+      official[conf][(idx-4)*2+1].winner
+    ].filter(Boolean);
   }
-  return [official[conf][4].winner,official[conf][5].winner].filter(Boolean);
+  return [
+    official[conf][4].winner,
+    official[conf][5].winner
+  ].filter(Boolean);
 }
 
+// ============================================================
+//  CASCADE
+// ============================================================
 function cascade(picks,conf){
   // R2 reset
   for(let m=0;m<2;m++){
@@ -279,174 +317,29 @@ function cascade(picks,conf){
     const t2 = picks[conf][m*2+1].winner;
     const r2 = picks[conf][4+m];
     if(r2.winner && r2.winner!==t1 && r2.winner!==t2){
-      r2.winner=null; r2.score=null; r2.fromApi
-
-<script>
-// ============================================================
-//  RENDER BRACKET
-// ============================================================
-function renderBracket(){
-  const container = document.getElementById('main-bracket');
-  container.innerHTML = '';
-  
-  const confs = ['east','west'];
-  
-  confs.forEach(conf=>{
-    const section = document.createElement('div');
-    section.className = `conf-section ${conf}`;
-    
-    for(let round=0; round<4; round++){
-      const col = document.createElement('div');
-      col.className = 'round-col';
-      
-      const label = document.createElement('div');
-      label.className = 'round-label';
-      label.textContent = round===3 ? 'Conf. Finals' : `R${round+1}`;
-      col.appendChild(label);
-      
-      let matches;
-      if(round===3){
-        matches = [official[conf][6]];
-      } else if(round===2){
-        matches = [official[conf][4], official[conf][5]];
-      } else if(round===1){
-        matches = [official[conf][0], official[conf][1], official[conf][2], official[conf][3]];
-      } else {
-        matches = conf==='east'? EAST_TEAMS.map(t=>({winner:null})) : WEST_TEAMS.map(t=>({winner:null}));
-      }
-      
-      matches.forEach(m=>{
-        const div = document.createElement('div');
-        div.className = 'matchup';
-        const row = document.createElement('div');
-        row.className = 'team-row';
-        row.textContent = m.winner || 'TBD';
-        div.appendChild(row);
-        col.appendChild(div);
-      });
-      
-      section.appendChild(col);
+      r2.winner=null; r2.score=null; r2.fromApi=false;
     }
-    
-    container.appendChild(section);
-  });
-  
+  }
+
+  // R3 reset
+  const r3 = picks[conf][6];
+  if(r3.winner &&
+     r3.winner!==picks[conf][4].winner &&
+     r3.winner!==picks[conf][5].winner){
+    r3.winner=null; r3.score=null; r3.fromApi=false;
+  }
+
   // Finale
-  const finalsCol = document.createElement('div');
-  finalsCol.className = 'finals-col';
-  const finalsInner = document.createElement('div');
-  finalsInner.className = 'finals-col-inner';
-  const champBox = document.createElement('div');
-  champBox.className = 'champion-box';
-  champBox.innerHTML = `<div class="trophy">🏆</div>
-                        <div class="champ-label">Champion</div>
-                        <div class="champ-name">${official.final.winner||'TBD'}</div>`;
-  finalsInner.appendChild(champBox);
-  finalsCol.appendChild(finalsInner);
-  container.appendChild(finalsCol);
-}
-
-// ============================================================
-//  TABS
-// ============================================================
-function showTab(tab){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  
-  document.querySelector(`.tab[onclick="showTab('${tab}')"]`).classList.add('active');
-  document.getElementById(`panel-${tab}`).classList.add('active');
-}
-
-// ============================================================
-//  DEADLINE COUNTDOWN
-// ============================================================
-function updateCountdown(){
-  const now = new Date();
-  const end = new Date(DEADLINE);
-  const diff = end - now;
-  
-  const cdEl = document.getElementById('countdown');
-  const badgeEl = document.getElementById('phase-badge');
-  const textEl = document.getElementById('phase-text');
-  
-  if(diff>0){
-    const d = Math.floor(diff/86400000);
-    const h = Math.floor((diff%86400000)/3600000);
-    const m = Math.floor((diff%3600000)/60000);
-    const s = Math.floor((diff%60000)/1000);
-    cdEl.innerHTML = `${d}j ${h}h ${m}m ${s}s`;
-    badgeEl.className = 'phase-badge open';
-    textEl.textContent = 'SAISIE OUVERTE';
-  } else {
-    cdEl.textContent = '';
-    badgeEl.className = 'phase-badge locked';
-    textEl.textContent = 'SAISIE FERMÉE';
-    document.getElementById('deadline-locked-msg').style.display = 'flex';
+  const eastWinner = picks.east[6].winner;
+  const westWinner = picks.west[6].winner;
+  if(picks.final.winner &&
+     ![eastWinner, westWinner].includes(picks.final.winner)){
+    picks.final.winner = null; picks.final.score = null; picks.final.fromApi = false;
   }
 }
 
-setInterval(updateCountdown,1000);
-updateCountdown();
-
 // ============================================================
-//  ADMIN & LEADERBOARD
+//  INITIAL LOAD
 // ============================================================
-let participants = [];
-
-function renderLeaderboard(){
-  const search = document.getElementById('search-lb').value.toLowerCase();
-  const tbody = document.getElementById('lb-body');
-  tbody.innerHTML = '';
-  
-  participants.forEach((p,i)=>{
-    if(search && !p.name.toLowerCase().includes(search)) return;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${i+1}</td>
-                    <td>${p.name}</td>
-                    <td>${p.points||0}</td>
-                    <td>${p.bonus||0}</td>
-                    <td>${p.precision||0}%</td>
-                    <td>${p.champion||'TBD'}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-function addParticipant(){
-  const name = document.getElementById('new-participant').value.trim();
-  if(!name) return;
-  participants.push({name});
-  document.getElementById('new-participant').value='';
-  renderParticipants();
-  renderLeaderboard();
-}
-
-function renderParticipants(){
-  const list = document.getElementById('participant-list');
-  list.innerHTML='';
-  participants.forEach(p=>{
-    const card = document.createElement('div');
-    card.className='admin-card';
-    card.innerHTML = `<div class="ac-title">${p.name}</div>`;
-    list.appendChild(card);
-  });
-}
-
-// ============================================================
-//  SAVE MY BRACKET
-// ============================================================
-function setPseudo(){
-  const pseudo = document.getElementById('pseudo-field').value.trim();
-  if(!pseudo) return;
-  document.getElementById('my-bracket-hint').textContent=`Bienvenue ${pseudo}`;
-}
-
-function saveMyBracket(){
-  document.getElementById('save-msg').textContent='✅ Bracket enregistré !';
-}
-
-// ============================================================
-//  INIT
-// ============================================================
-renderBracket();
-renderLeaderboard();
+loadFromSheet();
 </script>
