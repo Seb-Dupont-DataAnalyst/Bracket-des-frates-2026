@@ -559,60 +559,7 @@ function getMatchCandidates(conf, idx){
   return [];
 }
 
-  // 2️⃣ Finale NBA
-  const finalCandidates = [official.east[6].winner, official.west[6].winner].filter(Boolean);
-  if(finalCandidates.includes(winner)){
-    if(!official.final.fromApi){
-      official.final.winner = winner;
-      official.final.score = score;
-      official.final.fromApi = true;
-    }
-    return true;
-  }
-
-  return false;
-}
-
-// Retourne tous les noms possibles pour un match donné selon l'indice
-function getMatchCandidates(conf,idx){
-  const round = idx<4 ? 0 : idx<6 ? 1 : 2; // 0=R1, 1=R2, 2=R3
-  if(round===0) return [EAST_TEAMS[idx*2].name, EAST_TEAMS[idx*2+1].name].map(normName);
-  if(round===1){
-    const t1 = official[conf][(idx-4)*2].winner;
-    const t2 = official[conf][(idx-4)*2+1].winner;
-    return [t1,t2].filter(Boolean).map(normName);
-  }
-  if(round===2){
-    const t1 = official[conf][4].winner;
-    const t2 = official[conf][5].winner;
-    return [t1,t2].filter(Boolean).map(normName);
-  }
-  return [];
-}
-  for(const {conf} of confs){
-    for(let i=0;i<2;i++){
-      const t1=official[conf][i*2].winner,t2=official[conf][i*2+1].winner;
-      if(t1&&t2&&(winner===t1||winner===t2)){
-        if(!official[conf][4+i].fromApi){official[conf][4+i].winner=winner;official[conf][4+i].score=score;official[conf][4+i].fromApi=true;cascade(official,conf);}
-        return true;
-      }
-    }
-  }
-  for(const {conf} of confs){
-    const t1=official[conf][4].winner,t2=official[conf][5].winner;
-    if(t1&&t2&&(winner===t1||winner===t2)){
-      if(!official[conf][6].fromApi){official[conf][6].winner=winner;official[conf][6].score=score;official[conf][6].fromApi=true;cascade(official,conf);}
-      return true;
-    }
-  }
-  const ef=official.east[6].winner,wf=official.west[6].winner;
-  if(ef&&wf&&(winner===ef||winner===wf)){
-    if(!official.final.fromApi){official.final.winner=winner;official.final.score=score;official.final.fromApi=true;}
-    return true;
-  }
-  return false;
-}
-
+  
 function setBanner(type,html){
   const b=document.getElementById('main-banner'); b.style.display=''; b.className='banner '+type; b.innerHTML=html;
 }
