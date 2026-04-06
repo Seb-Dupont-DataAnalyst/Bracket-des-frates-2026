@@ -4,205 +4,149 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bracket des frates 2026</title>
+
+<style>
+body{background:#0d0f14;color:white;font-family:sans-serif;padding:20px}
+.bracket{display:flex;gap:20px}
+.col{display:flex;flex-direction:column;gap:10px}
+.match{border:1px solid #333;padding:6px;border-radius:6px}
+.winner{color:#22c55e;font-weight:bold}
+</style>
 </head>
 
-<body style="background:#111;color:white;font-family:sans-serif">
+<body>
 
-<h2>Bracket NBA 2026 (version clean)</h2>
-<button onclick="loadFromSheet()">🔄 Sync résultats</button>
+<h1>🏀 Bracket des frates 2026</h1>
 
-<pre id="output"></pre>
+<button onclick="loadFromSheet()">⟳ Charger résultats</button>
+
+<div id="bracket" class="bracket"></div>
 
 <script>
-// ============================================================
-// CONFIG (UNE SEULE FOIS)
-// ============================================================
-const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
-
+// ==============================
+// CONFIG
+// ==============================
+const SHEET_CSV = '1R7aH9kW1E9ipZxExLqVWmNqi1mvu8_QB4WbrJyXS4RA';
 const EAST_TEAMS = [
-  {seed:1, name:'Cavaliers'}, {seed:8, name:'Heat'},
-  {seed:4, name:'Pacers'},    {seed:5, name:'Bucks'},
-  {seed:3, name:'Knicks'},    {seed:6, name:'Pistons'},
-  {seed:2, name:'Celtics'},   {seed:7, name:'Magic'}
+  {seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},
+  {seed:4,name:'Pacers'},{seed:5,name:'Bucks'},
+  {seed:3,name:'Knicks'},{seed:6,name:'Pistons'},
+  {seed:2,name:'Celtics'},{seed:7,name:'Magic'}
 ];
-
 const WEST_TEAMS = [
-  {seed:1, name:'Thunder'},      {seed:8, name:'Grizzlies'},
-  {seed:4, name:'Nuggets'},      {seed:5, name:'Clippers'},
-  {seed:3, name:'Timberwolves'}, {seed:6, name:'Warriors'},
-  {seed:2, name:'Rockets'},      {seed:7, name:'Lakers'}
+  {seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},
+  {seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},
+  {seed:3,name:'Timberwolves'},{seed:6,name:'Warriors'},
+  {seed:2,name:'Rockets'},{seed:7,name:'Lakers'}
 ];
 
-// ============================================================
-// HELPERS
-// ============================================================
-const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
+const ALL_NAMES=[...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
 
-function normName(n){
-  if(!n) return '';
-  return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase()) || n.trim();
-}
-
-// ============================================================
+// ==============================
 // STATE
-// ============================================================
-let official = emptyOfficial();
+// ==============================
+let official={
+  east:Array(7).fill().map(()=>({winner:null,score:null,fromApi:false})),
+  west:Array(7).fill().map(()=>({winner:null,score:null,fromApi:false})),
+  final:{winner:null,score:null,fromApi:false}
+};
 
-function emptyOfficial(){
-  return {
-    east:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
-    west:  Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
-    final: {winner:null,score:null,fromApi:false}
-  };
+// ==============================
+// UTILS
+// ==============================
+function normName(n){
+  return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase())||n.trim();
 }
 
-// ============================================================
-// FETCH CSV
-// ============================================================
+// ==============================
+// FETCH
+// ==============================
 async function fetchCSV(){
-  const proxies = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`,
-    `https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`
-  ];
-
-  for(const url of proxies){
-    try{
-      const res = await fetch(url);
-      if(res.ok){
-        const text = await res.text();
-        if(text && text.length > 10) return text;
-      }
-    }catch(e){}
-  }
-
-  throw new Error('Erreur Google Sheet');
+  const res=await fetch(SHEET_CSV);
+  return await res.text();
 }
 
-function parseCSV(text){
-  return text.trim().split('\n').map(line=>{
-    const cells=[]; let cur=''; let inQ=false;
-
-    for(const ch of line){
-      if(ch === '"') inQ = !inQ;
-      else if(ch === ',' && !inQ){
-        cells.push(cur.trim());
-        cur='';
-      } else cur+=ch;
-    }
-
-    cells.push(cur.trim());
-    return cells;
-  });
-}
-
-// ============================================================
-// LOAD
-// ============================================================
 async function loadFromSheet(){
-  try{
-    official = emptyOfficial(); // reset propre
+  const text=await fetchCSV();
+  const rows=text.trim().split('\n').map(l=>l.split(','));
+  const data=rows[0][0].toLowerCase()==='winner'?rows.slice(1):rows;
 
-    const text = await fetchCSV();
-    const rows = parseCSV(text);
+  let pending=data.map(r=>({winner:normName(r[0]),score:r[1]}));
 
-    const hasHeader = rows[0][0].toLowerCase()==='winner';
-    const data = hasHeader ? rows.slice(1) : rows;
-
-    let pending = data
-      .filter(r=>r[0] && r[1])
-      .map(r=>({
-        winner:normName(r[0]),
-        score:r[1].trim()
-      }));
-
-    let passes = 6;
-
-    while(pending.length && passes--){
-      pending = pending.filter(r=>!applyResult(r.winner,r.score));
-    }
-
-    render();
-
-  }catch(e){
-    console.error(e);
+  let passes=6;
+  while(pending.length && passes--){
+    pending=pending.filter(r=>!applyResult(r.winner,r.score));
   }
+
+  render();
 }
 
-// ============================================================
+// ==============================
 // APPLY RESULT
-// ============================================================
-function applyResult(winner, score){
-  winner = normName(winner);
-  let applied = false;
+// ==============================
+function applyResult(winner,score){
+  let applied=false;
 
   ['east','west'].forEach(conf=>{
-    official[conf].forEach((match,i)=>{
-      const candidates = getMatchCandidates(conf,i);
-
-      if(candidates.includes(winner)){
-        if(!match.fromApi){
-          match.winner = winner;
-          match.score = score;
-          match.fromApi = true;
-
-          cascade(official, conf);
+    official[conf].forEach((m,i)=>{
+      const c=getCandidates(conf,i);
+      if(c.includes(winner)){
+        if(!m.fromApi){
+          m.winner=winner;
+          m.score=score;
+          m.fromApi=true;
+          cascade(official,conf);
         }
-        applied = true;
+        applied=true;
       }
     });
   });
 
-  const finalists = [
+  // 🔥 FIX FINAL
+  const finalists=[
     official.east[6].winner,
     official.west[6].winner
   ].filter(Boolean);
 
   if(finalists.includes(winner)){
-    official.final.winner = winner;
-    official.final.score = score;
-    official.final.fromApi = true;
-    applied = true;
+    official.final.winner=winner;
+    official.final.score=score;
+    official.final.fromApi=true;
+    applied=true;
   }
 
   return applied;
 }
 
-// ============================================================
-// MATCH CANDIDATES
-// ============================================================
-function getMatchCandidates(conf, idx){
+// ==============================
+// CANDIDATES
+// ==============================
+function getCandidates(conf,i){
+  const teams=conf==='east'?EAST_TEAMS:WEST_TEAMS;
 
-  if(idx < 4){
-    const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
-    return [
-      teams[idx*2].name,
-      teams[idx*2+1].name
-    ].map(normName);
-  }
+  if(i<4) return [teams[i*2].name,teams[i*2+1].name];
 
-  if(idx < 6){
-    return [
-      official[conf][(idx-4)*2].winner,
-      official[conf][(idx-4)*2+1].winner
-    ].filter(Boolean).map(normName);
-  }
+  if(i<6) return [
+    official[conf][(i-4)*2].winner,
+    official[conf][(i-4)*2+1].winner
+  ].filter(Boolean);
 
   return [
     official[conf][4].winner,
     official[conf][5].winner
-  ].filter(Boolean).map(normName);
+  ].filter(Boolean);
 }
 
-// ============================================================
-// CASCADE (FIX FINAL BUG)
-// ============================================================
-function cascade(picks, conf){
+// ==============================
+// CASCADE FIX (🔥 IMPORTANT)
+// ==============================
+function cascade(picks,conf){
 
-  // R2
+  // reset R2
   for(let m=0;m<2;m++){
-    const t1 = picks[conf][m*2].winner;
-    const t2 = picks[conf][m*2+1].winner;
-    const r2 = picks[conf][4+m];
+    const t1=picks[conf][m*2].winner;
+    const t2=picks[conf][m*2+1].winner;
+    const r2=picks[conf][4+m];
 
     if(r2.winner && r2.winner!==t1 && r2.winner!==t2){
       r2.winner=null;
@@ -211,42 +155,58 @@ function cascade(picks, conf){
     }
   }
 
-  // R3
-  const r3 = picks[conf][6];
+  // reset R3
+  const r3=picks[conf][6];
   if(r3.winner &&
-    r3.winner!==picks[conf][4].winner &&
-    r3.winner!==picks[conf][5].winner){
+     r3.winner!==picks[conf][4].winner &&
+     r3.winner!==picks[conf][5].winner){
     r3.winner=null;
     r3.score=null;
     r3.fromApi=false;
   }
 
-  // 🔥 FINAL FIX
-  const eastWinner = picks.east[6].winner;
-  const westWinner = picks.west[6].winner;
+  // 🔥 FIX FINAL (LE BUG QUE TU AVAIS)
+  const east=picks.east[6].winner;
+  const west=picks.west[6].winner;
 
   if(picks.final.winner &&
-     ![eastWinner, westWinner].includes(picks.final.winner)){
-    picks.final.winner = null;
-    picks.final.score = null;
-    picks.final.fromApi = false;
+     ![east,west].includes(picks.final.winner)){
+    picks.final.winner=null;
+    picks.final.score=null;
+    picks.final.fromApi=false;
   }
 }
 
-// ============================================================
-// RENDER SIMPLE
-// ============================================================
+// ==============================
+// RENDER
+// ==============================
 function render(){
-  document.getElementById('output').textContent =
-    JSON.stringify(official, null, 2);
+  const div=document.getElementById('bracket');
+  div.innerHTML='';
+
+  ['west','east'].forEach(conf=>{
+    const col=document.createElement('div');
+    col.className='col';
+
+    official[conf].forEach(m=>{
+      const d=document.createElement('div');
+      d.className='match';
+      d.innerHTML=m.winner?`<span class="winner">${m.winner}</span> (${m.score})`:'—';
+      col.appendChild(d);
+    });
+
+    div.appendChild(col);
+  });
+
+  const final=document.createElement('div');
+  final.className='col';
+  final.innerHTML='<h3>Final</h3>'+(official.final.winner||'—');
+  div.appendChild(final);
 }
 
-// ============================================================
 // INIT
-// ============================================================
-loadFromSheet();
+render();
 
 </script>
-
 </body>
 </html>
