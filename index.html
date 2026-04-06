@@ -342,16 +342,37 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
 // ============================================================
 //  HELPERS
 // ============================================================
+const EAST_TEAMS = [
+  {name:'Team East 1', seed:1}, {name:'Team East 2', seed:8},
+  {name:'Team East 3', seed:4}, {name:'Team East 4', seed:5},
+  {name:'Team East 5', seed:2}, {name:'Team East 6', seed:7},
+  {name:'Team East 7', seed:3}, {name:'Team East 8', seed:6}
+];
+
+const WEST_TEAMS = [
+  {name:'Team West 1', seed:1}, {name:'Team West 2', seed:8},
+  {name:'Team West 3', seed:4}, {name:'Team West 4', seed:5},
+  {name:'Team West 5', seed:2}, {name:'Team West 6', seed:7},
+  {name:'Team West 7', seed:3}, {name:'Team West 8', seed:6}
+];
+
+const DEADLINE = '2026-04-15T20:00:00'; // date limite ISO
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/TON_ID/export?format=csv'; // à remplacer par ton sheet CSV
+const ROUND_PTS = [1, 2, 3]; // points par round : R1, R2, R3
+const SCORE_BONUS = 1;
 const SCORES = ['4-0','4-1','4-2','4-3'];
+
+// ============================================================
+//  HELPERS
+// ============================================================
 const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
 function normName(n){ return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase())||n.trim(); }
 function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
 
 // ============================================================
-//  PHASE — deadline
+//  PHASE & DEADLINE
 // ============================================================
 function isPastDeadline(){
-  // Compare en heure locale Paris
   const dl = new Date(DEADLINE);
   return new Date() >= dl;
 }
@@ -367,22 +388,20 @@ function updatePhaseUI(){
 
   const dl = new Date(DEADLINE);
   const dlStr = dl.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})
-              + ' à '
-              + dl.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+              + ' à ' + dl.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 
   document.getElementById('admin-deadline').textContent = dlStr;
 
   if(past){
     badge.className = 'phase-badge locked';
     text.textContent = 'BRACKETS VERROUILLÉS';
-    badge.querySelector('.phase-dot').classList.remove('pulse');
+    badge.querySelector('.phase-dot')?.classList.remove('pulse');
     cdEl.innerHTML = '';
     noteEl.textContent = 'Deadline passée le ' + dlStr;
     document.getElementById('admin-phase').textContent = 'Phase suivi (brackets fermés)';
     if(saveBtn) saveBtn.disabled = true;
     if(deadlineLockedMsg) deadlineLockedMsg.style.display='flex';
   } else {
-    // Compte à rebours
     const now = new Date();
     const diff = dl - now;
     const days  = Math.floor(diff / 86400000);
@@ -410,18 +429,15 @@ function updatePhaseUI(){
     if(deadlineLockedMsg) deadlineLockedMsg.style.display='none';
   }
 }
-
-// Mise à jour toutes les secondes
-setInterval(updatePhaseUI, 1000);
+setInterval(updatePhaseUI,1000);
 
 // ============================================================
 //  STATE
 // ============================================================
 let official = emptyOfficial();
-// ⚠️  Remplacer par les vrais participants avant de partager le lien
 let participants = [
-  {name:'Alice',   picks: emptyPicks()},
-  {name:'Bob',     picks: emptyPicks()},
+  {name:'Alice', picks: emptyPicks()},
+  {name:'Bob', picks: emptyPicks()},
   {name:'Charlie', picks: emptyPicks()}
 ];
 let myName = '', myPicks = emptyPicks();
@@ -433,6 +449,7 @@ function emptyOfficial(){
     final: {winner:null,score:null,fromApi:false}
   };
 }
+
 function emptyPicks(){
   return {
     east:  Array(7).fill(null).map(()=>({winner:null,score:null})),
@@ -442,372 +459,8 @@ function emptyPicks(){
 }
 
 // ============================================================
-//  FETCH SHEET via proxy CORS
-// ============================================================
-async function fetchCSV(){
-  const proxies = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`,
-    `https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`
-  ];
-  for(const url of proxies){
-    try{
-      const res = await fetch(url);
-      if(res.ok){ const t=await res.text(); if(t&&t.length>10) return t; }
-    }catch(e){}
-  }
-  throw new Error('Impossible de contacter le Google Sheet. Réessayez ou ouvrez le fichier depuis un serveur web.');
-}
-
-async function loadFromSheet(){
-  const st = document.getElementById('sync-status');
-  st.className='sync-status'; st.innerHTML='<span class="spin">⟳</span>';
-  setBanner('info','<span class="spin">⟳</span>&nbsp; Connexion au Google Sheet…');
-  try{
-    const text = await fetchCSV();
-    const rows = parseCSV(text);
-    if(!rows.length) throw new Error('Feuille vide');
-    const hasHeader = rows[0][0].toLowerCase()==='winner';
-    const data = hasHeader ? rows.slice(1) : rows;
-
-    official.east.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
-    official.west.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
-    if(official.final.fromApi){official.final.winner=null;official.final.score=null;official.final.fromApi=false;}
-
-    let pending=data.filter(r=>r[0]&&r[1]).map(r=>({winner:normName(r[0]),score:r[1].trim()}));
-    let applied=0, passes=6;
-    while(pending.length&&passes-->0){
-      const still=[];
-      for(const row of pending){ if(applyResult(row.winner,row.score)) applied++; else still.push(row); }
-      if(still.length===pending.length) break;
-      pending=still;
-    }
-    const now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`);
-    st.className='sync-status ok'; st.textContent='✓ '+now;
-  }catch(e){
-    setBanner('warn',`⚠ ${e.message}`);
-    st.className='sync-status err'; st.textContent='Erreur';
-  }
-  renderOfficialBracket();
-  renderLeaderboard();
-}
-
-function parseCSV(text){
-  return text.trim().split('\n').map(line=>{
-    const cells=[]; let cur='',inQ=false;
-    for(const ch of line){
-      if(ch==='"') inQ=!inQ;
-      else if(ch===','&&!inQ){cells.push(cur.trim());cur='';}
-      else cur+=ch;
-    }
-    cells.push(cur.trim()); return cells;
-  });
-}
-
-function applyResult(winner, score){
-  winner = normName(winner);
-  const confs = ['east','west'];
-  let applied = false;
-
-  for(const conf of confs){
-    for(let i=0;i<official[conf].length;i++){
-      const match = official[conf][i];
-      const candidates = getMatchCandidates(conf,i);
-      if(candidates.includes(winner)){
-        if(!match.fromApi){
-          match.winner = winner;
-          match.score = score;
-          match.fromApi = true;
-          cascade(official, conf);
-        }
-        applied = true;
-      }
-    }
-  }
-
-  // Finale NBA
-  const finalCandidates = [official.east[6].winner, official.west[6].winner].filter(Boolean);
-  if(finalCandidates.includes(winner)){
-    if(!official.final.fromApi){
-      official.final.winner = winner;
-      official.final.score = score;
-      official.final.fromApi = true;
-    }
-    applied = true;
-  }
-
-  return applied;
-}
-
-// Retourne tous les noms possibles pour un match donné selon l'indice
-function getMatchCandidates(conf, idx){
-  if(idx<4){
-    // Premier tour
-    const teams = conf==='east' ? EAST_TEAMS : WEST_TEAMS;
-    return [teams[idx*2].name, teams[idx*2+1].name].map(normName);
-  } else if(idx<6){
-    // Demi-finales
-    const t1 = official[conf][(idx-4)*2].winner;
-    const t2 = official[conf][(idx-4)*2+1].winner;
-    return [t1,t2].filter(Boolean).map(normName);
-  } else if(idx===6){
-    // Finale conférence
-    const t1 = official[conf][4].winner;
-    const t2 = official[conf][5].winner;
-    return [t1,t2].filter(Boolean).map(normName);
-  }
-  return [];
-}
-
-  
-function setBanner(type,html){
-  const b=document.getElementById('main-banner'); b.style.display=''; b.className='banner '+type; b.innerHTML=html;
-}
-
-// ============================================================
-//  BRACKET BUILDER
-//  Layout visuel : [West R1 | West R2 | West R3] | Finals | [East R3 | East R2 | East R1]
-//  → West progresse de gauche vers le centre
-//  → East progresse de droite vers le centre
-// ============================================================
-function buildBracket(containerId, picks, onUpdate, readOnly){
-  const c=document.getElementById(containerId); c.innerHTML='';
-
-  // West à gauche : R1 (extrême gauche) → R2 → R3 (proche du centre)
-  const ws=el('div','conf-section west');
-  buildConf(ws,'west',picks,onUpdate,readOnly);
-
-  // Finales au centre
-  const fs=el('div','finals-col');
-  buildFinals(fs,picks,onUpdate,readOnly);
-
-  // East à droite : R3 (proche du centre) → R2 → R1 (extrême droite)
-  const es=el('div','conf-section east');
-  buildConf(es,'east',picks,onUpdate,readOnly);
-
-  c.appendChild(ws); c.appendChild(fs); c.appendChild(es);
-}
-
-function buildConf(section, conf, picks, onUpdate, readOnly){
-  const teams = conf==='east' ? EAST_TEAMS : WEST_TEAMS;
-
-  const r1=makeCol('1er tour');
-  for(let m=0;m<4;m++){
-    r1.appendChild(buildMatchup(
-      picks[conf][m],
-      {seed:teams[m*2].seed,   name:teams[m*2].name},
-      {seed:teams[m*2+1].seed, name:teams[m*2+1].name},
-      (w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},
-      readOnly, 0
-    ));
-    r1.appendChild(el('div','matchup-gap'));
-  }
-
-  const r2=makeCol('Demi-finales');
-  for(let m=0;m<2;m++){
-    const t1={seed:null,name:picks[conf][m*2].winner||'?'};
-    const t2={seed:null,name:picks[conf][m*2+1].winner||'?'};
-    r2.appendChild(buildMatchup(
-      picks[conf][4+m], t1, t2,
-      (w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},
-      readOnly||!picks[conf][m*2].winner||!picks[conf][m*2+1].winner, 1
-    ));
-    r2.appendChild(el('div','matchup-gap'));
-  }
-
-  const r3=makeCol('Finale conf.');
-  const tf1={seed:null,name:picks[conf][4].winner||'?'};
-  const tf2={seed:null,name:picks[conf][5].winner||'?'};
-  r3.appendChild(buildMatchup(
-    picks[conf][6], tf1, tf2,
-    (w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},
-    readOnly||!picks[conf][4].winner||!picks[conf][5].winner, 2
-  ));
-
-  if(conf==='west'){
-    // West : R1 à gauche, R3 proche du centre
-    section.appendChild(r1); section.appendChild(r2); section.appendChild(r3);
-  } else {
-    // East : R3 proche du centre, R1 à droite
-    section.appendChild(r3); section.appendChild(r2); section.appendChild(r1);
-  }
-}
-
-function buildFinals(sec, picks, onUpdate, readOnly){
-  const col=el('div','finals-col-inner');
-  const lbl=el('div','');
-  lbl.style.cssText='font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;text-align:center';
-  lbl.textContent='FINALES NBA';
-  col.appendChild(lbl);
-  const wf=picks.west[6].winner, ef=picks.east[6].winner;
-  col.appendChild(buildMatchup(
-    picks.final,
-    {seed:null, name:wf||'?'},
-    {seed:null, name:ef||'?'},
-    (w,s)=>{picks.final.winner=w;picks.final.score=s;onUpdate();},
-    readOnly||!wf||!ef, 3
-  ));
-  const cb=el('div','champion-box');
-  cb.innerHTML=`<div class="trophy">🏆</div><div class="champ-label">CHAMPION NBA</div><div class="champ-name">${picks.final.winner||'?'}</div>${picks.final.score?`<div class="champ-score">${picks.final.score}</div>`:''}`;
-  col.appendChild(cb); sec.appendChild(col);
-}
-
-function buildMatchup(md,t1,t2,onSet,locked,ri){
-  // En phase de saisie, readOnly = isPastDeadline() pour le bracket perso
-  const wrap=el('div','matchup'+(md.fromApi?' synced':''));
-  const w=md.winner,s=md.score,api=md.fromApi;
-  const tbd1=t1.name==='?',tbd2=t2.name==='?';
-
-  const mkRow=(t,isW,isE,isTbd)=>{
-    const r=el('div','team-row'+(isW?' winner':isE?' eliminated':'')+(locked||isTbd?' locked':'')+(isTbd?' tbd':''));
-    r.innerHTML=`<span class="seed">${t.seed||''}</span><span class="tname">${t.name}</span>${isW&&api?'<span class="api-badge">LIVE</span>':isW?'<span class="check">✓</span>':''}`;
-    if(!locked&&!isTbd&&!api) r.onclick=()=>onSet(t.name,md.score);
-    return r;
-  };
-  wrap.appendChild(mkRow(t1,w===t1.name,w&&w!==t1.name,tbd1));
-  wrap.appendChild(el('div','divider-h'));
-  wrap.appendChild(mkRow(t2,w===t2.name,w&&w!==t2.name,tbd2));
-
-  if(w&&!tbd1&&!tbd2){
-    const sr=el('div','score-row');
-    const sl=el('span','score-label'); sl.textContent='SCORE'; sr.appendChild(sl);
-    const sb=el('div','score-btns');
-    SCORES.forEach(sc=>{
-      const dlLocked = locked && !api;
-      const b=el('button','sbtn'+(s===sc?' active':'')+(api?' api-locked':dlLocked?' deadline-locked':''));
-      b.textContent=sc;
-      if(!api&&!dlLocked) b.onclick=(e)=>{e.stopPropagation();onSet(w,sc);};
-      sb.appendChild(b);
-    });
-    sr.appendChild(sb);
-    if(api){const lk=el('span','lock-icon'); lk.textContent='🔒'; sr.appendChild(lk);}
-    wrap.appendChild(sr);
-  }
-  return wrap;
-}
-
-function cascade(picks,conf){
-  for(let m=0;m<2;m++){
-    const t1w=picks[conf][m*2].winner,t2w=picks[conf][m*2+1].winner,r2=picks[conf][4+m];
-    if(r2.winner&&r2.winner!==t1w&&r2.winner!==t2w){r2.winner=null;r2.score=null;r2.fromApi=false;}
-  }
-  const r3=picks[conf][6];
-  if(r3.winner&&r3.winner!==picks[conf][4].winner&&r3.winner!==picks[conf][5].winner){r3.winner=null;r3.score=null;r3.fromApi=false;}
-}
-function makeCol(label){const c=el('div','round-col');const l=el('div','round-label');l.textContent=label.toUpperCase();c.appendChild(l);return c;}
-
-// ============================================================
-//  SCORING
-// ============================================================
-function computeScore(p){
-  let pts=0,bonus=0,correct=0,total=0;
-  const chk=(pm,om,ri)=>{
-    if(!om.winner) return; total++;
-    if(pm.winner===om.winner){pts+=ROUND_PTS[ri];correct++;if(pm.score&&pm.score===om.score){pts+=SCORE_BONUS;bonus++;}}
-  };
-  for(let i=0;i<7;i++){const ri=i<4?0:i<6?1:2;chk(p.picks.east[i],official.east[i],ri);chk(p.picks.west[i],official.west[i],ri);}
-  chk(p.picks.final,official.final,3);
-  return{pts,bonus,correct,total};
-}
-
-// ============================================================
-//  RENDER
-// ============================================================
-function renderOfficialBracket(){buildBracket('main-bracket',official,()=>{renderOfficialBracket();renderLeaderboard();},false);}
-function renderMyBracket(){
-  if(!myName){document.getElementById('my-bracket-render').innerHTML='';return;}
-  // Verrouillé si deadline passée
-  const ro = isPastDeadline();
-  buildBracket('my-bracket-render',myPicks,()=>{updateProgress();renderMyBracket();},ro);
-  updateProgress();
-}
-function updateProgress(){
-  let done=0;
-  for(let i=0;i<7;i++){if(myPicks.east[i].winner)done++;if(myPicks.west[i].winner)done++;}
-  if(myPicks.final.winner)done++;
-  document.getElementById('my-progress').style.width=Math.round(done/15*100)+'%';
-  document.getElementById('my-progress-label').textContent=`${done} / 15 matchs pronostiqués`;
-}
-function renderLeaderboard(){
-  const search=(document.getElementById('search-lb')||{value:''}).value.toLowerCase();
-  const sorted=participants.map(p=>({...p,sc:computeScore(p)})).sort((a,b)=>b.sc.pts-a.sc.pts);
-  const tbody=document.getElementById('lb-body'); tbody.innerHTML='';
-  sorted.filter(p=>!search||p.name.toLowerCase().includes(search)).forEach((p,i)=>{
-    const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
-    const acc=p.sc.total?`${p.sc.correct}/${p.sc.total}`:'—';
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td><span class="rank-badge ${rc}">${i+1}</span></td><td>${p.name}</td><td><span class="pts-big">${p.sc.pts}</span> pts</td><td class="bonus-cell">+${p.sc.bonus*SCORE_BONUS} pts (${p.sc.bonus})</td><td class="detail-cell">${acc}</td><td>${p.picks.final.winner||'—'}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-function renderAdmin(){
-  const list=document.getElementById('participant-list'); list.innerHTML='';
-  participants.forEach((p,i)=>{
-    const sc=computeScore(p); const card=el('div','admin-card');
-    card.innerHTML=`<div class="ac-title">${p.name}</div><div class="ac-sub">${sc.pts} pts • ${sc.correct}/${sc.total} bons pronostics<br>Champion : ${p.picks.final.winner||'—'}</div><button class="btn" style="margin-top:8px" onclick="removeParticipant(${i})">Supprimer</button>`;
-    list.appendChild(card);
-  });
-}
-
-// ============================================================
-//  ACTIONS
-// ============================================================
-function showTab(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  document.querySelectorAll('.tab')[['bracket','my-bracket','leaderboard','admin'].indexOf(id)].classList.add('active');
-  if(id==='leaderboard') renderLeaderboard();
-  if(id==='admin')       renderAdmin();
-  if(id==='my-bracket')  renderMyBracket();
-}
-
-function setPseudo(){
-  if(isPastDeadline()){ alert('La date limite est passée — les brackets sont verrouillés.'); return; }
-  const n=document.getElementById('pseudo-field').value.trim(); if(!n) return;
-  myName=n;
-  document.getElementById('my-bracket-hint').textContent=`Bonjour ${n} ! Cliquez sur chaque équipe gagnante puis choisissez le score de la série.`;
-  const ex=participants.find(p=>p.name===n);
-  myPicks=ex?JSON.parse(JSON.stringify(ex.picks)):emptyPicks();
-  renderMyBracket();
-}
-
-function saveMyBracket(){
-  if(isPastDeadline()){ alert('La date limite est passée — impossible d\'enregistrer.'); return; }
-  if(!myName){ alert('Entrez votre pseudo d\'abord'); return; }
-  const idx=participants.findIndex(p=>p.name===myName);
-  const copy=JSON.parse(JSON.stringify(myPicks));
-  if(idx>=0) participants[idx].picks=copy; else participants.push({name:myName,picks:copy});
-  document.getElementById('save-msg').textContent='✓ Bracket enregistré !';
-  setTimeout(()=>document.getElementById('save-msg').textContent='',2500);
-}
-
-function addParticipant(){
-  const input=document.getElementById('new-participant'); const n=input.value.trim();
-  if(!n||participants.find(p=>p.name===n)) return;
-  participants.push({name:n,picks:emptyPicks()}); input.value=''; renderAdmin();
-}
-function removeParticipant(i){
-  if(!confirm(`Supprimer ${participants[i].name} ?`)) return;
-  participants.splice(i,1); renderAdmin();
-}
-function resetOfficial(){
-  if(!confirm('Réinitialiser tous les résultats officiels ?')) return;
-  official=emptyOfficial(); renderOfficialBracket();
-  setBanner('info','Résultats réinitialisés.');
-}
-function exportCSV(){
-  let csv='Participant,Points,Bonus scores,Bons pronostics,Champion\n';
-  participants.forEach(p=>{const s=computeScore(p);csv+=`${p.name},${s.pts},${s.bonus*SCORE_BONUS},${s.correct}/${s.total},${p.picks.final.winner||''}\n`;});
-  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='nba_bracket_2026.csv'; a.click();
-}
-
-// ============================================================
 //  INIT
 // ============================================================
 updatePhaseUI();
 renderOfficialBracket();
 loadFromSheet();
-</script>
-</body>
-</html>
