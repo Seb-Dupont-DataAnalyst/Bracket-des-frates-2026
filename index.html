@@ -179,7 +179,7 @@ const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQ
 //    Format ISO 8601, heure de Paris (Europe/Paris)
 //    Mettre la veille du 1er match des playoffs, 18h00
 //    2026 : play-in 14-17 avril → deadline 17 avril 18h
-const DEADLINE = '2026-04-19T00:00:00'; // Playoffs 2025 déjà commencés — brackets verrouillés
+const DEADLINE = '2025-04-19T00:00:00'; // Playoffs 2025 déjà commencés — brackets verrouillés
 
 // ── 3. Équipes EST — Playoffs NBA 2025 ───────────────────────────
 //    (seed1 vs seed8), (seed4 vs seed5), (seed3 vs seed6), (seed2 vs seed7)
@@ -530,51 +530,65 @@ async function loadFromSheet(){
 }
 
 function parseCSV(text){
-  return text.trim().split('\n').map(line=>{
+  const lines = text.trim().split('\n').filter(l=>l.trim());
+  // Détecter le séparateur : ; ou ,
+  const sep = lines[0].includes(';') ? ';' : ',';
+  return lines.map(line=>{
     const cells=[]; let cur='',inQ=false;
     for(const ch of line){
       if(ch==='"') inQ=!inQ;
-      else if(ch===','&&!inQ){cells.push(cur.trim());cur='';}
+      else if(ch===sep&&!inQ){cells.push(cur.trim());cur='';}
       else cur+=ch;
     }
-    cells.push(cur.trim()); return cells;
+    cells.push(cur.trim());
+    return cells.filter((_,i)=>i<4); // max 4 colonnes, ignore trailing ;
   });
 }
 
-// Applique TOUS les résultats d'un coup en respectant l'ordre R1→R2→R3→Finals
+// Applique les résultats du CSV dans l'ordre strict du bracket
+// Le CSV contient les séries dans un ordre quelconque — on les place
+// en identifiant le matchup par les deux équipes participantes à chaque round
 function applyAllResults(rows) {
   const confs = [{conf:'east',teams:EAST_TEAMS},{conf:'west',teams:WEST_TEAMS}];
-
-  // Indexe tous les résultats par nom de gagnant pour accès rapide
-  const byWinner = {};
-  rows.forEach(r => { if(r[0]&&r[1]) byWinner[normName(r[0])] = r[1].trim(); });
-
   let applied = 0;
 
-  // ── R1 : gagnants connus depuis les équipes de départ ──
-  for(const {conf,teams} of confs){
-    for(let i=0;i<4;i++){
-      const t1=teams[i*2].name, t2=teams[i*2+1].name;
-      const w = byWinner[t1]!==undefined ? t1 : byWinner[t2]!==undefined ? t2 : null;
-      if(w && !official[conf][i].fromApi){
-        official[conf][i].winner=w;
-        official[conf][i].score=byWinner[w];
-        official[conf][i].fromApi=true;
+  // Parse chaque ligne : winner, score
+  const entries = rows
+    .filter(r => r[0] && r[1] && r[0].toLowerCase() !== 'winner')
+    .map(r => ({ winner: normName(r[0]), score: r[1].trim(), used: false }));
+
+  // Cherche dans entries une ligne non utilisée dont le gagnant est t1 ou t2
+  function pick(t1, t2) {
+    const e = entries.find(e => !e.used && (e.winner === t1 || e.winner === t2));
+    if(e) e.used = true;
+    return e || null;
+  }
+
+  // ── R1 : équipes connues depuis la config ──
+  for(const {conf, teams} of confs){
+    for(let i = 0; i < 4; i++){
+      const t1 = teams[i*2].name, t2 = teams[i*2+1].name;
+      const e = pick(t1, t2);
+      if(e && !official[conf][i].fromApi){
+        official[conf][i].winner  = e.winner;
+        official[conf][i].score   = e.score;
+        official[conf][i].fromApi = true;
         applied++;
       }
     }
   }
 
-  // ── R2 : gagnants connus depuis les gagnants R1 ──
+  // ── R2 : équipes = gagnants R1 ──
   for(const {conf} of confs){
-    for(let i=0;i<2;i++){
-      const t1=official[conf][i*2].winner, t2=official[conf][i*2+1].winner;
-      if(!t1||!t2) continue;
-      const w = byWinner[t1]!==undefined ? t1 : byWinner[t2]!==undefined ? t2 : null;
-      if(w && !official[conf][4+i].fromApi){
-        official[conf][4+i].winner=w;
-        official[conf][4+i].score=byWinner[w];
-        official[conf][4+i].fromApi=true;
+    for(let i = 0; i < 2; i++){
+      const t1 = official[conf][i*2].winner;
+      const t2 = official[conf][i*2+1].winner;
+      if(!t1 || !t2) continue;
+      const e = pick(t1, t2);
+      if(e && !official[conf][4+i].fromApi){
+        official[conf][4+i].winner  = e.winner;
+        official[conf][4+i].score   = e.score;
+        official[conf][4+i].fromApi = true;
         applied++;
       }
     }
@@ -582,25 +596,27 @@ function applyAllResults(rows) {
 
   // ── R3 : finales de conférence ──
   for(const {conf} of confs){
-    const t1=official[conf][4].winner, t2=official[conf][5].winner;
-    if(!t1||!t2) continue;
-    const w = byWinner[t1]!==undefined ? t1 : byWinner[t2]!==undefined ? t2 : null;
-    if(w && !official[conf][6].fromApi){
-      official[conf][6].winner=w;
-      official[conf][6].score=byWinner[w];
-      official[conf][6].fromApi=true;
+    const t1 = official[conf][4].winner;
+    const t2 = official[conf][5].winner;
+    if(!t1 || !t2) continue;
+    const e = pick(t1, t2);
+    if(e && !official[conf][6].fromApi){
+      official[conf][6].winner  = e.winner;
+      official[conf][6].score   = e.score;
+      official[conf][6].fromApi = true;
       applied++;
     }
   }
 
   // ── Finales NBA ──
-  const ef=official.east[6].winner, wf=official.west[6].winner;
-  if(ef&&wf){
-    const w = byWinner[ef]!==undefined ? ef : byWinner[wf]!==undefined ? wf : null;
-    if(w && !official.final.fromApi){
-      official.final.winner=w;
-      official.final.score=byWinner[w];
-      official.final.fromApi=true;
+  const ef = official.east[6].winner;
+  const wf = official.west[6].winner;
+  if(ef && wf){
+    const e = pick(ef, wf);
+    if(e && !official.final.fromApi){
+      official.final.winner  = e.winner;
+      official.final.score   = e.score;
+      official.final.fromApi = true;
       applied++;
     }
   }
@@ -608,7 +624,6 @@ function applyAllResults(rows) {
   return applied;
 }
 
-// Gardée pour compatibilité mais plus utilisée directement
 function applyResult(winner,score){ return false; }
 
 function setBanner(type,html){
