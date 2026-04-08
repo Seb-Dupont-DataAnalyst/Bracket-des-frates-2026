@@ -336,14 +336,21 @@ function saveMyBracket(){
   });
 }
 
-function setPseudo(){
+function setPseudo() {
   const val = document.getElementById('pseudo-field').value.trim();
-  if(!val) return;
+  if (!val) return;
   myName = val;
   localStorage.setItem('brkt_pseudo', myName);
-  document.getElementById('my-bracket-hint').textContent = `Salut ${myName} ! Modifie tes pronos :`;
-  const ex = participants.find(p=>p.name===myName);
-  if(ex) myPicks = JSON.parse(JSON.stringify(ex.picks));
+  
+  // On cherche si le participant existe déjà dans les données chargées de Firebase
+  const ex = participants.find(p => p.name.toLowerCase() === myName.toLowerCase());
+  if (ex) {
+    myPicks = JSON.parse(JSON.stringify(ex.picks));
+    document.getElementById('my-bracket-hint').textContent = `Content de te revoir ${myName} ! Tes pronos ont été chargés.`;
+  } else {
+    myPicks = emptyPicks();
+    document.getElementById('my-bracket-hint').textContent = `Bienvenue ${myName} ! Clique sur un gagnant puis son score pour avancer.`;
+  }
   renderMyBracket();
 }
 
@@ -415,28 +422,53 @@ function buildFinals(sec, picks, onUpdate, readOnly){
   sec.appendChild(champ);
 }
 
-function buildMatchup(md, t1, t2, onSet, locked){
+function buildMatchup(md, t1, t2, onSet, locked) {
   const wrap = el('div', 'matchup' + (md.fromApi ? ' synced' : ''));
+  
   const mkRow = (t) => {
     const isW = md.winner === t.name;
-    const r = el('div','team-row' + (isW?' winner':'') + (locked||t.name==='?'?' locked':''));
+    const isTbd = t.name === '?';
+    const r = el('div', 'team-row' + (isW ? ' winner' : '') + (locked || isTbd ? ' locked' : ''));
     const logo = getLogo(t.name);
-    r.innerHTML = `<span class="seed">${t.seed||''}</span>${logo?`<img src="${logo}" class="t-logo">`:''} <span class="tname">${t.name}</span>`;
-    if(!locked && t.name!=='?') r.onclick = () => onSet(t.name, md.score);
+    
+    r.innerHTML = `<span class="seed">${t.seed || ''}</span>
+                   ${logo ? `<img src="${logo}" class="t-logo">` : ''} 
+                   <span class="tname">${t.name}</span>
+                   ${isW && md.fromApi ? '<span class="check">✓</span>' : ''}`;
+
+    // Au clic sur l'équipe : on définit le vainqueur mais on ne passe pas encore au tour suivant
+    // On attend le score pour valider la montée
+    if (!locked && !isTbd) {
+      r.onclick = () => {
+        md.winner = t.name;
+        renderMyBracket(); // Rafraîchit l'affichage pour montrer la sélection
+      };
+    }
     return r;
   };
-  wrap.append(mkRow(t1), el('div','divider-h'), mkRow(t2));
-  
-  if(md.winner && t1.name!=='?' && t2.name!=='?'){
-    const srow = el('div','score-row');
-    const sbtns = el('div','score-btns');
-    ['4-0','4-1','4-2','4-3'].forEach(s => {
-      const b = el('button','sbtn' + (md.score===s?' active':''));
+
+  wrap.append(mkRow(t1), el('div', 'divider-h'), mkRow(t2));
+
+  // Affichage des boutons de score si un vainqueur est sélectionné
+  if (md.winner && t1.name !== '?' && t2.name !== '?') {
+    const srow = el('div', 'score-row');
+    const sbtns = el('div', 'score-btns');
+    ['4-0', '4-1', '4-2', '4-3'].forEach(s => {
+      const b = el('button', 'sbtn' + (md.score === s ? ' active' : ''));
+      if (md.fromApi) b.classList.add('locked');
       b.textContent = s;
-      if(!locked) b.onclick = (e) => { e.stopPropagation(); onSet(md.winner, s); };
+      
+      if (!locked && !md.fromApi) {
+        b.onclick = (e) => {
+          e.stopPropagation();
+          // ICI : On valide le score ET on envoie au tour suivant
+          onSet(md.winner, s); 
+        };
+      }
       sbtns.appendChild(b);
     });
-    srow.appendChild(sbtns); wrap.appendChild(srow);
+    srow.appendChild(sbtns);
+    wrap.appendChild(srow);
   }
   return wrap;
 }
