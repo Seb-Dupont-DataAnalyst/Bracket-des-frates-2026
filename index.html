@@ -273,9 +273,14 @@ const db = firebase.database();
 const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
 const DEADLINE  = '2026-04-19T00:00:00';
 const CONF_LOGOS = {
-  east: 'https://upload.wikimedia.org/wikipedia/fr/1/1e/NBA_Eastern_Conference_logo.svg',
-  west: 'https://upload.wikimedia.org/wikipedia/fr/c/c2/NBA_Western_Conference_logo.svg',
-  final: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/nba.png' 
+  // Logo Eastern Conference
+  east: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iIzM4YmRmOCIgZD0iTTEyIDJMMiA3djVsMTAgMTBsMTAtMTBWN0wyIDEyek0xMiAxOS44TDQuMiAxMmw3LjgtNy44IDcuOCA3LjgtNy44IDcuOHoiLz48L3N2Zz4=', 
+  
+  // Logo Western Conference
+  west: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2Y0M2Y1ZSIgZD0iTTEyIDJMMiA3djVsMTAgMTBsMTAtMTBWN0wyIDEyek0xMiAxOS44TDQuMiAxMmw3LjgtNy44IDcuOCA3LjgtNy44IDcuOHoiLz48L3N2Zz4=',
+  
+  // Logo NBA Finals (Version simplifiée pour garantir l'affichage)
+  final: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/nba.png'
 };
 
 const TEAM_LOGOS = {'Cavaliers':'cle','Heat':'mia','Pacers':'ind','Bucks':'mil','Knicks':'ny','Pistons':'det','Celtics':'bos','Magic':'orl','Thunder':'okc','Grizzlies':'mem','Nuggets':'den','Clippers':'lac','Timberwolves':'min','Mavericks':'dal','Rockets':'hou','Warriors':'gs'};
