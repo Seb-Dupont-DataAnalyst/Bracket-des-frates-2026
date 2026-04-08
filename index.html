@@ -122,19 +122,35 @@
 .round-col { 
   display: flex; 
   flex-direction: column; 
-  /* justify-content: space-around permet de centrer les blocs par rapport 
-     aux blocs du tour précédent, créant cet effet d'entonnoir parfait */
   justify-content: space-around; 
-  padding: 10px 6px; 
   min-width: 175px; 
-  flex: 1; /* Force la colonne à prendre toute la hauteur du parent */
+  flex: 1;
+  /* On s'assure que toutes les colonnes commencent à la même hauteur, 
+     même celles qui n'ont pas de logo en haut */
+  padding-top: 10px; 
+}
+
+.round-col:not(:has(.conf-header))::before {
+  content: '';
+  display: block;
+  height: 110px; /* Même hauteur que .conf-header */
+}
+
+/* Ajustement pour le bloc central des Finales NBA */
+.finals-col-inner::before {
+  content: '';
+  display: block;
+  height: 110px; 
 }
   
   /* --- MODIFS LOGOS CONFÉRENCES --- */
-  .conf-header {
-  text-align: center;
-  margin-bottom: 20px; /* Plus d'espace sous le logo */
-  padding: 10px;
+.conf-header { 
+  text-align: center; 
+  height: 110px; /* On fixe la hauteur du bloc logo+titre */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 15px;
 }
 
 .conf-logo-big { 
@@ -379,14 +395,14 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
 }
 
 function buildConf(sec, conf, picks, onUpdate, readOnly){
-  const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
-  
-  // Colonne 1 : 1er Tour
+  const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
   const col1 = makeCol('1er tour');
+
+  // Le header doit être dans col1 pour que notre CSS s'applique
   const confHeader = el('div', 'conf-header');
-  confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big" onerror="this.style.display='none'">
-                          <div class="round-label">${conf==='east'?'Eastern':'Western'}</div>`;
-  col1.prepend(confHeader);
+  confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big">
+                          <div class="round-label">${conf === 'east' ? 'Eastern' : 'Western'} Conference</div>`;
+  col1.appendChild(confHeader);
 
   for(let i=0; i<4; i++){
   col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
