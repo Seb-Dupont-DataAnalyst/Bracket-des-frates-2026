@@ -340,10 +340,19 @@ function setPseudo(){
 
 // RENDU BRACKET
 function buildBracket(containerId, picks, onUpdate, readOnly){
-  const c = document.getElementById(containerId); c.innerHTML='';
-  const ws = el('div','conf-section'); buildConf(ws,'west',picks,onUpdate,readOnly);
-  const fs = el('div','finals-col'); buildFinals(fs,picks,onUpdate,readOnly);
-  const es = el('div','conf-section'); buildConf(es,'east',picks,onUpdate,readOnly);
+  const c = document.getElementById(containerId); 
+  c.innerHTML = '';
+  
+  // On ajoute bien les classes 'west' et 'east' ici
+  const ws = el('div','conf-section west'); 
+  buildConf(ws,'west',picks,onUpdate,readOnly);
+  
+  const fs = el('div','finals-col'); 
+  buildFinals(fs,picks,onUpdate,readOnly);
+  
+  const es = el('div','conf-section east'); 
+  buildConf(es,'east',picks,onUpdate,readOnly);
+  
   c.append(ws, fs, es);
 }
 
