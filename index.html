@@ -132,27 +132,30 @@
   
   /* --- MODIFS LOGOS CONFÉRENCES --- */
   .conf-header {
-    text-align: center;
-    margin-bottom: 15px;
-    padding: 10px;
-    background: rgba(0,0,0,0.3);
-    border-radius: var(--r);
-    border: 1px solid var(--border);
-  }
-  .conf-logo-big {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
-  }
-  
-  .finals-logo-big {
-    width: 120px;
-    height: 60px;
-    object-fit: contain;
-    margin-bottom: 15px;
-    filter: drop-shadow(0 0 8px rgba(245,158,11,0.2));
-  }
+  text-align: center;
+  margin-bottom: 20px; /* Plus d'espace sous le logo */
+  padding: 10px;
+}
+
+.conf-logo-big {
+  width: 90px; /* Légèrement plus grand */
+  height: auto;
+  max-height: 90px;
+  object-fit: contain;
+  margin: 0 auto 12px; /* Centrage horizontal parfait */
+  display: block;
+  /* Petite ombre portée pour le style sur fond sombre */
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.15)); 
+}
+
+/* --- STYLE DU LOGO DES FINALES --- */
+.finals-logo-big {
+  width: 140px; /* Bien visible au centre */
+  height: auto;
+  display: block;
+  margin: 0 auto 25px; /* Bel espace sous le logo */
+  filter: drop-shadow(0 0 6px rgba(245,158,11,0.3)); /* Ombre dorée */
+}
 
   .round-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); text-align: center; text-transform: uppercase; margin-top: 5px;}
   
