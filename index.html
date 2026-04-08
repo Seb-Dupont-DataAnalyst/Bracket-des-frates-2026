@@ -273,12 +273,11 @@ const db = firebase.database();
 const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
 const DEADLINE  = '2026-04-19T00:00:00';
 const CONF_LOGOS = {
-  // Logos officiels vectoriels (SVG) hébergés sur Wikimedia (très stables)
   east: 'https://upload.wikimedia.org/wikipedia/fr/1/1e/NBA_Eastern_Conference_logo.svg',
   west: 'https://upload.wikimedia.org/wikipedia/fr/c/c2/NBA_Western_Conference_logo.svg',
-  // Logo officiel des NBA Finals hébergé sur ESPN (indestructible)
   final: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/nba.png' 
 };
+
 const TEAM_LOGOS = {'Cavaliers':'cle','Heat':'mia','Pacers':'ind','Bucks':'mil','Knicks':'ny','Pistons':'det','Celtics':'bos','Magic':'orl','Thunder':'okc','Grizzlies':'mem','Nuggets':'den','Clippers':'lac','Timberwolves':'min','Mavericks':'dal','Rockets':'hou','Warriors':'gs'};
 
 const EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
@@ -286,7 +285,9 @@ const WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,na
 const ROUND_PTS = [10, 12, 15, 20];
 const SCORE_BONUS = 2;
 
-// ÉTAT
+// ==========================================
+// ÉTAT GLOBAL
+// ==========================================
 let official = emptyPicks();
 let participants = [];
 let myName = localStorage.getItem('brkt_pseudo') || '';
@@ -300,11 +301,12 @@ function emptyPicks(){
   };
 }
 
-// LOGOS
 function getLogo(n){ const c=TEAM_LOGOS[n]; return c?`https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/${c}.png`:''; }
 function el(t,c){ const e=document.createElement(t); if(c)e.className=c; return e; }
 
+// ==========================================
 // LOGIQUE FIREBASE
+// ==========================================
 db.ref('participants').on('value', (snap) => {
   const data = snap.val();
   if(data) {
@@ -327,7 +329,7 @@ function saveMyBracket(){
     updated: Date.now()
   }).then(() => {
     btn.disabled = false;
-    document.getElementById('save-msg').textContent = "✓ Sauvegardé !";
+    document.getElementById('save-msg').textContent = "✓ Sauvegardé dans le Cloud !";
     setTimeout(()=> document.getElementById('save-msg').textContent="", 3000);
   });
 }
@@ -337,18 +339,19 @@ function setPseudo(){
   if(!val) return;
   myName = val;
   localStorage.setItem('brkt_pseudo', myName);
-  document.getElementById('my-bracket-hint').textContent = `Salut ${myName} ! Modifie ton bracket ci-dessous :`;
+  document.getElementById('my-bracket-hint').textContent = `Salut ${myName} ! Modifie tes pronos :`;
   const ex = participants.find(p=>p.name===myName);
   if(ex) myPicks = JSON.parse(JSON.stringify(ex.picks));
   renderMyBracket();
 }
 
-// RENDU BRACKET
+// ==========================================
+// FONCTIONS DE RENDU
+// ==========================================
 function buildBracket(containerId, picks, onUpdate, readOnly){
   const c = document.getElementById(containerId); 
   c.innerHTML = '';
   
-  // On ajoute bien les classes 'west' et 'east' ici
   const ws = el('div','conf-section west'); 
   buildConf(ws,'west',picks,onUpdate,readOnly);
   
@@ -361,35 +364,15 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
   c.append(ws, fs, es);
 }
 
-// MODIF : Ajout du logo de conférence en haut de la colonne
 function buildConf(sec, conf, picks, onUpdate, readOnly){
   const teams = conf==='east'?EAST_TEAMS:WEST_TEAMS;
-  const col1 = makeCol('1er tour');
-
-  // Ajout du Header de Conférence (Logo + Label)
-// Dans buildConf
-const confHeader = el('div', 'conf-header');
-confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big" onerror="this.style.display='none'">
-                        <div class="round-label">${conf==='east'?'Eastern':'Western'} Conference</div>`;
-
-
   
-  const col3 = makeCol('Finale Conf');
-  const t1={name:picks[conf][4].winner||'?'}, t2={name:picks[conf][5].winner||'?'};
-  col3.appendChild(buildMatchup(picks[conf][6], t1, t2, (w,s)=>{
-    picks[conf][6].winner=w; picks[conf][6].score=s; onUpdate();
-  }, readOnly || t1.name==='?' || t2.name==='?'));
-
-  // L'alignement est géré par CSS, on garde l'ordre logique
-  if(conf==='west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
-}
-
-// MODIF : Ajout du logo NBA Finals au centre
-function buildFinals(sec, picks, onUpdate, readOnly){
-  // Ajout du logo NBA Finals
-// Dans buildFinals
-const finalsHeader = el('div', 'finals-header');
-finalsHeader.innerHTML = `<img src="${CONF_LOGOS.final}" class="finals-logo-big" onerror="this.style.display='none'">`;
+  // Colonne 1 : 1er Tour
+  const col1 = makeCol('1er tour');
+  const confHeader = el('div', 'conf-header');
+  confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big" onerror="this.style.display='none'">
+                          <div class="round-label">${conf==='east'?'Eastern':'Western'}</div>`;
+  col1.prepend(confHeader);
 
   for(let i=0; i<4; i++){
     col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
@@ -397,13 +380,29 @@ finalsHeader.innerHTML = `<img src="${CONF_LOGOS.final}" class="finals-logo-big"
     }, readOnly));
   }
   
-  const col2 = makeCol('Demi');
+  // Colonne 2 : Demis
+  const col2 = makeCol('Demis');
   for(let i=0; i<2; i++){
     const t1={name:picks[conf][i*2].winner||'?'}, t2={name:picks[conf][i*2+1].winner||'?'};
     col2.appendChild(buildMatchup(picks[conf][4+i], t1, t2, (w,s)=>{
       picks[conf][4+i].winner=w; picks[conf][4+i].score=s; cascade(picks,conf); onUpdate();
     }, readOnly || t1.name==='?' || t2.name==='?'));
   }
+  
+  // Colonne 3 : Finale Conf
+  const col3 = makeCol('Finale');
+  const t1_f={name:picks[conf][4].winner||'?'}, t2_f={name:picks[conf][5].winner||'?'};
+  col3.appendChild(buildMatchup(picks[conf][6], t1_f, t2_f, (w,s)=>{
+    picks[conf][6].winner=w; picks[conf][6].score=s; onUpdate();
+  }, readOnly || t1_f.name==='?' || t2_f.name==='?'));
+
+  if(conf==='west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
+}
+
+function buildFinals(sec, picks, onUpdate, readOnly){
+  const finalsHeader = el('div', 'finals-header');
+  finalsHeader.innerHTML = `<img src="${CONF_LOGOS.final}" class="finals-logo-big">`;
+  sec.appendChild(finalsHeader);
 
   const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
   sec.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?'));
@@ -425,13 +424,14 @@ function buildMatchup(md, t1, t2, onSet, locked){
     return r;
   };
   wrap.append(mkRow(t1), el('div','divider-h'), mkRow(t2));
+  
   if(md.winner && t1.name!=='?' && t2.name!=='?'){
     const srow = el('div','score-row');
     const sbtns = el('div','score-btns');
     ['4-0','4-1','4-2','4-3'].forEach(s => {
       const b = el('button','sbtn' + (md.score===s?' active':''));
       b.textContent = s;
-      if(!locked) b.onclick = () => onSet(md.winner, s);
+      if(!locked) b.onclick = (e) => { e.stopPropagation(); onSet(md.winner, s); };
       sbtns.appendChild(b);
     });
     srow.appendChild(sbtns); wrap.appendChild(srow);
@@ -440,92 +440,87 @@ function buildMatchup(md, t1, t2, onSet, locked){
 }
 
 function makeCol(l){ const c=el('div','round-col'); const lbl=el('div','round-label'); lbl.textContent=l; c.appendChild(lbl); return c; }
+
 function cascade(p,c){
-  for(let i=0; i<2; i++){ if(p[c][4+i].winner && p[c][4+i].winner!==p[c][i*2].winner && p[c][4+i].winner!==p[c][i*2+1].winner){ p[c][4+i].winner=null; p[c][4+i].score=null; }}
-  if(p[c][6].winner && p[c][6].winner!==p[c][4].winner && p[c][6].winner!==p[c][5].winner){ p[c][6].winner=null; p[c][6].score=null; }
+  for(let i=0; i<2; i++){ 
+    if(p[c][4+i].winner && p[c][4+i].winner!==p[c][i*2].winner && p[c][4+i].winner!==p[c][i*2+1].winner){ 
+       p[c][4+i].winner=null; p[c][4+i].score=null; 
+    }
+  }
+  if(p[c][6].winner && p[c][6].winner!==p[c][4].winner && p[c][6].winner!==p[c][5].winner){ 
+     p[c][6].winner=null; p[c][6].score=null; 
+  }
 }
 
-// CALCUL SCORES
+// ==========================================
+// CALCUL & SYNC
+// ==========================================
 function computeScore(p){
   let pts=0;
-  const check = (pm, om, r) => { if(om.winner && pm.winner === om.winner){ pts += ROUND_PTS[r]; if(pm.score === om.score) pts += SCORE_BONUS; } };
-  for(let i=0; i<7; i++){ const r = i<4?0:i<6?1:2; check(p.east[i], official.east[i], r); check(p.west[i], official.west[i], r); }
+  const check = (pm, om, r) => { 
+    if(om.winner && pm.winner === om.winner){ 
+      pts += ROUND_PTS[r]; 
+      if(pm.score === om.score) pts += SCORE_BONUS; 
+    } 
+  };
+  for(let i=0; i<7; i++){ 
+    const r = i<4?0:i<6?1:2; 
+    check(p.east[i], official.east[i], r); 
+    check(p.west[i], official.west[i], r); 
+  }
   check(p.final, official.final, 3);
   return pts;
 }
 
-// SYNC SHEET
 async function loadFromSheet() {
   const st = document.getElementById('sync-status');
-  st.className = 'sync-status';
   st.innerHTML = '<span class="spin">⟳</span>';
-  
   try {
     const res = await fetch(SHEET_CSV + '&t=' + Date.now());
     const text = await res.text();
-    
-    // On réutilise ta logique de parsing CSV
     const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
     const data = rows[0][0].toLowerCase() === 'winner' ? rows.slice(1) : rows;
-
-    // Réinitialiser les scores officiels provenant de l'API/Sheet avant de ré-appliquer
+    
     official = emptyPicks(); 
+    const entries = data.filter(r => r[0] && r[1]).map(r => ({winner: r[0], score: r[1], used: false}));
 
-    let applied = 0;
-    const entries = data.filter(r => r[0] && r[1]).map(r => ({
-      winner: r[0],
-      score: r[1],
-      used: false
-    }));
-
-    function pick(t1, t2) {
+    const pickRes = (t1, t2) => {
       const e = entries.find(e => !e.used && (e.winner === t1 || e.winner === t2));
       if (e) e.used = true;
-      return e || null;
-    }
+      return e;
+    };
 
-    // Application des résultats aux 3 tours + Finale
-    const confs = ['east', 'west'];
-    confs.forEach(conf => {
+    ['east', 'west'].forEach(conf => {
       const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
-      // Round 1
       for (let i = 0; i < 4; i++) {
-        const e = pick(teams[i*2].name, teams[i*2+1].name);
-        if (e) { official[conf][i] = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+        const e = pickRes(teams[i*2].name, teams[i*2+1].name);
+        if (e) official[conf][i] = { winner: e.winner, score: e.score, fromApi: true };
       }
-      // Round 2
       for (let i = 0; i < 2; i++) {
         const t1 = official[conf][i*2].winner, t2 = official[conf][i*2+1].winner;
-        if (!t1 || !t2) continue;
-        const e = pick(t1, t2);
-        if (e) { official[conf][4+i] = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+        if (t1 && t2) {
+          const e = pickRes(t1, t2);
+          if (e) official[conf][4+i] = { winner: e.winner, score: e.score, fromApi: true };
+        }
       }
-      // Round 3
-      const t1 = official[conf][4].winner, t2 = official[conf][5].winner;
-      if (t1 && t2) {
-        const e = pick(t1, t2);
-        if (e) { official[conf][6] = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+      const t1_f = official[conf][4].winner, t2_f = official[conf][5].winner;
+      if (t1_f && t2_f) {
+        const e = pickRes(t1_f, t2_f);
+        if (e) official[conf][6] = { winner: e.winner, score: e.score, fromApi: true };
       }
     });
 
-    // Finale NBA
     const ef = official.east[6].winner, wf = official.west[6].winner;
     if (ef && wf) {
-      const e = pick(ef, wf);
-      if (e) { official.final = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+      const e = pickRes(ef, wf);
+      if (e) official.final = { winner: e.winner, score: e.score, fromApi: true };
     }
 
     st.className = 'sync-status ok';
-    st.textContent = "✓ " + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-    
+    st.textContent = "✓ " + new Date().toLocaleTimeString();
     renderOfficialBracket();
-    renderLeaderboard(); // Pour mettre à jour les points de tout le monde en fonction des nouveaux scores
-    
-  } catch (e) {
-    console.error(e);
-    st.className = 'sync-status err';
-    st.textContent = "Erreur Sync";
-  }
+    renderLeaderboard();
+  } catch (e) { st.textContent = "Erreur Sync"; }
 }
 
 function renderLeaderboard(){
@@ -539,20 +534,21 @@ function renderLeaderboard(){
 }
 
 function renderOfficialBracket(){ buildBracket('main-bracket', official, ()=>{}, true); }
-function renderMyBracket(){ if(myName) buildBracket('my-bracket-render', myPicks, ()=>{}, false); }
+function renderMyBracket(){ if(myName) buildBracket('my-bracket-render', myPicks, ()=>{ renderLeaderboard(); }, false); }
+
 function showTab(id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
-  renderMyBracket();
+  const tabs = document.querySelectorAll('.tab');
+  if(id==='bracket') tabs[0].classList.add('active');
+  if(id==='my-bracket') tabs[1].classList.add('active');
+  if(id==='leaderboard') tabs[2].classList.add('active');
 }
 
 // INIT
 renderOfficialBracket();
-if(myName) { 
-  document.getElementById('pseudo-field').value = myName;
-  setPseudo();
-}
+if(myName) { document.getElementById('pseudo-field').value = myName; setPseudo(); }
 </script>
 </body>
 </html>
