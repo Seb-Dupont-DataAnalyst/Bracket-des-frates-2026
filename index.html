@@ -91,33 +91,44 @@
   
   /* --- MODIFS ALIGNEMENT --- */
   .bracket { 
-    display: flex; 
-    min-width: 1060px; 
-    gap: 0; 
-    align-items: center; /* Aligne tout le bracket verticalement au centre */
-  }
-  .conf-section { 
-    flex: 1; 
-    display: flex; 
-    flex-direction: row; 
-    align-items: center; /* Aligne les colonnes de conf verticalement */
-  }
-  .round-col { 
-    display: flex; 
-    flex-direction: column; 
-    justify-content: center; /* Centre les matchups dans la colonne */
-    padding: 4px 6px; 
-    min-width: 175px; 
-    gap: 15px; /* Espace uniforme entre les matchups */
-  }
-  .finals-col { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: center; 
-    padding: 4px 10px; 
-    min-width: 190px; /* Un peu plus large pour le logo NBA Finals */
-  }
+  display: grid; 
+  /* On crée 3 colonnes : 1fr (gauche), auto (centre), 1fr (droite) */
+  /* Les 1fr forcent l'Est et l'Ouest à prendre exactement le même espace */
+  grid-template-columns: 1fr auto 1fr; 
+  min-width: 1100px; 
+  align-items: center; 
+  justify-items: center;
+}
+
+.conf-section { 
+  display: flex; 
+  flex-direction: row; 
+  align-items: center;
+  gap: 0;
+  width: 100%; /* Important pour que le 1fr de la grille fonctionne */
+}
+
+/* On s'assure que l'Ouest pousse vers la droite et l'Est vers la gauche */
+.conf-section.west { justify-content: flex-end; }
+.conf-section.east { justify-content: flex-start; }
+
+.finals-col { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 0 40px; /* On ajoute de l'air autour de la finale */
+  min-width: 220px;
+}
+
+.round-col { 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  padding: 0 10px; 
+  min-width: 175px; 
+  gap: 20px; /* Espace vertical entre les matchs */
+}
   
   /* --- MODIFS LOGOS CONFÉRENCES --- */
   .conf-header {
