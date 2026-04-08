@@ -310,7 +310,7 @@ function buildFinals(sec, picks, onUpdate, readOnly){
 }
 
 function buildMatchup(md, t1, t2, onSet, locked){
-  const wrap = el('div','matchup');
+  const wrap = el('div', 'matchup' + (md.fromApi ? ' synced' : ''));
   const mkRow = (t) => {
     const isW = md.winner === t.name;
     const r = el('div','team-row' + (isW?' winner':'') + (locked||t.name==='?'?' locked':''));
