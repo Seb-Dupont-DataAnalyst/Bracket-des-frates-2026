@@ -337,19 +337,26 @@ function saveMyBracket(){
 function setPseudo() {
   const val = document.getElementById('pseudo-field').value.trim();
   if (!val) return;
-  myName = val;
-  localStorage.setItem('brkt_pseudo', myName);
   
-  // On cherche si le participant existe déjà dans les données chargées de Firebase
-  const ex = participants.find(p => p.name.toLowerCase() === myName.toLowerCase());
-  if (ex) {
-    myPicks = JSON.parse(JSON.stringify(ex.picks));
-    document.getElementById('my-bracket-hint').textContent = `Content de te revoir ${myName} ! Tes pronos ont été chargés.`;
-  } else {
-    myPicks = emptyPicks();
-    document.getElementById('my-bracket-hint').textContent = `Bienvenue ${myName} ! Clique sur un gagnant puis son score pour avancer.`;
-  }
-  renderMyBracket();
+  myName = val;
+  localStorage.setItem('brkt_pseudo', myName); // Sauvegarde locale pour le refresh
+  
+  // On affiche un petit message de chargement
+  document.getElementById('my-bracket-hint').textContent = `Connexion en cours pour ${myName}...`;
+
+  // On va chercher tes données spécifiquement dans Firebase
+  db.ref('participants/' + myName.replace(/\s/g, '_')).once('value', (snap) => {
+    const data = snap.val();
+    if (data && data.picks) {
+      myPicks = data.picks;
+      document.getElementById('my-bracket-hint').textContent = `Content de te revoir ${myName} ! Tes pronos ont été chargés.`;
+    } else {
+      myPicks = emptyPicks();
+      document.getElementById('my-bracket-hint').textContent = `Bienvenue ${myName} ! Crée ton bracket et n'oublie pas d'enregistrer.`;
+    }
+    renderMyBracket();
+    renderLeaderboard(); // Pour mettre à jour ton score immédiatement
+  });
 }
 
 // ==========================================
@@ -551,6 +558,7 @@ async function loadFromSheet() {
 
     st.className = 'sync-status ok';
     st.textContent = "✓ " + new Date().toLocaleTimeString();
+    
     renderOfficialBracket();
     renderLeaderboard();
   } catch (e) { st.textContent = "Erreur Sync"; }
