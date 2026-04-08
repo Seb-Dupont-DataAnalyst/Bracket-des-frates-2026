@@ -275,7 +275,7 @@ const CONF_LOGOS = {
   west: 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/scoreboard/west.png&w=200&h=200',
   
   // LE LOGO DES FINALS (Le vrai script doré)
-  final: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/nba-finals.png'
+  final: 'https://i.imgur.com/uR18uN0.png'
 };
 
 const TEAM_LOGOS = {'Cavaliers':'cle','Heat':'mia','Pacers':'ind','Bucks':'mil','Knicks':'ny','Pistons':'det','Celtics':'bos','Magic':'orl','Thunder':'okc','Grizzlies':'mem','Nuggets':'den','Clippers':'lac','Timberwolves':'min','Mavericks':'dal','Rockets':'hou','Warriors':'gs'};
@@ -382,10 +382,13 @@ function buildConf(sec, conf, picks, onUpdate, readOnly){
   col1.prepend(confHeader);
 
   for(let i=0; i<4; i++){
-    col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
-      picks[conf][i].winner=w; picks[conf][i].score=s; cascade(picks,conf); onUpdate();
-    }, readOnly));
-  }
+  col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
+    picks[conf][i].winner=w; 
+    picks[conf][i].score=s; 
+    cascade(picks,conf); // C'est ça qui fait monter l'équipe !
+    renderMyBracket();   // Et ça qui affiche le changement
+  }, readOnly));
+}
   
   // Colonne 2 : Demis
   const col2 = makeCol('Demis');
@@ -436,9 +439,8 @@ function buildMatchup(md, t1, t2, onSet, locked) {
 
     if (!locked && !isTbd) {
       r.onclick = () => {
-        md.winner = t.name;
-        // On rafraîchit pour montrer quelle équipe est sélectionnée (couleur orange)
-        renderMyBracket(); 
+        md.winner = t.name; // On définit le vainqueur
+        renderMyBracket();  // On rafraîchit pour afficher la sélection en orange
       };
     }
     return r;
@@ -446,6 +448,7 @@ function buildMatchup(md, t1, t2, onSet, locked) {
 
   wrap.append(mkRow(t1), el('div', 'divider-h'), mkRow(t2));
 
+  // Si une équipe est sélectionnée, on affiche les scores
   if (md.winner && t1.name !== '?' && t2.name !== '?') {
     const srow = el('div', 'score-row');
     const sbtns = el('div', 'score-btns');
@@ -455,9 +458,10 @@ function buildMatchup(md, t1, t2, onSet, locked) {
       
       if (!locked && !md.fromApi) {
         b.onclick = (e) => {
-          e.stopPropagation();
-          // ACTION : On enregistre le score ET on déclenche la montée au tour suivant
-          onSet(md.winner, s); 
+          e.stopPropagation(); // Empêche le clic de se propager à la ligne de l'équipe
+          md.score = s;       // On définit le score
+          onSet(md.winner, s); // On déclenche la montée au tour suivant
+          renderMyBracket();  // On rafraîchit tout le bracket
         };
       }
       sbtns.appendChild(b);
