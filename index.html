@@ -3,218 +3,441 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bracket des frates 2025</title>
+  <title>Bracket des Frates 2025</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg:       #0d0f14;
-      --bg2:      #151820;
-      --bg3:      #1c2030;
-      --border:   rgba(255,255,255,0.08);
-      --border2:  rgba(255,255,255,0.16);
-      --text:     #e8eaf0;
-      --muted:    #6b7280;
-      --accent:   #f97316;
-      --accent2:  #fb923c;
-      --green:    #22c55e;
-      --green-bg: rgba(34,197,94,0.12);
-      --green-br: rgba(34,197,94,0.3);
-      --red:      #ef4444;
-      --red-bg:   rgba(239,68,68,0.1);
-      --red-br:   rgba(239,68,68,0.3);
-      --blue:     #3b82f6;
-      --blue-bg:  rgba(59,130,246,0.12);
-      --blue-br:  rgba(59,130,246,0.3);
-      --amber:    #f59e0b;
-      --amber-bg: rgba(245,158,11,0.12);
-      --amber-br: rgba(245,158,11,0.3);
-      --r: 8px;
-      --fh: 'Barlow Condensed', sans-serif;
-      --fb: 'Barlow', sans-serif;
+      --bg:        #07080c;
+      --bg2:       #0e1018;
+      --bg3:       #161922;
+      --glass:     rgba(255,255,255,0.04);
+      --glass2:    rgba(255,255,255,0.07);
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.13);
+      --text:      #f0f2f8;
+      --muted:     #5a6070;
+      --muted2:    #8892a4;
+      --orange:    #ff5f1f;
+      --orange2:   #ff8c00;
+      --amber:     #f59e0b;
+      --green:     #10b981;
+      --green-bg:  rgba(16,185,129,0.1);
+      --green-br:  rgba(16,185,129,0.25);
+      --red:       #f43f5e;
+      --red-bg:    rgba(244,63,94,0.1);
+      --red-br:    rgba(244,63,94,0.25);
+      --blue:      #38bdf8;
+      --blue-bg:   rgba(56,189,248,0.1);
+      --blue-br:   rgba(56,189,248,0.25);
+      --amber-bg:  rgba(245,158,11,0.1);
+      --amber-br:  rgba(245,158,11,0.25);
+      --r:         10px;
+      --r2:        14px;
     }
-    body { background:var(--bg); color:var(--text); font-family:var(--fb); font-size:14px; min-height:100vh; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── GRAIN overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      background-size: 180px 180px;
+      opacity: .6;
+    }
+
+    /* ── GLOW background orbs ── */
+    .bg-orb {
+      position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+      filter: blur(120px); opacity: .12;
+    }
+    .bg-orb-1 { width: 600px; height: 600px; background: var(--orange); top: -200px; left: -200px; }
+    .bg-orb-2 { width: 500px; height: 500px; background: #3b82f6; bottom: -150px; right: -150px; }
+
+    /* Everything above bg */
+    .wrap { position: relative; z-index: 1; }
 
     /* ── HEADER ── */
-    .header { background:var(--bg2); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
-    .header-title { font-family:var(--fh); font-size:26px; font-weight:700; letter-spacing:.04em; }
-    .header-title span { color:var(--accent); }
-    .header-sub { font-size:11px; color:var(--muted); margin-top:2px; }
-    .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .sync-status { font-size:11px; font-weight:500; }
-    .sync-status.ok  { color:var(--green); }
-    .sync-status.err { color:var(--red); }
-    .spin { display:inline-block; animation:spin .7s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      padding: 18px 28px;
+      background: rgba(14,16,24,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-brand { display: flex; align-items: baseline; gap: 10px; }
+    .header-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px; letter-spacing: .06em; line-height: 1;
+      background: linear-gradient(135deg, var(--orange) 0%, var(--amber) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-year {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px; color: var(--muted2);
+      border: 1px solid var(--border2); border-radius: 6px;
+      padding: 2px 7px; letter-spacing: .06em;
+    }
+    .header-sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: .02em; }
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .sync-status { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; }
+    .sync-status.ok  { color: var(--green); }
+    .sync-status.err { color: var(--red); }
+    .spin { display: inline-block; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── PHASE BANNER ── */
-    .phase-bar { padding:10px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--border); }
-    .phase-badge { display:inline-flex; align-items:center; gap:7px; padding:5px 12px; border-radius:20px; font-family:var(--fh); font-weight:700; font-size:12px; letter-spacing:.06em; }
-    .phase-badge.open   { background:var(--green-bg); border:1px solid var(--green-br); color:var(--green); }
-    .phase-badge.locked { background:var(--red-bg);   border:1px solid var(--red-br);   color:var(--red); }
-    .phase-badge.soon   { background:var(--amber-bg); border:1px solid var(--amber-br); color:var(--amber); }
-    .phase-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
-    .phase-dot.pulse { animation:pulse 1.5s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .countdown { font-family:var(--fh); font-size:13px; font-weight:600; color:var(--muted); letter-spacing:.04em; }
-    .countdown .cd-val { color:var(--amber); }
-    .deadline-note { font-size:11px; color:var(--muted); }
+    /* ── PHASE BAR ── */
+    .phase-bar {
+      padding: 10px 28px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 10px;
+      background: var(--glass); border-bottom: 1px solid var(--border);
+    }
+    .phase-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 14px; border-radius: 20px;
+      font-family: 'DM Mono', monospace; font-weight: 500;
+      font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    }
+    .phase-badge.open   { background: var(--green-bg); border: 1px solid var(--green-br); color: var(--green); }
+    .phase-badge.locked { background: var(--red-bg);   border: 1px solid var(--red-br);   color: var(--red); }
+    .phase-badge.soon   { background: var(--amber-bg); border: 1px solid var(--amber-br); color: var(--amber); }
+    .phase-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .phase-dot.pulse { animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
+    .countdown {
+      font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500;
+      color: var(--muted2); letter-spacing: .05em;
+    }
+    .countdown .cd-val { color: var(--amber); font-weight: 500; }
+    .deadline-note { font-size: 11px; color: var(--muted); }
 
     /* ── BANNER ── */
-    .banner { margin:10px 24px 0; padding:9px 14px; border-radius:var(--r); font-size:12px; line-height:1.5; }
-    .banner.success { background:var(--green-bg); border:1px solid var(--green-br); color:var(--green); }
-    .banner.warn    { background:var(--amber-bg); border:1px solid var(--amber-br); color:var(--amber); }
-    .banner.danger  { background:var(--red-bg);   border:1px solid var(--red-br);   color:var(--red); }
-    .banner.info    { background:var(--blue-bg);  border:1px solid var(--blue-br);  color:var(--blue); }
+    .banner {
+      margin: 12px 28px 0; padding: 10px 16px;
+      border-radius: var(--r); font-size: 12px; line-height: 1.5;
+      backdrop-filter: blur(10px);
+    }
+    .banner.success { background: var(--green-bg); border: 1px solid var(--green-br); color: var(--green); }
+    .banner.warn    { background: var(--amber-bg); border: 1px solid var(--amber-br); color: var(--amber); }
+    .banner.danger  { background: var(--red-bg);   border: 1px solid var(--red-br);   color: var(--red); }
+    .banner.info    { background: var(--blue-bg);  border: 1px solid var(--blue-br);  color: var(--blue); }
 
     /* ── TABS ── */
-    .tabs { display:flex; border-bottom:1px solid var(--border); padding:0 24px; margin-top:14px; gap:0; }
-    .tab { padding:10px 18px; font-size:13px; font-family:var(--fh); font-weight:700; letter-spacing:.04em; cursor:pointer; border:none; background:transparent; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .15s; }
-    .tab:hover { color:var(--text); }
-    .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .tabs {
+      display: flex; padding: 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-top: 16px; gap: 0; overflow-x: auto;
+    }
+    .tab {
+      padding: 11px 20px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+      font-weight: 500; cursor: pointer; border: none; background: transparent;
+      color: var(--muted); border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: all .2s; white-space: nowrap;
+      letter-spacing: .01em;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
 
     /* ── PANELS ── */
-    .panel { display:none; padding:20px 24px; }
-    .panel.active { display:block; }
+    .panel { display: none; padding: 24px 28px; }
+    .panel.active { display: block; animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
 
     /* ── BRACKET ── */
-    .bracket-wrap { overflow-x:auto; padding-bottom:12px; }
-    .bracket { display:flex; min-width:1020px; }
-    .conf-section { flex:1; display:flex; flex-direction:row; }
-    .round-col { display:flex; flex-direction:column; justify-content:space-around; padding:4px 6px; min-width:158px; }
-    .round-label { font-family:var(--fh); font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--muted); text-align:center; margin-bottom:10px; text-transform:uppercase; }
-    .finals-col { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px 12px; min-width:155px; }
-    .finals-col-inner { display:flex; flex-direction:column; align-items:center; gap:10px; justify-content:center; flex:1; width:100%; }
-    .matchup { margin:4px 0; border:1px solid var(--border); border-radius:var(--r); overflow:hidden; background:var(--bg2); transition:border-color .2s; }
-    .matchup.synced { border-color:var(--green-br); }
-    .team-row { display:flex; align-items:center; gap:7px; padding:6px 9px; cursor:pointer; transition:background .12s; color:var(--text); }
-    .team-row:hover:not(.locked):not(.tbd) { background:var(--bg3); }
-    .team-row.winner { background:var(--bg3); font-weight:500; }
-    .team-row.eliminated { opacity:.3; }
-    .team-row.locked,.team-row.tbd { cursor:default; }
-    .team-row.tbd { color:var(--muted); }
-    .seed { font-size:10px; color:var(--muted); min-width:13px; font-family:var(--fh); }
-    .tname { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; font-family:var(--fh); font-weight:600; letter-spacing:.03em; }
-    .api-badge { font-size:9px; padding:1px 5px; border-radius:3px; background:var(--green-bg); color:var(--green); border:1px solid var(--green-br); }
-    .check { font-size:10px; color:var(--green); }
-    .lock-icon { font-size:9px; color:var(--muted); }
-    .divider-h { height:1px; background:var(--border); }
-    .score-row { display:flex; align-items:center; gap:5px; padding:5px 9px; background:var(--bg); border-top:1px solid var(--border); }
-    .score-label { font-size:10px; color:var(--muted); flex:1; font-family:var(--fh); letter-spacing:.05em; }
-    .score-btns { display:flex; gap:4px; }
-    .sbtn { padding:2px 7px; font-size:10px; font-family:var(--fh); font-weight:600; border:1px solid var(--border2); border-radius:4px; background:transparent; color:var(--muted); cursor:pointer; transition:all .12s; letter-spacing:.03em; }
-    .sbtn:hover:not(.api-locked):not(.deadline-locked) { background:var(--bg3); color:var(--text); }
-    .sbtn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
-    .sbtn.api-locked,.sbtn.deadline-locked { cursor:default; opacity:.4; }
-    .matchup-gap { height:8px; }
-    .champion-box { text-align:center; padding:12px 8px; }
-    .trophy { font-size:28px; }
-    .champ-label { font-family:var(--fh); font-size:10px; font-weight:700; letter-spacing:.12em; color:var(--muted); margin:4px 0 3px; }
-    .champ-name { font-family:var(--fh); font-size:16px; font-weight:700; color:var(--accent); min-height:22px; letter-spacing:.04em; }
-    .champ-score { font-size:11px; color:var(--muted); margin-top:2px; }
+    .bracket-wrap { overflow-x: auto; padding-bottom: 16px; }
+    .bracket { display: flex; min-width: 1060px; gap: 0; }
+    .conf-section { flex: 1; display: flex; flex-direction: row; }
+    .round-col {
+      display: flex; flex-direction: column; justify-content: space-around;
+      padding: 4px 6px; min-width: 162px;
+    }
+    .round-label {
+      font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500;
+      letter-spacing: .14em; color: var(--muted); text-align: center;
+      margin-bottom: 12px; text-transform: uppercase;
+    }
+    .finals-col {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 4px 10px; min-width: 158px;
+    }
+    .finals-col-inner {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; justify-content: center; flex: 1; width: 100%;
+    }
 
-    /* ── DEADLINE LOCK OVERLAY ── */
-    .bracket-locked-msg { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--red-bg); border:1px solid var(--red-br); border-radius:var(--r); margin-bottom:14px; font-size:12px; color:var(--red); }
+    /* matchup card */
+    .matchup {
+      margin: 4px 0; border: 1px solid var(--border);
+      border-radius: var(--r); overflow: hidden;
+      background: var(--glass);
+      backdrop-filter: blur(8px);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .matchup:hover { border-color: var(--border2); }
+    .matchup.synced {
+      border-color: rgba(16,185,129,0.3);
+      box-shadow: 0 0 12px rgba(16,185,129,0.06);
+    }
+    .team-row {
+      display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+      cursor: pointer; transition: background .12s; color: var(--text);
+    }
+    .team-row:hover:not(.locked):not(.tbd) { background: var(--glass2); }
+    .team-row.winner { background: rgba(255,95,31,0.08); }
+    .team-row.eliminated { opacity: .28; }
+    .team-row.locked, .team-row.tbd { cursor: default; }
+    .team-row.tbd { color: var(--muted); }
+    .seed {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      color: var(--muted); min-width: 14px; letter-spacing: .04em;
+    }
+    .tname {
+      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 12px; font-weight: 500; letter-spacing: .01em;
+    }
+    .team-row.winner .tname { color: var(--orange2); }
+    .api-badge {
+      font-family: 'DM Mono', monospace; font-size: 8px; padding: 1px 5px;
+      border-radius: 4px; background: var(--green-bg); color: var(--green);
+      border: 1px solid var(--green-br); letter-spacing: .04em;
+    }
+    .check { font-size: 10px; color: var(--green); }
+    .lock-icon { font-size: 9px; color: var(--muted); }
+    .divider-h { height: 1px; background: var(--border); }
+    .score-row {
+      display: flex; align-items: center; gap: 5px; padding: 5px 10px;
+      background: rgba(0,0,0,0.2); border-top: 1px solid var(--border);
+    }
+    .score-label {
+      font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
+      flex: 1; letter-spacing: .08em; text-transform: uppercase;
+    }
+    .score-btns { display: flex; gap: 4px; }
+    .sbtn {
+      padding: 2px 7px; font-family: 'DM Mono', monospace; font-size: 10px;
+      border: 1px solid var(--border2); border-radius: 5px;
+      background: transparent; color: var(--muted); cursor: pointer;
+      transition: all .12s; letter-spacing: .03em;
+    }
+    .sbtn:hover:not(.api-locked):not(.deadline-locked) { background: var(--glass2); color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .sbtn.active {
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      border-color: var(--orange); color: #fff; font-weight: 500;
+    }
+    .sbtn.api-locked, .sbtn.deadline-locked { cursor: default; opacity: .3; }
+    .matchup-gap { height: 8px; }
+
+    /* champion */
+    .champion-box { text-align: center; padding: 14px 8px; }
+    .trophy { font-size: 32px; line-height: 1; }
+    .champ-label {
+      font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500;
+      letter-spacing: .14em; color: var(--muted); margin: 6px 0 4px;
+      text-transform: uppercase;
+    }
+    .champ-name {
+      font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+      background: linear-gradient(135deg, var(--orange), var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: .06em; min-height: 26px; line-height: 1.1;
+    }
+    .champ-score { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted2); margin-top: 3px; }
+
+    /* deadline lock */
+    .bracket-locked-msg {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      background: var(--red-bg); border: 1px solid var(--red-br);
+      border-radius: var(--r); margin-bottom: 16px; font-size: 12px; color: var(--red);
+    }
 
     /* ── LEADERBOARD ── */
-    .lb-controls { display:flex; gap:8px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
-    .lb-controls input { flex:1; min-width:180px; padding:7px 12px; font-size:13px; font-family:var(--fb); border:1px solid var(--border2); border-radius:var(--r); background:var(--bg2); color:var(--text); }
-    .lb-controls input:focus { outline:none; border-color:var(--accent); }
-    table.lb { width:100%; border-collapse:collapse; font-size:13px; }
-    table.lb th { font-family:var(--fh); font-weight:700; letter-spacing:.06em; font-size:11px; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; }
-    table.lb td { padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text); }
-    table.lb tr:hover td { background:var(--bg2); }
-    .rank-badge { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:11px; font-weight:700; font-family:var(--fh); background:var(--bg3); color:var(--muted); }
-    .rank-badge.gold   { background:rgba(250,199,117,.2); color:#FAC775; }
-    .rank-badge.silver { background:rgba(156,163,175,.2); color:#9ca3af; }
-    .rank-badge.bronze { background:rgba(180,120,90,.2);  color:#b4785a; }
-    .pts-big { font-family:var(--fh); font-size:15px; font-weight:700; color:var(--accent); }
-    .bonus-cell { color:var(--green); font-size:12px; }
-    .detail-cell { color:var(--muted); font-size:12px; }
+    .lb-controls { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+    .lb-controls input {
+      flex: 1; min-width: 200px; padding: 8px 14px; font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border2); border-radius: var(--r);
+      background: var(--glass); color: var(--text);
+      backdrop-filter: blur(8px); transition: border-color .2s;
+    }
+    .lb-controls input:focus { outline: none; border-color: var(--orange); }
+    .lb-controls input::placeholder { color: var(--muted); }
+    table.lb { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.lb th {
+      font-family: 'DM Mono', monospace; font-weight: 500; letter-spacing: .08em;
+      font-size: 10px; color: var(--muted); padding: 9px 12px;
+      border-bottom: 1px solid var(--border); text-align: left; text-transform: uppercase;
+    }
+    table.lb td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+    table.lb tr:hover td { background: var(--glass); }
+    .rank-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+      background: var(--glass2); color: var(--muted2);
+    }
+    .rank-badge.gold   { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .rank-badge.silver { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+    .rank-badge.bronze { background: rgba(180,120,90,0.15);  color: #b4785a; border: 1px solid rgba(180,120,90,0.3); }
+    .pts-big {
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: .04em;
+      background: linear-gradient(135deg, var(--orange), var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .bonus-cell { color: var(--green); font-size: 12px; font-family: 'DM Mono', monospace; }
+    .detail-cell { color: var(--muted2); font-size: 12px; font-family: 'DM Mono', monospace; }
 
-    /* ── ADMIN / MISC ── */
-    .admin-section { margin-bottom:24px; }
-    .admin-section h3 { font-family:var(--fh); font-size:15px; font-weight:700; letter-spacing:.05em; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); }
-    .admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
-    .admin-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; }
-    .admin-card .ac-title { font-family:var(--fh); font-weight:700; font-size:13px; letter-spacing:.03em; margin-bottom:3px; }
-    .admin-card .ac-sub { color:var(--muted); font-size:11px; line-height:1.5; }
-    .admin-card .ac-val { color:var(--accent); font-family:var(--fh); font-weight:700; font-size:12px; margin-top:3px; }
-    .pts-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .pts-table th { font-family:var(--fh); font-size:11px; font-weight:700; letter-spacing:.06em; color:var(--muted); padding:6px 10px; border-bottom:1px solid var(--border); text-align:left; }
-    .pts-table td { padding:8px 10px; border-bottom:1px solid var(--border); }
-    .pts-table td:nth-child(2) { color:var(--accent); font-family:var(--fh); font-weight:600; }
-    .pts-table td:nth-child(3) { color:var(--green); font-family:var(--fh); font-weight:600; }
+    /* ── ADMIN ── */
+    .admin-section { margin-bottom: 28px; }
+    .admin-section h3 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: .06em;
+      margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+      color: var(--muted2);
+    }
+    .admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 10px; }
+    .admin-card {
+      background: var(--glass); border: 1px solid var(--border);
+      border-radius: var(--r2); padding: 14px 16px;
+      backdrop-filter: blur(8px); transition: border-color .2s;
+    }
+    .admin-card:hover { border-color: var(--border2); }
+    .admin-card .ac-title { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+    .admin-card .ac-sub { color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .admin-card .ac-val {
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      color: var(--orange2); margin-top: 4px;
+    }
+    .pts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .pts-table th {
+      font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+      padding: 7px 12px; border-bottom: 1px solid var(--border); text-align: left;
+    }
+    .pts-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    .pts-table td:nth-child(2) { font-family: 'DM Mono', monospace; color: var(--orange2); font-weight: 500; }
+    .pts-table td:nth-child(3) { font-family: 'DM Mono', monospace; color: var(--green); font-weight: 500; }
 
     /* ── MY BRACKET ── */
-    .pseudo-input { display:flex; gap:8px; margin-bottom:14px; align-items:center; flex-wrap:wrap; }
-    .pseudo-input input { padding:7px 12px; font-size:13px; font-family:var(--fb); border:1px solid var(--border2); border-radius:var(--r); background:var(--bg2); color:var(--text); width:220px; }
-    .pseudo-input input:focus { outline:none; border-color:var(--accent); }
-    .progress-bg { background:var(--bg3); border-radius:4px; height:4px; margin-bottom:5px; }
-    .progress-fill { background:var(--accent); height:4px; border-radius:4px; transition:width .3s; }
-    .progress-label { font-size:11px; color:var(--muted); margin-bottom:14px; }
-    .save-bar { display:flex; gap:10px; align-items:center; margin-top:14px; flex-wrap:wrap; }
-    .save-msg { font-size:12px; color:var(--green); }
+    .pseudo-input { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+    .pseudo-input input {
+      padding: 8px 14px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border2); border-radius: var(--r);
+      background: var(--glass); color: var(--text); width: 220px;
+      backdrop-filter: blur(8px); transition: border-color .2s;
+    }
+    .pseudo-input input:focus { outline: none; border-color: var(--orange); }
+    .pseudo-input input::placeholder { color: var(--muted); }
+    .progress-bg { background: var(--glass2); border-radius: 4px; height: 3px; margin-bottom: 6px; }
+    .progress-fill {
+      background: linear-gradient(90deg, var(--orange), var(--amber));
+      height: 3px; border-radius: 4px; transition: width .4s cubic-bezier(.4,0,.2,1);
+    }
+    .progress-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+    .save-bar { display: flex; gap: 10px; align-items: center; margin-top: 16px; flex-wrap: wrap; }
+    .save-msg { font-size: 12px; color: var(--green); font-family: 'DM Mono', monospace; }
 
-    /* ── BTN ── */
-    .btn { padding:7px 14px; font-size:12px; font-family:var(--fb); border-radius:var(--r); cursor:pointer; transition:all .15s; border:1px solid var(--border2); background:transparent; color:var(--text); }
-    .btn:hover { background:var(--bg3); }
-    .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:500; }
-    .btn.primary:hover { background:var(--accent2); }
-    .btn:disabled { opacity:.4; cursor:default; }
-    .hint { font-size:11px; color:var(--muted); margin-top:10px; padding:8px 12px; background:var(--bg2); border-radius:var(--r); border-left:3px solid var(--border2); }
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 8px 16px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+      font-weight: 500; border-radius: var(--r); cursor: pointer;
+      transition: all .18s; border: 1px solid var(--border2);
+      background: var(--glass); color: var(--text); backdrop-filter: blur(8px);
+      letter-spacing: .01em;
+    }
+    .btn:hover { background: var(--glass2); border-color: rgba(255,255,255,0.2); }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--orange) 0%, var(--orange2) 100%);
+      border-color: var(--orange); color: #fff; font-weight: 500;
+    }
+    .btn.primary:hover { filter: brightness(1.1); }
+    .btn:disabled { opacity: .35; cursor: default; filter: none; }
+    .hint {
+      font-size: 11px; color: var(--muted); margin-top: 12px; padding: 9px 14px;
+      background: var(--glass); border-radius: var(--r);
+      border-left: 2px solid var(--border2);
+    }
+
+    /* ── CONF LABELS ── */
+    .conf-header {
+      text-align: center; margin-bottom: 6px;
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: .14em; color: var(--muted); text-transform: uppercase;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      header { padding: 14px 16px; }
+      .panel { padding: 16px; }
+      .phase-bar { padding: 8px 16px; }
+      .tabs { padding: 0 16px; }
+      .banner { margin: 10px 16px 0; }
+      .header-logo { font-size: 26px; }
+    }
   </style>
 </head>
 <body>
+
+<!-- background orbs -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<div class="wrap">
 
 <!-- ================================================================
      ⚙️  CONFIGURATION — TOUT MODIFIER ICI CHAQUE ANNÉE
      ================================================================ -->
 <script>
-// ── 1. URL CSV du Google Sheet publié ──────────────────────────────
 const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
+const DEADLINE  = '2025-04-19T00:00:00';
 
-// ── 2. Date limite de saisie des brackets ─────────────────────────
-//    Format ISO 8601, heure de Paris (Europe/Paris)
-//    Mettre la veille du 1er match des playoffs, 18h00
-//    2026 : play-in 14-17 avril → deadline 17 avril 18h
-const DEADLINE = '2025-04-19T00:00:00'; // Playoffs 2025 déjà commencés — brackets verrouillés
-
-// ── 3. Équipes EST — Playoffs NBA 2025 ───────────────────────────
-//    (seed1 vs seed8), (seed4 vs seed5), (seed3 vs seed6), (seed2 vs seed7)
 const EAST_TEAMS = [
-  {seed:1, name:'Cavaliers'},  {seed:8, name:'Heat'},
-  {seed:4, name:'Pacers'},     {seed:5, name:'Bucks'},
-  {seed:3, name:'Knicks'},     {seed:6, name:'Pistons'},
-  {seed:2, name:'Celtics'},    {seed:7, name:'Magic'}
+  {seed:1, name:'Cavaliers'}, {seed:8, name:'Heat'},
+  {seed:4, name:'Pacers'},    {seed:5, name:'Bucks'},
+  {seed:3, name:'Knicks'},    {seed:6, name:'Pistons'},
+  {seed:2, name:'Celtics'},   {seed:7, name:'Magic'}
 ];
-
-// ── 4. Équipes OUEST — Playoffs NBA 2025 ─────────────────────────
 const WEST_TEAMS = [
-  {seed:1, name:'Thunder'},       {seed:8, name:'Grizzlies'},
-  {seed:4, name:'Nuggets'},       {seed:5, name:'Clippers'},
-  {seed:3, name:'Timberwolves'},  {seed:6, name:'Mavericks'},
-  {seed:2, name:'Rockets'},       {seed:7, name:'Warriors'}
+  {seed:1, name:'Thunder'},      {seed:8, name:'Grizzlies'},
+  {seed:4, name:'Nuggets'},      {seed:5, name:'Clippers'},
+  {seed:3, name:'Timberwolves'}, {seed:6, name:'Mavericks'},
+  {seed:2, name:'Rockets'},      {seed:7, name:'Warriors'}
 ];
-
-// ── 5. Barème des points ──────────────────────────────────────────
-const ROUND_PTS   = [10, 12, 15, 20]; // R1, R2, R3 conf, Finals
-const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
+const ROUND_PTS   = [10, 12, 15, 20];
+const SCORE_BONUS = 2;
 </script>
 <!-- ================================================================ -->
 
 <!-- HEADER -->
-<div class="header">
+<header>
   <div>
-    <div class="header-title">🏀 Bracket <span>Des Frates</span> 2025</div>
-    <div class="header-sub">Concours de pronostics — gagnant + score de série</div>
+    <div class="header-brand">
+      <div class="header-logo">Bracket des Frates</div>
+      <div class="header-year">2025</div>
+    </div>
+    <div class="header-sub">NBA Playoffs · pronostics gagnant + score</div>
   </div>
   <div class="header-right">
     <button class="btn primary" onclick="loadFromSheet()">⟳ Sync résultats</button>
     <span class="sync-status" id="sync-status"></span>
   </div>
-</div>
+</header>
 
 <!-- PHASE BAR -->
 <div class="phase-bar">
@@ -222,7 +445,7 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
     <span class="phase-dot pulse"></span>
     <span id="phase-text">SAISIE OUVERTE</span>
   </div>
-  <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
     <div class="countdown" id="countdown"></div>
     <div class="deadline-note" id="deadline-note"></div>
   </div>
@@ -232,10 +455,10 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab active" onclick="showTab('bracket')">Bracket officiel</button>
-  <button class="tab" onclick="showTab('my-bracket')">Mon bracket</button>
-  <button class="tab" onclick="showTab('leaderboard')">Classement</button>
-  <button class="tab" onclick="showTab('admin')">Admin</button>
+  <button class="tab active" onclick="showTab('bracket')">🏆 Bracket officiel</button>
+  <button class="tab" onclick="showTab('my-bracket')">✏️ Mon bracket</button>
+  <button class="tab" onclick="showTab('leaderboard')">🏅 Classement</button>
+  <button class="tab" onclick="showTab('admin')">⚙️ Admin</button>
 </div>
 
 <!-- BRACKET OFFICIEL -->
@@ -243,21 +466,21 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
   <div class="bracket-wrap">
     <div class="bracket" id="main-bracket"></div>
   </div>
-  <div class="hint">💡 Résultats API verrouillés (badge vert). Saisie manuelle possible pour les matchs à venir.</div>
+  <div class="hint">💡 Résultats synchronisés depuis Google Sheets (badge vert = verrouillé). Saisie manuelle disponible pour les matchs à venir.</div>
 </div>
 
 <!-- MON BRACKET -->
 <div class="panel" id="panel-my-bracket">
   <div id="deadline-locked-msg" class="bracket-locked-msg" style="display:none">
-    🔒 La date limite de saisie est passée — les brackets sont verrouillés. Bonne chance à tous !
+    🔒 La date limite est passée — les brackets sont verrouillés. Good luck à tous !
   </div>
   <div class="pseudo-input">
-    <input type="text" id="pseudo-field" placeholder="Votre prénom / pseudo">
+    <input type="text" id="pseudo-field" placeholder="Ton prénom / pseudo…">
     <button class="btn primary" id="pseudo-btn" onclick="setPseudo()">OK</button>
   </div>
   <div class="progress-bg"><div class="progress-fill" id="my-progress" style="width:0%"></div></div>
   <div class="progress-label" id="my-progress-label">0 / 15 matchs pronostiqués</div>
-  <div id="my-bracket-hint" style="font-size:13px;color:var(--muted);margin-bottom:14px">Entrez votre pseudo pour commencer.</div>
+  <div id="my-bracket-hint" style="font-size:13px;color:var(--muted);margin-bottom:16px">Entrez votre pseudo pour commencer.</div>
   <div class="bracket-wrap"><div class="bracket" id="my-bracket-render"></div></div>
   <div class="save-bar">
     <button class="btn primary" id="save-btn" onclick="saveMyBracket()">Enregistrer mon bracket</button>
@@ -271,7 +494,7 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
     <input type="text" id="search-lb" placeholder="Rechercher un participant…" oninput="renderLeaderboard()">
   </div>
   <table class="lb">
-    <thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Bonus scores</th><th>Précision</th><th>Champion pronostiqué</th></tr></thead>
+    <thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Bonus scores</th><th>Précision</th><th>Champion</th></tr></thead>
     <tbody id="lb-body"></tbody>
   </table>
 </div>
@@ -281,27 +504,27 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
   <div class="admin-section">
     <h3>Participants</h3>
     <div class="lb-controls">
-      <input type="text" id="new-participant" placeholder="Nom du participant" style="padding:7px 12px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);width:220px">
+      <input type="text" id="new-participant" placeholder="Nouveau participant…" style="padding:8px 14px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);background:var(--glass);color:var(--text);width:220px;font-family:'DM Sans',sans-serif;backdrop-filter:blur(8px)">
       <button class="btn" onclick="addParticipant()">+ Ajouter</button>
     </div>
     <div class="admin-grid" id="participant-list"></div>
   </div>
   <div class="admin-section">
-    <h3>Paramètres du concours</h3>
+    <h3>Paramètres</h3>
     <div class="admin-grid">
       <div class="admin-card">
-        <div class="ac-title">Date limite de saisie</div>
-        <div class="ac-sub">Configurable dans la section CONFIG du fichier HTML</div>
+        <div class="ac-title">Date limite</div>
+        <div class="ac-sub">Configurable dans la section CONFIG</div>
         <div class="ac-val" id="admin-deadline"></div>
       </div>
       <div class="admin-card">
         <div class="ac-title">Phase actuelle</div>
-        <div class="ac-sub">Calculée automatiquement selon la date limite</div>
+        <div class="ac-sub">Calculée automatiquement</div>
         <div class="ac-val" id="admin-phase"></div>
       </div>
       <div class="admin-card">
         <div class="ac-title">Google Sheet</div>
-        <div class="ac-sub">Source des résultats — sync 7h + 8h (Paris)</div>
+        <div class="ac-sub">Source des résultats officiels · sync 7h + 8h (Paris)</div>
         <button class="btn" style="margin-top:8px" onclick="window.open(SHEET_CSV.replace('/pub?','/../edit?'),'_blank')">Ouvrir le Sheet</button>
       </div>
     </div>
@@ -312,8 +535,8 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
       <thead><tr><th>Tour</th><th>Bon gagnant</th><th>Bonus score exact</th></tr></thead>
       <tbody>
         <tr><td>1er tour</td><td>10 pts</td><td>+2 pts</td></tr>
-        <tr><td>Demi-finales de conf.</td><td>12 pts</td><td>+2 pts</td></tr>
-        <tr><td>Finales de conf.</td><td>15 pts</td><td>+2 pts</td></tr>
+        <tr><td>Demi-finales conf.</td><td>12 pts</td><td>+2 pts</td></tr>
+        <tr><td>Finales conf.</td><td>15 pts</td><td>+2 pts</td></tr>
         <tr><td>Finales NBA</td><td>20 pts</td><td>+2 pts</td></tr>
       </tbody>
     </table>
@@ -327,101 +550,70 @@ const SCORE_BONUS = 2;                 // bonus si score exact (4-0, 4-1…)
         <button class="btn" style="margin-top:8px" onclick="exportCSV()">Télécharger</button>
       </div>
       <div class="admin-card">
-        <div class="ac-title">Réinitialiser résultats</div>
-        <div class="ac-sub">Efface les résultats officiels (pas les brackets)</div>
+        <div class="ac-title">Réinitialiser</div>
+        <div class="ac-sub">Efface les résultats officiels (brackets conservés)</div>
         <button class="btn" style="margin-top:8px" onclick="resetOfficial()">Réinitialiser</button>
       </div>
     </div>
   </div>
 </div>
 
+</div><!-- .wrap -->
+
 <script>
-// ============================================================
-//  HELPERS
-// ============================================================
+// ── HELPERS ──
 const SCORES = ['4-0','4-1','4-2','4-3'];
 const ALL_NAMES = [...EAST_TEAMS,...WEST_TEAMS].map(t=>t.name);
 function normName(n){ return ALL_NAMES.find(t=>t.toLowerCase()===n.trim().toLowerCase())||n.trim(); }
 function el(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
 
-// ============================================================
-//  PHASE — deadline
-// ============================================================
-function isPastDeadline(){
-  // Compare en heure locale Paris
-  const dl = new Date(DEADLINE);
-  return new Date() >= dl;
-}
+// ── DEADLINE ──
+function isPastDeadline(){ return new Date() >= new Date(DEADLINE); }
 
 function updatePhaseUI(){
-  const past = isPastDeadline();
-  const badge = document.getElementById('phase-badge');
-  const text  = document.getElementById('phase-text');
-  const cdEl  = document.getElementById('countdown');
-  const noteEl= document.getElementById('deadline-note');
-  const saveBtn= document.getElementById('save-btn');
-  const deadlineLockedMsg = document.getElementById('deadline-locked-msg');
-
-  const dl = new Date(DEADLINE);
-  const dlStr = dl.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})
-              + ' à '
-              + dl.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-
-  document.getElementById('admin-deadline').textContent = dlStr;
-
+  const past=isPastDeadline();
+  const badge=document.getElementById('phase-badge');
+  const text=document.getElementById('phase-text');
+  const cdEl=document.getElementById('countdown');
+  const noteEl=document.getElementById('deadline-note');
+  const saveBtn=document.getElementById('save-btn');
+  const dlMsg=document.getElementById('deadline-locked-msg');
+  const dl=new Date(DEADLINE);
+  const dlStr=dl.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+dl.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('admin-deadline').textContent=dlStr;
   if(past){
-    badge.className = 'phase-badge locked';
-    text.textContent = 'BRACKETS VERROUILLÉS';
+    badge.className='phase-badge locked'; text.textContent='BRACKETS VERROUILLÉS';
     badge.querySelector('.phase-dot').classList.remove('pulse');
-    cdEl.innerHTML = '';
-    noteEl.textContent = 'Deadline passée le ' + dlStr;
-    document.getElementById('admin-phase').textContent = 'Phase suivi (brackets fermés)';
-    if(saveBtn) saveBtn.disabled = true;
-    if(deadlineLockedMsg) deadlineLockedMsg.style.display='flex';
+    cdEl.innerHTML=''; noteEl.textContent='Deadline passée le '+dlStr;
+    document.getElementById('admin-phase').textContent='Phase suivi (brackets fermés)';
+    if(saveBtn) saveBtn.disabled=true;
+    if(dlMsg) dlMsg.style.display='flex';
   } else {
-    // Compte à rebours
-    const now = new Date();
-    const diff = dl - now;
-    const days  = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    const mins  = Math.floor((diff % 3600000) / 60000);
-    const secs  = Math.floor((diff % 60000) / 1000);
-
-    let cdStr = '';
-    if(days > 0) cdStr += `<span class="cd-val">${days}j</span> `;
-    cdStr += `<span class="cd-val">${String(hours).padStart(2,'0')}h</span> `
-           + `<span class="cd-val">${String(mins).padStart(2,'0')}m</span> `
-           + `<span class="cd-val">${String(secs).padStart(2,'0')}s</span>`;
-
-    if(days < 1){
-      badge.className = 'phase-badge soon';
-      text.textContent = 'FERMETURE IMMINENTE';
-    } else {
-      badge.className = 'phase-badge open';
-      text.textContent = 'SAISIE OUVERTE';
-    }
-    cdEl.innerHTML = 'Fermeture dans ' + cdStr;
-    noteEl.textContent = 'Deadline : ' + dlStr;
-    document.getElementById('admin-phase').textContent = 'Phase saisie (brackets ouverts)';
-    if(saveBtn) saveBtn.disabled = false;
-    if(deadlineLockedMsg) deadlineLockedMsg.style.display='none';
+    const diff=dl-new Date();
+    const days=Math.floor(diff/86400000), hours=Math.floor((diff%86400000)/3600000);
+    const mins=Math.floor((diff%3600000)/60000), secs=Math.floor((diff%60000)/1000);
+    let cdStr='';
+    if(days>0) cdStr+=`<span class="cd-val">${days}j</span> `;
+    cdStr+=`<span class="cd-val">${String(hours).padStart(2,'0')}h</span> <span class="cd-val">${String(mins).padStart(2,'0')}m</span> <span class="cd-val">${String(secs).padStart(2,'0')}s</span>`;
+    badge.className=days<1?'phase-badge soon':'phase-badge open';
+    text.textContent=days<1?'FERMETURE IMMINENTE':'SAISIE OUVERTE';
+    cdEl.innerHTML='Fermeture dans '+cdStr;
+    noteEl.textContent='Deadline : '+dlStr;
+    document.getElementById('admin-phase').textContent='Phase saisie (brackets ouverts)';
+    if(saveBtn) saveBtn.disabled=false;
+    if(dlMsg) dlMsg.style.display='none';
   }
 }
+setInterval(updatePhaseUI,1000);
 
-// Mise à jour toutes les secondes
-setInterval(updatePhaseUI, 1000);
-
-// ============================================================
-//  STATE
-// ============================================================
-let official = emptyOfficial();
-// ⚠️  Remplacer par les vrais participants avant de partager le lien
-let participants = [
-  {name:'Alice',   picks: emptyPicks()},
-  {name:'Bob',     picks: emptyPicks()},
-  {name:'Charlie', picks: emptyPicks()}
+// ── STATE ──
+let official=emptyOfficial();
+let participants=[
+  {name:'Alice',   picks:emptyPicks()},
+  {name:'Bob',     picks:emptyPicks()},
+  {name:'Charlie', picks:emptyPicks()}
 ];
-let myName = '', myPicks = emptyPicks();
+let myName='', myPicks=emptyPicks();
 
 function emptyOfficial(){
   return {
@@ -438,292 +630,116 @@ function emptyPicks(){
   };
 }
 
-// ============================================================
-//  FETCH SHEET via proxy CORS
-// ============================================================
+// ── FETCH ──
 async function fetchCSV(){
-  // Stratégie 1 : fetch direct (fonctionne si hébergé sur un vrai serveur)
-  try {
-    const res = await fetch(SHEET_CSV + '&t=' + Date.now());
-    if(res.ok){ const t=await res.text(); if(t&&t.length>10&&!t.trim().startsWith('<')) return t; }
-  } catch(e){}
-
-  // Stratégie 2 : proxy allorigins
-  try {
-    const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`);
-    if(res.ok){ const t=await res.text(); if(t&&t.length>10&&!t.trim().startsWith('<')) return t; }
-  } catch(e){}
-
-  // Stratégie 3 : proxy corsproxy.io
-  try {
-    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`);
-    if(res.ok){ const t=await res.text(); if(t&&t.length>10&&!t.trim().startsWith('<')) return t; }
-  } catch(e){}
-
-  // Stratégie 4 : iframe (dernier recours, contourne CORS sur file://)
-  return new Promise((resolve, reject) => {
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'display:none;position:fixed;top:-9999px';
-    iframe.src = SHEET_CSV;
-    let done = false;
-    iframe.onload = () => {
-      try {
-        const body = iframe.contentDocument
-          ? iframe.contentDocument.body.innerText
-          : iframe.contentWindow.document.body.innerText;
-        done = true;
-        document.body.removeChild(iframe);
-        if(body && body.length > 10 && !body.trim().startsWith('<')) resolve(body);
-        else reject(new Error('Contenu iframe invalide'));
-      } catch(e) {
-        try{document.body.removeChild(iframe);}catch(_){}
-        reject(new Error('CORS bloqué même en iframe. Hébergez le fichier sur GitHub Pages ou Netlify.'));
-      }
-    };
-    iframe.onerror = () => { try{document.body.removeChild(iframe);}catch(_){} reject(new Error('Erreur iframe')); };
-    setTimeout(() => { if(!done){ try{document.body.removeChild(iframe);}catch(_){} reject(new Error('Timeout — vérifiez que le Sheet est bien publié en CSV.')); }}, 8000);
+  try{ const r=await fetch(SHEET_CSV+'&t='+Date.now()); if(r.ok){const t=await r.text();if(t&&t.length>10&&!t.trim().startsWith('<'))return t;}}catch(e){}
+  try{ const r=await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(SHEET_CSV)}&t=${Date.now()}`); if(r.ok){const t=await r.text();if(t&&t.length>10&&!t.trim().startsWith('<'))return t;}}catch(e){}
+  try{ const r=await fetch(`https://corsproxy.io/?${encodeURIComponent(SHEET_CSV)}`); if(r.ok){const t=await r.text();if(t&&t.length>10&&!t.trim().startsWith('<'))return t;}}catch(e){}
+  return new Promise((resolve,reject)=>{
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='display:none;position:fixed;top:-9999px';
+    iframe.src=SHEET_CSV; let done=false;
+    iframe.onload=()=>{try{const body=iframe.contentDocument?iframe.contentDocument.body.innerText:iframe.contentWindow.document.body.innerText;done=true;document.body.removeChild(iframe);if(body&&body.length>10&&!body.trim().startsWith('<'))resolve(body);else reject(new Error('Contenu iframe invalide'));}catch(e){try{document.body.removeChild(iframe);}catch(_){}reject(new Error('CORS bloqué. Hébergez sur GitHub Pages ou Netlify.'));}};
+    iframe.onerror=()=>{try{document.body.removeChild(iframe);}catch(_){}reject(new Error('Erreur iframe'));};
+    setTimeout(()=>{if(!done){try{document.body.removeChild(iframe);}catch(_){}reject(new Error('Timeout'));}},8000);
     document.body.appendChild(iframe);
   });
 }
 
 async function loadFromSheet(){
-  const st = document.getElementById('sync-status');
+  const st=document.getElementById('sync-status');
   st.className='sync-status'; st.innerHTML='<span class="spin">⟳</span>';
   setBanner('info','<span class="spin">⟳</span>&nbsp; Connexion au Google Sheet…');
   try{
-    const text = await fetchCSV();
-    const rows = parseCSV(text);
+    const text=await fetchCSV();
+    const rows=parseCSV(text);
     if(!rows.length) throw new Error('Feuille vide');
-
-    const hasHeader = rows[0][0].toLowerCase()==='winner';
-    const data = hasHeader ? rows.slice(1) : rows;
-
-    if(!data.length) throw new Error('Aucune donnée dans le Sheet (seulement le header)');
-
-    // Debug — affiche les lignes reçues dans la console navigateur
-    console.log('[Bracket] CSV reçu (' + data.length + ' lignes) :');
-    data.forEach((r,i) => console.log('  ligne ' + (i+1) + ':', r[0], '|', r[1]));
-
+    const hasHeader=rows[0][0].toLowerCase()==='winner';
+    const data=hasHeader?rows.slice(1):rows;
+    if(!data.length) throw new Error('Aucune donnée');
     official.east.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
     official.west.forEach(m=>{if(m.fromApi){m.winner=null;m.score=null;m.fromApi=false;}});
     if(official.final.fromApi){official.final.winner=null;official.final.score=null;official.final.fromApi=false;}
-
-    // Applique tous les résultats en ordre strict R1→R2→R3→Finals
-    const applied = applyAllResults(data);
-    console.log('[Bracket] Résultats appliqués : ' + applied + '/' + data.length);
-
+    const applied=applyAllResults(data);
     const now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    if(applied > 0){
-      setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`);
-      st.className='sync-status ok'; st.textContent='✓ '+now;
-    } else {
-      setBanner('warn',`⚠ Sheet lu (${data.length} ligne(s)) mais 0 résultat appliqué. Vérifiez les noms d'équipes dans la CONFIG.`);
-      st.className='sync-status err'; st.textContent='0 appliqué';
-    }
+    if(applied>0){ setBanner('success',`✓ ${applied} série(s) importée(s) — sync : ${now}`); st.className='sync-status ok'; st.textContent='✓ '+now; }
+    else { setBanner('warn',`⚠ Sheet lu mais 0 résultat appliqué. Vérifiez les noms d'équipes dans la CONFIG.`); st.className='sync-status err'; st.textContent='0 appliqué'; }
   }catch(e){
-    setBanner('warn',`⚠ ${e.message}`);
-    st.className='sync-status err'; st.textContent='Erreur';
-    console.error('[Bracket] Erreur sync:', e);
+    setBanner('warn',`⚠ ${e.message}`); st.className='sync-status err'; st.textContent='Erreur';
+    console.error('[Bracket]',e);
   }
-  renderOfficialBracket();
-  renderLeaderboard();
+  renderOfficialBracket(); renderLeaderboard();
 }
 
 function parseCSV(text){
-  const lines = text.trim().split('\n').filter(l=>l.trim());
-  // Détecter le séparateur : ; ou ,
-  const sep = lines[0].includes(';') ? ';' : ',';
+  const lines=text.trim().split('\n').filter(l=>l.trim());
+  const sep=lines[0].includes(';')?';':',';
   return lines.map(line=>{
     const cells=[]; let cur='',inQ=false;
-    for(const ch of line){
-      if(ch==='"') inQ=!inQ;
-      else if(ch===sep&&!inQ){cells.push(cur.trim());cur='';}
-      else cur+=ch;
-    }
+    for(const ch of line){ if(ch==='"') inQ=!inQ; else if(ch===sep&&!inQ){cells.push(cur.trim());cur='';}else cur+=ch; }
     cells.push(cur.trim());
-    return cells.filter((_,i)=>i<4); // max 4 colonnes, ignore trailing ;
+    return cells.filter((_,i)=>i<4);
   });
 }
 
-// Applique les résultats du CSV dans l'ordre strict du bracket
-// Le CSV contient les séries dans un ordre quelconque — on les place
-// en identifiant le matchup par les deux équipes participantes à chaque round
-function applyAllResults(rows) {
-  const confs = [{conf:'east',teams:EAST_TEAMS},{conf:'west',teams:WEST_TEAMS}];
-  let applied = 0;
-
-  // Parse chaque ligne : winner, score
-  const entries = rows
-    .filter(r => r[0] && r[1] && r[0].toLowerCase() !== 'winner')
-    .map(r => ({ winner: normName(r[0]), score: r[1].trim(), used: false }));
-
-  // Cherche dans entries une ligne non utilisée dont le gagnant est t1 ou t2
-  function pick(t1, t2) {
-    const e = entries.find(e => !e.used && (e.winner === t1 || e.winner === t2));
-    if(e) e.used = true;
-    return e || null;
-  }
-
-  // ── R1 : équipes connues depuis la config ──
-  for(const {conf, teams} of confs){
-    for(let i = 0; i < 4; i++){
-      const t1 = teams[i*2].name, t2 = teams[i*2+1].name;
-      const e = pick(t1, t2);
-      if(e && !official[conf][i].fromApi){
-        official[conf][i].winner  = e.winner;
-        official[conf][i].score   = e.score;
-        official[conf][i].fromApi = true;
-        applied++;
-      }
-    }
-  }
-
-  // ── R2 : équipes = gagnants R1 ──
-  for(const {conf} of confs){
-    for(let i = 0; i < 2; i++){
-      const t1 = official[conf][i*2].winner;
-      const t2 = official[conf][i*2+1].winner;
-      if(!t1 || !t2) continue;
-      const e = pick(t1, t2);
-      if(e && !official[conf][4+i].fromApi){
-        official[conf][4+i].winner  = e.winner;
-        official[conf][4+i].score   = e.score;
-        official[conf][4+i].fromApi = true;
-        applied++;
-      }
-    }
-  }
-
-  // ── R3 : finales de conférence ──
-  for(const {conf} of confs){
-    const t1 = official[conf][4].winner;
-    const t2 = official[conf][5].winner;
-    if(!t1 || !t2) continue;
-    const e = pick(t1, t2);
-    if(e && !official[conf][6].fromApi){
-      official[conf][6].winner  = e.winner;
-      official[conf][6].score   = e.score;
-      official[conf][6].fromApi = true;
-      applied++;
-    }
-  }
-
-  // ── Finales NBA ──
-  const ef = official.east[6].winner;
-  const wf = official.west[6].winner;
-  if(ef && wf){
-    const e = pick(ef, wf);
-    if(e && !official.final.fromApi){
-      official.final.winner  = e.winner;
-      official.final.score   = e.score;
-      official.final.fromApi = true;
-      applied++;
-    }
-  }
-
+function applyAllResults(rows){
+  const confs=[{conf:'east',teams:EAST_TEAMS},{conf:'west',teams:WEST_TEAMS}];
+  let applied=0;
+  const entries=rows.filter(r=>r[0]&&r[1]&&r[0].toLowerCase()!=='winner').map(r=>({winner:normName(r[0]),score:r[1].trim(),used:false}));
+  function pick(t1,t2){ const e=entries.find(e=>!e.used&&(e.winner===t1||e.winner===t2)); if(e) e.used=true; return e||null; }
+  for(const {conf,teams} of confs){ for(let i=0;i<4;i++){ const t1=teams[i*2].name,t2=teams[i*2+1].name; const e=pick(t1,t2); if(e&&!official[conf][i].fromApi){official[conf][i].winner=e.winner;official[conf][i].score=e.score;official[conf][i].fromApi=true;applied++;}}}
+  for(const {conf} of confs){ for(let i=0;i<2;i++){ const t1=official[conf][i*2].winner,t2=official[conf][i*2+1].winner; if(!t1||!t2) continue; const e=pick(t1,t2); if(e&&!official[conf][4+i].fromApi){official[conf][4+i].winner=e.winner;official[conf][4+i].score=e.score;official[conf][4+i].fromApi=true;applied++;}}}
+  for(const {conf} of confs){ const t1=official[conf][4].winner,t2=official[conf][5].winner; if(!t1||!t2) continue; const e=pick(t1,t2); if(e&&!official[conf][6].fromApi){official[conf][6].winner=e.winner;official[conf][6].score=e.score;official[conf][6].fromApi=true;applied++;}}
+  const ef=official.east[6].winner,wf=official.west[6].winner;
+  if(ef&&wf){ const e=pick(ef,wf); if(e&&!official.final.fromApi){official.final.winner=e.winner;official.final.score=e.score;official.final.fromApi=true;applied++;}}
   return applied;
 }
 
-function applyResult(winner,score){ return false; }
+function setBanner(type,html){ const b=document.getElementById('main-banner'); b.style.display=''; b.className='banner '+type; b.innerHTML=html; }
 
-function setBanner(type,html){
-  const b=document.getElementById('main-banner'); b.style.display=''; b.className='banner '+type; b.innerHTML=html;
-}
-
-// ============================================================
-//  BRACKET BUILDER
-//  Layout visuel : [West R1 | West R2 | West R3] | Finals | [East R3 | East R2 | East R1]
-//  → West progresse de gauche vers le centre
-//  → East progresse de droite vers le centre
-// ============================================================
-function buildBracket(containerId, picks, onUpdate, readOnly){
+// ── BRACKET BUILDER ──
+function buildBracket(containerId,picks,onUpdate,readOnly){
   const c=document.getElementById(containerId); c.innerHTML='';
-
-  // West à gauche : R1 (extrême gauche) → R2 → R3 (proche du centre)
-  const ws=el('div','conf-section west');
-  buildConf(ws,'west',picks,onUpdate,readOnly);
-
-  // Finales au centre
-  const fs=el('div','finals-col');
-  buildFinals(fs,picks,onUpdate,readOnly);
-
-  // East à droite : R3 (proche du centre) → R2 → R1 (extrême droite)
-  const es=el('div','conf-section east');
-  buildConf(es,'east',picks,onUpdate,readOnly);
-
+  const ws=el('div','conf-section west'); buildConf(ws,'west',picks,onUpdate,readOnly);
+  const fs=el('div','finals-col'); buildFinals(fs,picks,onUpdate,readOnly);
+  const es=el('div','conf-section east'); buildConf(es,'east',picks,onUpdate,readOnly);
   c.appendChild(ws); c.appendChild(fs); c.appendChild(es);
 }
 
-function buildConf(section, conf, picks, onUpdate, readOnly){
-  const teams = conf==='east' ? EAST_TEAMS : WEST_TEAMS;
-
+function buildConf(section,conf,picks,onUpdate,readOnly){
+  const teams=conf==='east'?EAST_TEAMS:WEST_TEAMS;
   const r1=makeCol('1er tour');
   for(let m=0;m<4;m++){
-    r1.appendChild(buildMatchup(
-      picks[conf][m],
-      {seed:teams[m*2].seed,   name:teams[m*2].name},
-      {seed:teams[m*2+1].seed, name:teams[m*2+1].name},
-      (w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},
-      readOnly, 0
-    ));
+    r1.appendChild(buildMatchup(picks[conf][m],{seed:teams[m*2].seed,name:teams[m*2].name},{seed:teams[m*2+1].seed,name:teams[m*2+1].name},(w,s)=>{picks[conf][m].winner=w;picks[conf][m].score=s;cascade(picks,conf);onUpdate();},readOnly,0));
     r1.appendChild(el('div','matchup-gap'));
   }
-
   const r2=makeCol('Demi-finales');
   for(let m=0;m<2;m++){
-    const t1={seed:null,name:picks[conf][m*2].winner||'?'};
-    const t2={seed:null,name:picks[conf][m*2+1].winner||'?'};
-    r2.appendChild(buildMatchup(
-      picks[conf][4+m], t1, t2,
-      (w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},
-      readOnly||!picks[conf][m*2].winner||!picks[conf][m*2+1].winner, 1
-    ));
+    const t1={seed:null,name:picks[conf][m*2].winner||'?'}, t2={seed:null,name:picks[conf][m*2+1].winner||'?'};
+    r2.appendChild(buildMatchup(picks[conf][4+m],t1,t2,(w,s)=>{picks[conf][4+m].winner=w;picks[conf][4+m].score=s;cascade(picks,conf);onUpdate();},readOnly||!picks[conf][m*2].winner||!picks[conf][m*2+1].winner,1));
     r2.appendChild(el('div','matchup-gap'));
   }
-
   const r3=makeCol('Finale conf.');
-  const tf1={seed:null,name:picks[conf][4].winner||'?'};
-  const tf2={seed:null,name:picks[conf][5].winner||'?'};
-  r3.appendChild(buildMatchup(
-    picks[conf][6], tf1, tf2,
-    (w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},
-    readOnly||!picks[conf][4].winner||!picks[conf][5].winner, 2
-  ));
-
-  if(conf==='west'){
-    // West : R1 (extrême gauche) → R2 → R3 (proche du centre)
-    section.appendChild(r1); section.appendChild(r2); section.appendChild(r3);
-  } else {
-    // East : R3 (proche du centre) → R2 → R1 (extrême droite)
-    section.appendChild(r3); section.appendChild(r2); section.appendChild(r1);
-  }
+  r3.appendChild(buildMatchup(picks[conf][6],{seed:null,name:picks[conf][4].winner||'?'},{seed:null,name:picks[conf][5].winner||'?'},(w,s)=>{picks[conf][6].winner=w;picks[conf][6].score=s;cascade(picks,conf);onUpdate();},readOnly||!picks[conf][4].winner||!picks[conf][5].winner,2));
+  if(conf==='west'){section.appendChild(r1);section.appendChild(r2);section.appendChild(r3);}
+  else             {section.appendChild(r3);section.appendChild(r2);section.appendChild(r1);}
 }
 
-function buildFinals(sec, picks, onUpdate, readOnly){
+function buildFinals(sec,picks,onUpdate,readOnly){
   const col=el('div','finals-col-inner');
-  const lbl=el('div','');
-  lbl.style.cssText='font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent);margin-bottom:8px;text-align:center';
-  lbl.textContent='FINALES NBA';
+  const lbl=el('div',''); lbl.style.cssText='font-family:"DM Mono",monospace;font-size:9px;font-weight:500;letter-spacing:.14em;color:var(--muted);margin-bottom:10px;text-align:center;text-transform:uppercase'; lbl.textContent='Finales NBA';
   col.appendChild(lbl);
   const wf=picks.west[6].winner, ef=picks.east[6].winner;
-  col.appendChild(buildMatchup(
-    picks.final,
-    {seed:null, name:wf||'?'},
-    {seed:null, name:ef||'?'},
-    (w,s)=>{picks.final.winner=w;picks.final.score=s;onUpdate();},
-    readOnly||!wf||!ef, 3
-  ));
+  col.appendChild(buildMatchup(picks.final,{seed:null,name:wf||'?'},{seed:null,name:ef||'?'},(w,s)=>{picks.final.winner=w;picks.final.score=s;onUpdate();},readOnly||!wf||!ef,3));
   const cb=el('div','champion-box');
-  cb.innerHTML=`<div class="trophy">🏆</div><div class="champ-label">CHAMPION NBA</div><div class="champ-name">${picks.final.winner||'?'}</div>${picks.final.score?`<div class="champ-score">${picks.final.score}</div>`:''}`;
+  cb.innerHTML=`<div class="trophy">🏆</div><div class="champ-label">Champion NBA</div><div class="champ-name">${picks.final.winner||'?'}</div>${picks.final.score?`<div class="champ-score">${picks.final.score}</div>`:''}`;
   col.appendChild(cb); sec.appendChild(col);
 }
 
 function buildMatchup(md,t1,t2,onSet,locked,ri){
-  // En phase de saisie, readOnly = isPastDeadline() pour le bracket perso
   const wrap=el('div','matchup'+(md.fromApi?' synced':''));
   const w=md.winner,s=md.score,api=md.fromApi;
   const tbd1=t1.name==='?',tbd2=t2.name==='?';
-
   const mkRow=(t,isW,isE,isTbd)=>{
     const r=el('div','team-row'+(isW?' winner':isE?' eliminated':'')+(locked||isTbd?' locked':'')+(isTbd?' tbd':''));
     r.innerHTML=`<span class="seed">${t.seed||''}</span><span class="tname">${t.name}</span>${isW&&api?'<span class="api-badge">LIVE</span>':isW?'<span class="check">✓</span>':''}`;
@@ -733,58 +749,44 @@ function buildMatchup(md,t1,t2,onSet,locked,ri){
   wrap.appendChild(mkRow(t1,w===t1.name,w&&w!==t1.name,tbd1));
   wrap.appendChild(el('div','divider-h'));
   wrap.appendChild(mkRow(t2,w===t2.name,w&&w!==t2.name,tbd2));
-
   if(w&&!tbd1&&!tbd2){
     const sr=el('div','score-row');
-    const sl=el('span','score-label'); sl.textContent='SCORE'; sr.appendChild(sl);
+    const sl=el('span','score-label'); sl.textContent='Score'; sr.appendChild(sl);
     const sb=el('div','score-btns');
     SCORES.forEach(sc=>{
-      const dlLocked = locked && !api;
+      const dlLocked=locked&&!api;
       const b=el('button','sbtn'+(s===sc?' active':'')+(api?' api-locked':dlLocked?' deadline-locked':''));
       b.textContent=sc;
       if(!api&&!dlLocked) b.onclick=(e)=>{e.stopPropagation();onSet(w,sc);};
       sb.appendChild(b);
     });
     sr.appendChild(sb);
-    if(api){const lk=el('span','lock-icon'); lk.textContent='🔒'; sr.appendChild(lk);}
+    if(api){const lk=el('span','lock-icon');lk.textContent='🔒';sr.appendChild(lk);}
     wrap.appendChild(sr);
   }
   return wrap;
 }
 
 function cascade(picks,conf){
-  for(let m=0;m<2;m++){
-    const t1w=picks[conf][m*2].winner,t2w=picks[conf][m*2+1].winner,r2=picks[conf][4+m];
-    if(r2.winner&&r2.winner!==t1w&&r2.winner!==t2w){r2.winner=null;r2.score=null;r2.fromApi=false;}
-  }
-  const r3=picks[conf][6];
-  if(r3.winner&&r3.winner!==picks[conf][4].winner&&r3.winner!==picks[conf][5].winner){r3.winner=null;r3.score=null;r3.fromApi=false;}
+  for(let m=0;m<2;m++){ const t1w=picks[conf][m*2].winner,t2w=picks[conf][m*2+1].winner,r2=picks[conf][4+m]; if(r2.winner&&r2.winner!==t1w&&r2.winner!==t2w){r2.winner=null;r2.score=null;r2.fromApi=false;}}
+  const r3=picks[conf][6]; if(r3.winner&&r3.winner!==picks[conf][4].winner&&r3.winner!==picks[conf][5].winner){r3.winner=null;r3.score=null;r3.fromApi=false;}
 }
-function makeCol(label){const c=el('div','round-col');const l=el('div','round-label');l.textContent=label.toUpperCase();c.appendChild(l);return c;}
+function makeCol(label){ const c=el('div','round-col'); const l=el('div','round-label'); l.textContent=label.toUpperCase(); c.appendChild(l); return c; }
 
-// ============================================================
-//  SCORING
-// ============================================================
+// ── SCORING ──
 function computeScore(p){
   let pts=0,bonus=0,correct=0,total=0;
-  const chk=(pm,om,ri)=>{
-    if(!om.winner) return; total++;
-    if(pm.winner===om.winner){pts+=ROUND_PTS[ri];correct++;if(pm.score&&pm.score===om.score){pts+=SCORE_BONUS;bonus++;}}
-  };
+  const chk=(pm,om,ri)=>{ if(!om.winner) return; total++; if(pm.winner===om.winner){pts+=ROUND_PTS[ri];correct++;if(pm.score&&pm.score===om.score){pts+=SCORE_BONUS;bonus++;}}};
   for(let i=0;i<7;i++){const ri=i<4?0:i<6?1:2;chk(p.picks.east[i],official.east[i],ri);chk(p.picks.west[i],official.west[i],ri);}
   chk(p.picks.final,official.final,3);
   return{pts,bonus,correct,total};
 }
 
-// ============================================================
-//  RENDER
-// ============================================================
+// ── RENDER ──
 function renderOfficialBracket(){buildBracket('main-bracket',official,()=>{renderOfficialBracket();renderLeaderboard();},false);}
 function renderMyBracket(){
   if(!myName){document.getElementById('my-bracket-render').innerHTML='';return;}
-  // Verrouillé si deadline passée
-  const ro = isPastDeadline();
-  buildBracket('my-bracket-render',myPicks,()=>{updateProgress();renderMyBracket();},ro);
+  buildBracket('my-bracket-render',myPicks,()=>{updateProgress();renderMyBracket();},isPastDeadline());
   updateProgress();
 }
 function updateProgress(){
@@ -802,7 +804,7 @@ function renderLeaderboard(){
     const rc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
     const acc=p.sc.total?`${p.sc.correct}/${p.sc.total}`:'—';
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><span class="rank-badge ${rc}">${i+1}</span></td><td>${p.name}</td><td><span class="pts-big">${p.sc.pts}</span> pts</td><td class="bonus-cell">+${p.sc.bonus*SCORE_BONUS} pts (${p.sc.bonus})</td><td class="detail-cell">${acc}</td><td>${p.picks.final.winner||'—'}</td>`;
+    tr.innerHTML=`<td><span class="rank-badge ${rc}">${i+1}</span></td><td>${p.name}</td><td><span class="pts-big">${p.sc.pts}</span></td><td class="bonus-cell">+${p.sc.bonus*SCORE_BONUS} pts (${p.sc.bonus})</td><td class="detail-cell">${acc}</td><td>${p.picks.final.winner||'—'}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -810,14 +812,12 @@ function renderAdmin(){
   const list=document.getElementById('participant-list'); list.innerHTML='';
   participants.forEach((p,i)=>{
     const sc=computeScore(p); const card=el('div','admin-card');
-    card.innerHTML=`<div class="ac-title">${p.name}</div><div class="ac-sub">${sc.pts} pts • ${sc.correct}/${sc.total} bons pronostics<br>Champion : ${p.picks.final.winner||'—'}</div><button class="btn" style="margin-top:8px" onclick="removeParticipant(${i})">Supprimer</button>`;
+    card.innerHTML=`<div class="ac-title">${p.name}</div><div class="ac-sub">${sc.pts} pts · ${sc.correct}/${sc.total} bons pronostics<br>Champion : ${p.picks.final.winner||'—'}</div><button class="btn" style="margin-top:10px" onclick="removeParticipant(${i})">Supprimer</button>`;
     list.appendChild(card);
   });
 }
 
-// ============================================================
-//  ACTIONS
-// ============================================================
+// ── ACTIONS ──
 function showTab(id){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
@@ -827,50 +827,38 @@ function showTab(id){
   if(id==='admin')       renderAdmin();
   if(id==='my-bracket')  renderMyBracket();
 }
-
 function setPseudo(){
-  if(isPastDeadline()){ alert('La date limite est passée — les brackets sont verrouillés.'); return; }
+  if(isPastDeadline()){alert('La date limite est passée — les brackets sont verrouillés.');return;}
   const n=document.getElementById('pseudo-field').value.trim(); if(!n) return;
   myName=n;
-  document.getElementById('my-bracket-hint').textContent=`Bonjour ${n} ! Cliquez sur chaque équipe gagnante puis choisissez le score de la série.`;
+  document.getElementById('my-bracket-hint').textContent=`Salut ${n} ! Clique sur chaque équipe gagnante puis choisis le score.`;
   const ex=participants.find(p=>p.name===n);
   myPicks=ex?JSON.parse(JSON.stringify(ex.picks)):emptyPicks();
   renderMyBracket();
 }
-
 function saveMyBracket(){
-  if(isPastDeadline()){ alert('La date limite est passée — impossible d\'enregistrer.'); return; }
-  if(!myName){ alert('Entrez votre pseudo d\'abord'); return; }
+  if(isPastDeadline()){alert('La date limite est passée.');return;}
+  if(!myName){alert('Entrez votre pseudo d\'abord');return;}
   const idx=participants.findIndex(p=>p.name===myName);
   const copy=JSON.parse(JSON.stringify(myPicks));
   if(idx>=0) participants[idx].picks=copy; else participants.push({name:myName,picks:copy});
-  document.getElementById('save-msg').textContent='✓ Bracket enregistré !';
+  document.getElementById('save-msg').textContent='✓ Enregistré !';
   setTimeout(()=>document.getElementById('save-msg').textContent='',2500);
 }
-
 function addParticipant(){
   const input=document.getElementById('new-participant'); const n=input.value.trim();
   if(!n||participants.find(p=>p.name===n)) return;
   participants.push({name:n,picks:emptyPicks()}); input.value=''; renderAdmin();
 }
-function removeParticipant(i){
-  if(!confirm(`Supprimer ${participants[i].name} ?`)) return;
-  participants.splice(i,1); renderAdmin();
-}
-function resetOfficial(){
-  if(!confirm('Réinitialiser tous les résultats officiels ?')) return;
-  official=emptyOfficial(); renderOfficialBracket();
-  setBanner('info','Résultats réinitialisés.');
-}
+function removeParticipant(i){ if(!confirm(`Supprimer ${participants[i].name} ?`)) return; participants.splice(i,1); renderAdmin(); }
+function resetOfficial(){ if(!confirm('Réinitialiser les résultats officiels ?')) return; official=emptyOfficial(); renderOfficialBracket(); setBanner('info','Résultats réinitialisés.'); }
 function exportCSV(){
   let csv='Participant,Points,Bonus scores,Bons pronostics,Champion\n';
   participants.forEach(p=>{const s=computeScore(p);csv+=`${p.name},${s.pts},${s.bonus*SCORE_BONUS},${s.correct}/${s.total},${p.picks.final.winner||''}\n`;});
-  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='nba_bracket_2026.csv'; a.click();
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='bracket_frates_2025.csv'; a.click();
 }
 
-// ============================================================
-//  INIT
-// ============================================================
+// ── INIT ──
 updatePhaseUI();
 renderOfficialBracket();
 loadFromSheet();
