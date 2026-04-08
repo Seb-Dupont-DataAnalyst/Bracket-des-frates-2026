@@ -367,24 +367,12 @@ function buildConf(sec, conf, picks, onUpdate, readOnly){
   const col1 = makeCol('1er tour');
 
   // Ajout du Header de Conférence (Logo + Label)
-  const confHeader = el('div', 'conf-header');
-  confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big"><div class="round-label">${conf==='east'?'Eastern':'Western'} Conference</div>`;
-  // On l'insère avant les matchups
-  col1.prepend(confHeader);
+// Dans buildConf
+const confHeader = el('div', 'conf-header');
+confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big" onerror="this.style.display='none'">
+                        <div class="round-label">${conf==='east'?'Eastern':'Western'} Conference</div>`;
 
-  for(let i=0; i<4; i++){
-    col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
-      picks[conf][i].winner=w; picks[conf][i].score=s; cascade(picks,conf); onUpdate();
-    }, readOnly));
-  }
-  
-  const col2 = makeCol('Demi');
-  for(let i=0; i<2; i++){
-    const t1={name:picks[conf][i*2].winner||'?'}, t2={name:picks[conf][i*2+1].winner||'?'};
-    col2.appendChild(buildMatchup(picks[conf][4+i], t1, t2, (w,s)=>{
-      picks[conf][4+i].winner=w; picks[conf][4+i].score=s; cascade(picks,conf); onUpdate();
-    }, readOnly || t1.name==='?' || t2.name==='?'));
-  }
+
   
   const col3 = makeCol('Finale Conf');
   const t1={name:picks[conf][4].winner||'?'}, t2={name:picks[conf][5].winner||'?'};
@@ -399,9 +387,23 @@ function buildConf(sec, conf, picks, onUpdate, readOnly){
 // MODIF : Ajout du logo NBA Finals au centre
 function buildFinals(sec, picks, onUpdate, readOnly){
   // Ajout du logo NBA Finals
-  const finalsHeader = el('div', 'finals-header');
-  finalsHeader.innerHTML = `<img src="${CONF_LOGOS.final}" class="finals-logo-big">`;
-  sec.appendChild(finalsHeader);
+// Dans buildFinals
+const finalsHeader = el('div', 'finals-header');
+finalsHeader.innerHTML = `<img src="${CONF_LOGOS.final}" class="finals-logo-big" onerror="this.style.display='none'">`;
+
+  for(let i=0; i<4; i++){
+    col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
+      picks[conf][i].winner=w; picks[conf][i].score=s; cascade(picks,conf); onUpdate();
+    }, readOnly));
+  }
+  
+  const col2 = makeCol('Demi');
+  for(let i=0; i<2; i++){
+    const t1={name:picks[conf][i*2].winner||'?'}, t2={name:picks[conf][i*2+1].winner||'?'};
+    col2.appendChild(buildMatchup(picks[conf][4+i], t1, t2, (w,s)=>{
+      picks[conf][4+i].winner=w; picks[conf][4+i].score=s; cascade(picks,conf); onUpdate();
+    }, readOnly || t1.name==='?' || t2.name==='?'));
+  }
 
   const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
   sec.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?'));
