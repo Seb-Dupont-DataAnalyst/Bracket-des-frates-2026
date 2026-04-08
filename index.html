@@ -436,12 +436,11 @@ function buildMatchup(md, t1, t2, onSet, locked) {
                    <span class="tname">${t.name}</span>
                    ${isW && md.fromApi ? '<span class="check">✓</span>' : ''}`;
 
-    // Au clic sur l'équipe : on définit le vainqueur mais on ne passe pas encore au tour suivant
-    // On attend le score pour valider la montée
     if (!locked && !isTbd) {
       r.onclick = () => {
         md.winner = t.name;
-        renderMyBracket(); // Rafraîchit l'affichage pour montrer la sélection
+        // On rafraîchit pour montrer quelle équipe est sélectionnée (couleur orange)
+        renderMyBracket(); 
       };
     }
     return r;
@@ -449,19 +448,17 @@ function buildMatchup(md, t1, t2, onSet, locked) {
 
   wrap.append(mkRow(t1), el('div', 'divider-h'), mkRow(t2));
 
-  // Affichage des boutons de score si un vainqueur est sélectionné
   if (md.winner && t1.name !== '?' && t2.name !== '?') {
     const srow = el('div', 'score-row');
     const sbtns = el('div', 'score-btns');
     ['4-0', '4-1', '4-2', '4-3'].forEach(s => {
       const b = el('button', 'sbtn' + (md.score === s ? ' active' : ''));
-      if (md.fromApi) b.classList.add('locked');
       b.textContent = s;
       
       if (!locked && !md.fromApi) {
         b.onclick = (e) => {
           e.stopPropagation();
-          // ICI : On valide le score ET on envoie au tour suivant
+          // ACTION : On enregistre le score ET on déclenche la montée au tour suivant
           onSet(md.winner, s); 
         };
       }
