@@ -350,17 +350,77 @@ function computeScore(p){
 }
 
 // SYNC SHEET
-async function loadFromSheet(){
-  document.getElementById('sync-status').innerHTML = '<span class="spin">⟳</span>';
+async function loadFromSheet() {
+  const st = document.getElementById('sync-status');
+  st.className = 'sync-status';
+  st.innerHTML = '<span class="spin">⟳</span>';
+  
   try {
     const res = await fetch(SHEET_CSV + '&t=' + Date.now());
     const text = await res.text();
-    // Logique simplifiée de parsing ici pour l'exemple
-    // (A compléter avec ton parseur CSV d'origine si besoin)
-    document.getElementById('sync-status').textContent = "✓ " + new Date().toLocaleTimeString();
+    
+    // On réutilise ta logique de parsing CSV
+    const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
+    const data = rows[0][0].toLowerCase() === 'winner' ? rows.slice(1) : rows;
+
+    // Réinitialiser les scores officiels provenant de l'API/Sheet avant de ré-appliquer
+    official = emptyPicks(); 
+
+    let applied = 0;
+    const entries = data.filter(r => r[0] && r[1]).map(r => ({
+      winner: r[0],
+      score: r[1],
+      used: false
+    }));
+
+    function pick(t1, t2) {
+      const e = entries.find(e => !e.used && (e.winner === t1 || e.winner === t2));
+      if (e) e.used = true;
+      return e || null;
+    }
+
+    // Application des résultats aux 3 tours + Finale
+    const confs = ['east', 'west'];
+    confs.forEach(conf => {
+      const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
+      // Round 1
+      for (let i = 0; i < 4; i++) {
+        const e = pick(teams[i*2].name, teams[i*2+1].name);
+        if (e) { official[conf][i] = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+      }
+      // Round 2
+      for (let i = 0; i < 2; i++) {
+        const t1 = official[conf][i*2].winner, t2 = official[conf][i*2+1].winner;
+        if (!t1 || !t2) continue;
+        const e = pick(t1, t2);
+        if (e) { official[conf][4+i] = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+      }
+      // Round 3
+      const t1 = official[conf][4].winner, t2 = official[conf][5].winner;
+      if (t1 && t2) {
+        const e = pick(t1, t2);
+        if (e) { official[conf][6] = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+      }
+    });
+
+    // Finale NBA
+    const ef = official.east[6].winner, wf = official.west[6].winner;
+    if (ef && wf) {
+      const e = pick(ef, wf);
+      if (e) { official.final = { winner: e.winner, score: e.score, fromApi: true }; applied++; }
+    }
+
+    st.className = 'sync-status ok';
+    st.textContent = "✓ " + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    
     renderOfficialBracket();
-    renderLeaderboard();
-  } catch(e) { document.getElementById('sync-status').textContent = "Erreur"; }
+    renderLeaderboard(); // Pour mettre à jour les points de tout le monde en fonction des nouveaux scores
+    
+  } catch (e) {
+    console.error(e);
+    st.className = 'sync-status err';
+    st.textContent = "Erreur Sync";
+  }
 }
 
 function renderLeaderboard(){
