@@ -330,7 +330,7 @@ function el(t,c){ const e=document.createElement(t); if(c)e.className=c; return 
 // ==========================================
 // LOGIQUE FIREBASE
 // ==========================================
-db.ref('participants').on('value', (snap) => {
+db.ref('participants_2026').on('value', (snap) => {
   const data = snap.val();
   if(data) {
     participants = Object.values(data);
@@ -347,7 +347,7 @@ function saveMyBracket(){
   if(!myName) return alert("Pseudo requis");
   const btn = document.getElementById('save-btn');
   btn.disabled = true;
-  db.ref('participants/' + myName.replace(/\s/g, '_')).set({
+  db.ref('participants_2026/' + myName.replace(/\s/g, '_')).set({
     name: myName,
     picks: myPicks,
     updated: Date.now()
@@ -369,7 +369,7 @@ function setPseudo() {
   document.getElementById('my-bracket-hint').textContent = `Connexion en cours pour ${myName}...`;
 
   // On va chercher tes données spécifiquement dans Firebase
-  db.ref('participants/' + myName.replace(/\s/g, '_')).once('value', (snap) => {
+  db.ref('participants_2026/' + myName.replace(/\s/g, '_')).once('value', (snap) => {
     const data = snap.val();
     if (data && data.picks) {
       myPicks = data.picks;
