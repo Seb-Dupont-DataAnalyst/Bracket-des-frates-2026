@@ -334,6 +334,7 @@ db.ref('participants').on('value', (snap) => {
   const data = snap.val();
   if(data) {
     participants = Object.values(data);
+    localStorage.setItem('brkt_leaderboard_backup', JSON.stringify(participants));
     renderLeaderboard();
     if(myName){
       const me = participants.find(p => p.name === myName);
@@ -547,7 +548,8 @@ async function loadFromSheet() {
     const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
     const data = rows[0][0].toLowerCase() === 'winner' ? rows.slice(1) : rows;
     
-    official = emptyPicks(); 
+    official = emptyPicks()
+    ; 
     const entries = data.filter(r => r[0] && r[1]).map(r => ({winner: r[0], score: r[1], used: false}));
 
     const pickRes = (t1, t2) => {
@@ -582,6 +584,7 @@ async function loadFromSheet() {
       if (e) official.final = { winner: e.winner, score: e.score, fromApi: true };
     }
 
+    localStorage.setItem('brkt_official_backup', JSON.stringify(official));
     st.className = 'sync-status ok';
     st.textContent = "✓ " + new Date().toLocaleTimeString();
     
@@ -616,6 +619,22 @@ function showTab(id){
 // INIT
 renderOfficialBracket();
 if(myName) { document.getElementById('pseudo-field').value = myName; setPseudo(); }
+// --- AU CHARGEMENT DE LA PAGE ---
+// 1. On tente de charger les backups immédiatement pour éviter le "vide"
+const bracketBackup = localStorage.getItem('brkt_official_backup');
+if (bracketBackup) {
+  official = JSON.parse(bracketBackup);
+  renderOfficialBracket();
+}
+
+const lbBackup = localStorage.getItem('brkt_leaderboard_backup');
+if (lbBackup) {
+  participants = JSON.parse(lbBackup);
+  renderLeaderboard(); // Le classement s'affiche direct !
+}
+
+// Ensuite, on lance la vraie synchro qui mettra à jour si besoin
+loadApp();
 
 // ==========================================
 /*// BLOC D'INITIALISATION (INIT)
