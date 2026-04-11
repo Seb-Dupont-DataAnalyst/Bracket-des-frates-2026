@@ -301,10 +301,10 @@ const TEAM_LOGOS = {
   '76ers':'phi','Nets':'bkn','Raptors':'tor','Bulls':'chi','Hawks':'atl','Hornets':'cha','Wizards':'was','Magic':'orl',
   'Suns':'phx','Kings':'sac','Pelicans':'no','Lakers':'lal','Jazz':'uta','Trail Blazers':'por','Spurs':'sas'
 };
-//let EAST_TEAMS = [];
-//let WEST_TEAMS = [];
-const EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
-const WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},{seed:3,name:'Timberwolves'},{seed:6,name:'Mavericks'},{seed:2,name:'Rockets'},{seed:7,name:'Warriors'}];
+let EAST_TEAMS = [];
+let WEST_TEAMS = [];
+//const EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
+//const WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},{seed:3,name:'Timberwolves'},{seed:6,name:'Mavericks'},{seed:2,name:'Rockets'},{seed:7,name:'Warriors'}];
 const ROUND_PTS = [10, 12, 15, 20];
 const SCORE_BONUS = 2;
 
@@ -592,7 +592,35 @@ async function loadFromSheet() {
     renderLeaderboard();
   } catch (e) { st.textContent = "Erreur Sync"; }
 }
+async function loadTeams() {
+  try {
+    // Vérifie bien que cette URL est celle de l'onglet "Classement" en CSV
+    const res = await fetch(STANDINGS_CSV + '&t=' + Date.now());
+    const text = await res.text();
+    
+    // On transforme le CSV en tableau
+    const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
+    
+    let tempEast = [];
+    let tempWest = [];
+    
+    rows.forEach(row => {
+      const conf = row[0].toLowerCase();
+      const team = { seed: parseInt(row[1]), name: row[2] };
+      if (conf === 'east') tempEast.push(team);
+      else if (conf === 'west') tempWest.push(team);
+    });
 
+    // Ordre NBA pour le dessin du bracket (1vs8, 4vs5, 3vs6, 2vs7)
+    const bracketOrder = [1, 8, 4, 5, 3, 6, 2, 7];
+    
+    EAST_TEAMS = bracketOrder.map(s => tempEast.find(t => t.seed === s) || {seed:s, name:'?'});
+    WEST_TEAMS = bracketOrder.map(s => tempWest.find(t => t.seed === s) || {seed:s, name:'?'});
+
+  } catch (e) {
+    console.error("Erreur au chargement des équipes :", e);
+  }
+}
 function renderLeaderboard(){
   const sorted = participants.map(p=>({...p, pts:computeScore(p.picks)})).sort((a,b)=>b.pts-a.pts);
   const tbody = document.getElementById('lb-body'); tbody.innerHTML='';
@@ -634,30 +662,29 @@ if (lbBackup) {
 }
 
 // Ensuite, on lance la vraie synchro qui mettra à jour si besoin
-loadApp();
+//loadApp();
 
-// ==========================================
-/*// BLOC D'INITIALISATION (INIT)
-// ==========================================
+// Ton bloc d'initialisation final
 async function loadApp() {
-  // 1. On attend que les équipes 2026 soient chargées
+  // 1. D'abord on charge les équipes du Sheet
   await loadTeams(); 
   
-  // 2. On attend que les scores officiels soient chargés
+  // 2. Ensuite on charge les scores des séries
   await loadFromSheet(); 
   
-  // 3. Une fois qu'on a toutes les données, on dessine le bracket
+  // 3. Enfin on dessine tout
   renderOfficialBracket();
+  renderLeaderboard();
   
-  // 4. On reconnecte l'utilisateur s'il a un pseudo enregistré
+  // 4. Si l'utilisateur est connu, on charge son bracket perso
   if (myName) {
     document.getElementById('pseudo-field').value = myName;
     setPseudo();
   }
 }
 
-// LANCEMENT DE L'APPLICATION
-loadApp();*/
+// On lance la machine !
+loadApp();
   
 </script>
 </body>
