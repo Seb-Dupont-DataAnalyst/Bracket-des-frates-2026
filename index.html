@@ -215,6 +215,27 @@
   50% { opacity: 1; }
   100% { opacity: 0.5; }
 }
+
+.stat-small {
+  font-family: 'Bebas Neue', sans-serif;
+  color: #ccc;
+}
+
+.bonus-badge {
+  background: rgba(255, 165, 0, 0.1);
+  color: var(--orange);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.85em;
+}
+
+/* On centre les colonnes de stats */
+#lb-body td:nth-child(3),
+#lb-body td:nth-child(4),
+#lb-body td:nth-child(5) {
+  text-align: center;
+}
     
 </style>
 </head>
@@ -273,7 +294,14 @@
 
 <div class="panel" id="panel-leaderboard">
   <table class="lb">
-    <thead><tr><th>#</th><th>Participant</th><th>Points</th><th>Champion</th></tr></thead>
+    <thead>
+  <tr>
+    <th>Pos</th>
+    <th>Joueur</th>
+    <th>Pts</th>
+    <th>Pronos</th> <th>Bonus</th>  <th>Champion</th>
+  </tr>
+</thead>
     <tbody id="lb-body"></tbody>
   </table>
 </div>
@@ -538,21 +566,43 @@ function cascade(p,c){
 // ==========================================
 // CALCUL & SYNC
 // ==========================================
-function computeScore(p){
-  let pts=0;
-  const check = (pm, om, r) => { 
-    if(om.winner && pm.winner === om.winner){ 
-      pts += ROUND_PTS[r]; 
-      if(pm.score === om.score) pts += SCORE_BONUS; 
-    } 
+function computeScore(p) {
+  let totalPts = 0;
+  let correctSeries = 0;
+  let totalBonus = 0;
+  let totalSeriesMatch = 0; // Nombre de séries où l'API a un résultat
+
+  const check = (pm, om, r) => {
+    if (!om.winner) return; // Pas encore de résultat officiel pour cette série
+    
+    totalSeriesMatch++; // On incrémente le nombre de séries terminées officiellement
+
+    if (pm.winner === om.winner) {
+      correctSeries++; // +1 prono correct
+      totalPts += ROUND_PTS[r];
+      
+      if (pm.score === om.score) {
+        totalBonus += SCORE_BONUS; // +2 bonus
+        totalPts += SCORE_BONUS;
+      }
+    }
   };
-  for(let i=0; i<7; i++){ 
-    const r = i<4?0:i<6?1:2; 
-    check(p.east[i], official.east[i], r); 
-    check(p.west[i], official.west[i], r); 
+
+  // On check les conférences
+  for (let i = 0; i < 7; i++) {
+    const r = i < 4 ? 0 : i < 6 ? 1 : 2;
+    check(p.east[i], official.east[i], r);
+    check(p.west[i], official.west[i], r);
   }
+  // On check la finale
   check(p.final, official.final, 3);
-  return pts;
+
+  return { 
+    pts: totalPts, 
+    correct: correctSeries, 
+    bonus: totalBonus, 
+    total: totalSeriesMatch 
+  };
 }
 
 async function loadFromSheet() {
@@ -637,12 +687,30 @@ async function loadTeams() {
     console.error("Erreur au chargement des équipes :", e);
   }
 }
-function renderLeaderboard(){
-  const sorted = participants.map(p=>({...p, pts:computeScore(p.picks)})).sort((a,b)=>b.pts-a.pts);
-  const tbody = document.getElementById('lb-body'); tbody.innerHTML='';
-  sorted.forEach((p,i)=>{
+function renderLeaderboard() {
+  // On calcule les scores détaillés pour tout le monde
+  const sorted = participants.map(p => {
+    const stats = computeScore(p.picks);
+    return { ...p, ...stats };
+  }).sort((a, b) => b.pts - a.pts);
+
+  const tbody = document.getElementById('lb-body');
+  tbody.innerHTML = '';
+
+  sorted.forEach((p, i) => {
     const tr = el('tr');
-    tr.innerHTML = `<td><span class="rank-badge">${i+1}</span></td><td>${p.name}</td><td><span class="pts-big">${p.pts}</span></td><td>${p.picks.final.winner||'—'}</td>`;
+    
+    // On affiche "X / Y" pour les pronos (ex: 5/8 séries terminées)
+    const pronoRatio = `${p.correct} / ${p.total}`;
+    
+    tr.innerHTML = `
+      <td><span class="rank-badge">${i + 1}</span></td>
+      <td style="font-weight:bold">${p.name}</td>
+      <td><span class="pts-big">${p.pts}</span></td>
+      <td><span class="stat-small">${pronoRatio}</span></td>
+      <td><span class="bonus-badge">+${p.bonus}</span></td>
+      <td style="font-size: 0.9em; color: var(--orange)">${p.picks.final.winner || '—'}</td>
+    `;
     tbody.appendChild(tr);
   });
 }
