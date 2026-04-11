@@ -203,6 +203,19 @@
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.tname:contains('Chargement...') {
+  color: #555;
+  font-style: italic;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+    
 </style>
 </head>
 <body>
@@ -301,8 +314,9 @@ const TEAM_LOGOS = {
   '76ers':'phi','Nets':'bkn','Raptors':'tor','Bulls':'chi','Hawks':'atl','Hornets':'cha','Wizards':'was','Magic':'orl',
   'Suns':'phx','Kings':'sac','Pelicans':'no','Lakers':'lal','Jazz':'uta','Trail Blazers':'por','Spurs':'sas'
 };
-let EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
-let WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},{seed:3,name:'Timberwolves'},{seed:6,name:'Mavericks'},{seed:2,name:'Rockets'},{seed:7,name:'Warriors'}];
+// Équipes par défaut (Squelette de chargement)
+let EAST_TEAMS = Array(8).fill(null).map((_, i) => ({ seed: [1,8,4,5,3,6,2,7][i], name: 'Chargement...' }));
+let WEST_TEAMS = Array(8).fill(null).map((_, i) => ({ seed: [1,8,4,5,3,6,2,7][i], name: 'Chargement...' }));
 //const EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
 //const WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},{seed:3,name:'Timberwolves'},{seed:6,name:'Mavericks'},{seed:2,name:'Rockets'},{seed:7,name:'Warriors'}];
 const ROUND_PTS = [10, 12, 15, 20];
@@ -586,7 +600,7 @@ async function loadFromSheet() {
       if (e) official.final = { winner: e.winner, score: e.score, fromApi: true };
     }
 
-    localStorage.setItem('brkt_official_backup', JSON.stringify(official));
+    localStorage.setItem('brkt_official_2026', JSON.stringify(official));
     st.className = 'sync-status ok';
     st.textContent = "✓ " + new Date().toLocaleTimeString();
     
@@ -652,7 +666,7 @@ function showTab(id){
 
 async function loadApp() {
   // 1. On charge d'abord les backups locaux pour l'affichage instantané
-  const bracketBackup = localStorage.getItem('brkt_official_backup');
+  const bracketBackup = localStorage.getItem('brkt_official_2026');
   if (bracketBackup) {
     official = JSON.parse(bracketBackup);
   }
