@@ -336,10 +336,12 @@ db.ref('participants_2026').on('value', (snap) => {
     participants = Object.values(data);
     localStorage.setItem('brkt_leaderboard_backup', JSON.stringify(participants));
     renderLeaderboard();
-    if(myName){
-      const me = participants.find(p => p.name === myName);
-      if(me) { myPicks = me.picks; renderMyBracket(); }
-    }
+    // ... reste du code
+  } else {
+    // Cas où la base 2026 est vide au début
+    participants = [];
+    localStorage.removeItem('brkt_leaderboard_backup');
+    renderLeaderboard();
   }
 });
 
