@@ -301,8 +301,8 @@ const TEAM_LOGOS = {
   '76ers':'phi','Nets':'bkn','Raptors':'tor','Bulls':'chi','Hawks':'atl','Hornets':'cha','Wizards':'was','Magic':'orl',
   'Suns':'phx','Kings':'sac','Pelicans':'no','Lakers':'lal','Jazz':'uta','Trail Blazers':'por','Spurs':'sas'
 };
-let EAST_TEAMS = [];
-let WEST_TEAMS = [];
+let EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
+let WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},{seed:3,name:'Timberwolves'},{seed:6,name:'Mavericks'},{seed:2,name:'Rockets'},{seed:7,name:'Warriors'}];
 //const EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
 //const WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},{seed:3,name:'Timberwolves'},{seed:6,name:'Mavericks'},{seed:2,name:'Rockets'},{seed:7,name:'Warriors'}];
 const ROUND_PTS = [10, 12, 15, 20];
@@ -616,7 +616,7 @@ async function loadTeams() {
     
     EAST_TEAMS = bracketOrder.map(s => tempEast.find(t => t.seed === s) || {seed:s, name:'?'});
     WEST_TEAMS = bracketOrder.map(s => tempWest.find(t => t.seed === s) || {seed:s, name:'?'});
-
+    renderOfficialBracket();
   } catch (e) {
     console.error("Erreur au chargement des équipes :", e);
   }
@@ -644,48 +644,46 @@ function showTab(id){
   if(id==='leaderboard') tabs[2].classList.add('active');
 }
 
-// INIT
-renderOfficialBracket();
-if(myName) { document.getElementById('pseudo-field').value = myName; setPseudo(); }
-// --- AU CHARGEMENT DE LA PAGE ---
-// 1. On tente de charger les backups immédiatement pour éviter le "vide"
-const bracketBackup = localStorage.getItem('brkt_official_backup');
-if (bracketBackup) {
-  official = JSON.parse(bracketBackup);
-  renderOfficialBracket();
-}
+// ==========================================
+// INITIALISATION FINALE
+// ==========================================
 
-const lbBackup = localStorage.getItem('brkt_leaderboard_backup');
-if (lbBackup) {
-  participants = JSON.parse(lbBackup);
-  renderLeaderboard(); // Le classement s'affiche direct !
-}
-
-// Ensuite, on lance la vraie synchro qui mettra à jour si besoin
-//loadApp();
-
-// Ton bloc d'initialisation final
 async function loadApp() {
-  // 1. D'abord on charge les équipes du Sheet
-  await loadTeams(); 
-  
-  // 2. Ensuite on charge les scores des séries
-  await loadFromSheet(); 
-  
-  // 3. Enfin on dessine tout
+  // 1. On charge d'abord les backups locaux pour l'affichage instantané
+  const bracketBackup = localStorage.getItem('brkt_official_backup');
+  if (bracketBackup) {
+    official = JSON.parse(bracketBackup);
+  }
+
+  const lbBackup = localStorage.getItem('brkt_leaderboard_backup');
+  if (lbBackup) {
+    participants = JSON.parse(lbBackup);
+  }
+
+  // 2. Premier rendu (avec backup ou teams par défaut)
   renderOfficialBracket();
   renderLeaderboard();
-  
-  // 4. Si l'utilisateur est connu, on charge son bracket perso
-  if (myName) {
-    document.getElementById('pseudo-field').value = myName;
-    setPseudo();
+  if (myName) setPseudo();
+
+  // 3. SYNCHRO LIVE : On va chercher les vraies infos sur le Sheet
+  try {
+    // On attend d'avoir les équipes AVANT de calculer les résultats
+    await loadTeams();     
+    await loadFromSheet(); 
+    
+    // Une fois tout reçu, on rafraîchit l'affichage
+    renderOfficialBracket();
+    renderLeaderboard();
+    if (myName) renderMyBracket();
+    
+    console.log("Sync complète terminée");
+  } catch (err) {
+    console.error("Échec de la synchro live:", err);
   }
 }
 
-// On lance la machine !
+// On lance l'application
 loadApp();
-  
 </script>
 </body>
 </html>
