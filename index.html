@@ -236,7 +236,44 @@
 #lb-body td:nth-child(5) {
   text-align: center;
 }
-    
+
+.rules-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+.rules-section {
+  margin-bottom: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 15px;
+}
+
+.rules-section h3 {
+  color: var(--orange);
+  margin-bottom: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+}
+
+.rules-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+.rules-table th, .rules-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.rules-section ul {
+  padding-left: 20px;
+}
+  
 </style>
 </head>
 <body>
@@ -273,6 +310,7 @@
   <button class="tab active" onclick="showTab('bracket')">🏆 Bracket Officiel</button>
   <button class="tab" onclick="showTab('my-bracket')">✏️ Mon Bracket</button>
   <button class="tab" onclick="showTab('leaderboard')">🏅 Classement</button>
+  <button class="tab" onclick="showTab('rules')">Règles</button>
 </div>
 
 <div class="panel active" id="panel-bracket">
@@ -305,6 +343,41 @@
     <tbody id="lb-body"></tbody>
   </table>
 </div>
+<div id="panel-rules" class="panel">
+  <div class="rules-container">
+    <h2>🏀 Règlement du Bracket 2026</h2>
+    
+    <div class="rules-section">
+      <h3>1. Remplissage</h3>
+      <ul>
+        <li>Choisissez le vainqueur de chaque série en cliquant sur le nom de l'équipe.</li>
+        <li>Sélectionnez obligatoirement le score de la série (ex: 4-2) pour valider le match.</li>
+        <li><strong>Date limite :</strong> Votre bracket doit être enregistré avant le coup d'envoi du premier match des Playoffs.</li>
+      </ul>
+    </div>
+
+    <div class="rules-section">
+      <h3>2. Attribution des Points</h3>
+      <table class="rules-table">
+        <tr><th>Tour</th><th>Points par bon vainqueur</th></tr>
+        <tr><td>1er Tour</td><td>10 pts</td></tr>
+        <tr><td>Demi-finales</td><td>12 pts</td></tr>
+        <tr><td>Finales de Conférence</td><td>15 pts</td></tr>
+        <tr><td>Finales NBA</td><td>20 pts</td></tr>
+      </table>
+    </div>
+
+    <div class="rules-section">
+      <h3>3. Bonus "Score Exact"</h3>
+      <p>Si vous trouvez le <strong>bon vainqueur</strong> ET le <strong>score exact</strong> de la série (ex: vous avez mis 4-1 et la série finit à 4-1), vous gagnez un <strong>bonus de +2 points</strong>.</p>
+    </div>
+
+    <div class="rules-section">
+      <h3>4. Mise à jour</h3>
+      <p>Les résultats officiels et le classement sont mis à jour automatiquement chaque matin entre 7h et 8h.</p>
+    </div>
+  </div>
+</div>
 </div>
 
 <script>
@@ -333,7 +406,7 @@ const CONF_LOGOS = {
   west: 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/scoreboard/west.png&w=200&h=200',
   
   // LE LOGO DES FINALS (Le vrai script doré)
-  final: 'https://github.com/Seb-Dupont-DataAnalyst/Bracket-des-frates-2026/blob/main/logo%20NBA%20finals.png'
+  final: 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500/nba.png'
 };
 
 const TEAM_LOGOS = {
@@ -719,13 +792,17 @@ function renderOfficialBracket(){ buildBracket('main-bracket', official, ()=>{},
 function renderMyBracket(){ if(myName) buildBracket('my-bracket-render', myPicks, ()=>{ renderLeaderboard(); }, false); }
 
 function showTab(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  
+  document.getElementById('panel-' + id).classList.add('active');
+  
+  // On active le bon bouton de navigation
   const tabs = document.querySelectorAll('.tab');
-  if(id==='bracket') tabs[0].classList.add('active');
-  if(id==='my-bracket') tabs[1].classList.add('active');
-  if(id==='leaderboard') tabs[2].classList.add('active');
+  if(id === 'bracket') tabs[0].classList.add('active');
+  if(id === 'my-bracket') tabs[1].classList.add('active');
+  if(id === 'leaderboard') tabs[2].classList.add('active');
+  if(id === 'rules') tabs[3].classList.add('active'); // Ajout pour les règles
 }
 
 // ==========================================
