@@ -364,6 +364,37 @@
 .save-status-msg.error {
   color: #f44336; /* Rouge erreur */
 }  
+
+.countdown {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--muted2);
+  background: rgba(0,0,0,0.2);
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.countdown .cd-val {
+  color: var(--orange); /* Ou --amber pour un look "alerte" */
+  font-weight: bold;
+}
+
+.phase-badge {
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+/* Style quand c'est verrouillé */
+.phase-badge.locked {
+  background: var(--red-bg);
+  border: 1px solid var(--red-br);
+  color: var(--red);
+}
+    
 </style>
 </head>
 <body>
@@ -1041,6 +1072,46 @@ async function loadApp() {
   }
 }
 
+function updateCountdown() {
+    const now = new Date().getTime();
+    const deadline = new Date(DEADLINE).getTime();
+    const diff = deadline - now;
+
+    const badge = document.getElementById('phase-badge');
+    const phaseText = document.getElementById('phase-text');
+    const cdDisplay = document.getElementById('countdown');
+
+    if (diff <= 0) {
+        // DEADLINE PASSÉE
+        badge.className = "phase-badge locked";
+        phaseText.textContent = "SAISIE VERROUILLÉE";
+        cdDisplay.innerHTML = "Les Playoffs ont commencé ! 🏀";
+        
+        // Optionnel : On cache le bouton enregistrer s'il est encore là
+        const saveBtn = document.querySelector('.save-container');
+        if(saveBtn) saveBtn.style.display = 'none';
+        
+        return; // On arrête le timer
+    }
+
+    // CALCUL DU TEMPS RESTANT
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+    // AFFICHAGE FORMATÉ
+    let timerStr = "Fermeture dans : ";
+    if (days > 0) timerStr += `<span class="cd-val">${days}j</span> `;
+    timerStr += `<span class="cd-val">${hours}h ${mins}m ${secs}s</span>`;
+    
+    cdDisplay.innerHTML = timerStr;
+}
+
+// Lancer le timer toutes les secondes
+setInterval(updateCountdown, 1000);
+updateCountdown(); // Appel immédiat pour éviter le délai d'une seconde
+  
 // On lance l'application
 loadApp();
 </script>
