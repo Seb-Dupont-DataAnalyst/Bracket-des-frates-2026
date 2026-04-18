@@ -122,16 +122,17 @@
 .round-col { 
   display: flex; 
   flex-direction: column; 
-  justify-content: flex-start; /* Aligné vers le haut */
+  justify-content: flex-start; 
   min-width: 185px; 
   flex: 1;
   padding: 0 10px;
+  gap: 15px; /* Espace entre chaque bloc de match */
 }
 
 .round-col:not(:has(.conf-header))::before {
   content: '';
   display: block;
-  height: 120px; /* Même hauteur que .conf-header */
+  height: 100px; /* Identique au min-height du header */
 }
 
 /* Ajustement pour le bloc central des Finales NBA */
@@ -144,14 +145,12 @@
   /* --- MODIFS LOGOS CONFÉRENCES --- */
 .conf-header { 
   text-align: center; 
-  height: auto; /* On laisse le contenu dicter la hauteur */
-  min-height: 120px;
+  min-height: 100px; /* Réduit de 130px à 100px */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 15px 0;
-  margin-bottom: 10px;
+  margin-bottom: 0px; /* On supprime la marge basse */
 }
 
 .conf-logo-big { 
@@ -171,15 +170,14 @@
 }
 
   .round-label { 
-  font-family: 'Bebas Neue', sans-serif; /* On utilise ta police stylée */
-  font-size: 16px; /* Plus grand pour la lisibilité */
-  color: var(--orange); /* On passe sur ton orange signature */
+  font-family: 'Bebas Neue', sans-serif; 
+  font-size: 16px; 
+  color: var(--orange); 
   text-align: center; 
   text-transform: uppercase; 
   letter-spacing: 1.5px;
-  margin-bottom: 15px;
-  display: block;
-  position: relative;
+  margin-bottom: 10px; /* Espace réduit sous le titre (1er tour, Demis...) */
+  line-height: 1;
 }
 
   .round-label::after {
