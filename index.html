@@ -400,8 +400,8 @@
   <button class="tab active" onclick="showTab('bracket')">🏆 Bracket Officiel</button>
   <button class="tab" onclick="showTab('my-bracket')">✏️ Mon Bracket</button>
   <button class="tab" onclick="showTab('leaderboard')">🏅 Classement</button>
-  <button class="tab" onclick="showTab('rules')">📋 Règles</button>
   <button class="tab" onclick="showTab('view-others')">👀 Bracket des concurrents</button>
+  <button class="tab" onclick="showTab('rules')">📋 Règles</button>
 </div>
 
 <div class="panel active" id="panel-bracket">
@@ -962,7 +962,8 @@ function showTab(id){
   if(id === 'bracket') tabs[0].classList.add('active');
   if(id === 'my-bracket') tabs[1].classList.add('active');
   if(id === 'leaderboard') tabs[2].classList.add('active');
-  if(id === 'rules') tabs[3].classList.add('active'); // Ajout pour les règles
+  if(id === 'view-others') tabs[3].classList.add('active');
+  if(id === 'rules') tabs[4].classList.add('active'); // Ajout pour les règles
 }
 
   // 1. Remplit la liste déroulante avec les participants enregistrés
