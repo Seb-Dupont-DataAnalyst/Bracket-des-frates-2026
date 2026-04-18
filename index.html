@@ -401,6 +401,7 @@
   <button class="tab" onclick="showTab('my-bracket')">✏️ Mon Bracket</button>
   <button class="tab" onclick="showTab('leaderboard')">🏅 Classement</button>
   <button class="tab" onclick="showTab('rules')">📋 Règles</button>
+  <button class="tab" onclick="showTab('view-others')">👀 Bracket des concurrents</button>
 </div>
 
 <div class="panel active" id="panel-bracket">
@@ -476,6 +477,18 @@
       <p>Les résultats officiels et le classement sont mis à jour automatiquement chaque matin.</p>
     </div>
   </div>
+
+<div class="panel" id="panel-view-others">
+  <div class="pseudo-input">
+    <select id="select-participant" onchange="loadOtherBracket()" class="btn" style="background: var(--bg3); color: white; min-width: 200px;">
+      <option value="">-- Choisir un participant --</option>
+    </select>
+  </div>
+  <div id="other-bracket-hint" style="margin-bottom:10px; color:var(--orange)"></div>
+  <div class="bracket-wrap">
+    <div class="bracket" id="other-bracket-render"></div>
+  </div>
+</div>
 </div>
 
 <script>
@@ -611,6 +624,7 @@ function setPseudo() {
     }
     renderMyBracket();
     renderLeaderboard(); // Pour mettre à jour ton score immédiatement
+    updateParticipantList();
   });
 }
 
@@ -923,6 +937,13 @@ function renderOfficialBracket(){ buildBracket('main-bracket', official, ()=>{},
 function renderMyBracket(){ if(myName) buildBracket('my-bracket-render', myPicks, ()=>{ renderLeaderboard(); }, false); }
 
 function showTab(id){
+  const now = new Date();
+  const deadlineDate = new Date(DEADLINE);
+
+  if (id === 'view-others' && now < deadlineDate) {
+    alert("Cet onglet sera activé une fois les Playoffs commencés ! Interdiction d'espionner avant la deadline. 😉");
+    return;
+  }
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   
@@ -934,6 +955,43 @@ function showTab(id){
   if(id === 'my-bracket') tabs[1].classList.add('active');
   if(id === 'leaderboard') tabs[2].classList.add('active');
   if(id === 'rules') tabs[3].classList.add('active'); // Ajout pour les règles
+}
+
+  // 1. Remplit la liste déroulante avec les participants enregistrés
+function updateParticipantList() {
+  const select = document.getElementById('select-participant');
+  if (!select) return;
+  
+  // On garde l'option par défaut
+  select.innerHTML = '<option value="">-- Choisir un participant --</option>';
+  
+  // On ajoute chaque participant (trié par nom)
+  participants.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    select.appendChild(opt);
+  });
+}
+
+// 2. Affiche le bracket du joueur sélectionné
+function loadOtherBracket() {
+  const name = document.getElementById('select-participant').value;
+  const container = document.getElementById('other-bracket-render');
+  const hint = document.getElementById('other-bracket-hint');
+  
+  if (!name) {
+    container.innerHTML = '';
+    hint.textContent = '';
+    return;
+  }
+
+  const user = participants.find(p => p.name === name);
+  if (user && user.picks) {
+    hint.textContent = `Bracket de ${name} (Points actuels : ${computeScore(user.picks).pts})`;
+    // On utilise buildBracket en mode "readOnly = true" (le dernier paramètre)
+    buildBracket('other-bracket-render', user.picks, () => {}, true);
+  }
 }
 
 // ==========================================
