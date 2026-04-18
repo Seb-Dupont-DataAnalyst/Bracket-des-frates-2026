@@ -1260,52 +1260,27 @@ function updateCountdown() {
 setInterval(updateCountdown, 1000);
 updateCountdown();
 
-// --- LOGIQUE AVANCÉE DU CLAVIER ---
+// ==========================================
+// LOGIQUE DU CHAT (VERSION FINALE PROPRE)
+// ==========================================
+
+// 1. GESTION DU CLAVIER ET EMOJIS
 const chatInput = document.getElementById('chat-input');
 
 chatInput?.addEventListener('keydown', (e) => {
-    // Si on appuie sur Entrée
-    if (e.key === 'Enter') {
-        // Si Shift est enfoncé : on laisse faire le comportement naturel (saut de ligne)
-        if (e.shiftKey) {
-          return; 
-        } 
-        // Sinon : on envoie le message et on annule le saut de ligne par défaut
-        else {
-          e.preventDefault();
-          sendChatMessage();
-        }
-    }
-});
-
-// --- ACCÈS AUX EMOJIS ---
-// Cette fonction déclenche le sélecteur d'emojis natif sur la plupart des systèmes modernes
-function toggleEmojiPicker() {
-  const input = document.getElementById('chat-input');
-  input.focus();
-  
-  // Astuce : sur Windows (Win + .) ou Mac (Cmd + Ctrl + Space), 
-  // on ne peut pas forcer l'ouverture en JS pur, mais on peut informer l'utilisateur.
-  // Cependant, sur mobile, le clavier emoji s'ouvre via le clavier standard.
-  
-  // Si tu veux un vrai sélecteur d'emoji intégré, il faudrait une bibliothèque, 
-  // mais c'est lourd. Le plus simple est de laisser les gens utiliser leur clavier.
-  // On peut juste ajouter un petit aide-mémoire :
-  alert("Astuce : Utilisez Touche Windows + ";" ou Cmd + Ctrl + Espace (Mac) pour les emojis !");
-}
-
-// ==========================================
-// LOGIQUE DU CHAT (VERSION FINALE)
-// ==========================================
-
-// 1. GESTION DU CLAVIER (Entrée vs Shift+Entrée)
-const chatInput = document.getElementById('chat-input');
-chatInput?.addEventListener('keydown', (e) => {
+    // Si Entrée est pressé SANS Shift -> On envoie
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendChatMessage();
     }
+    // Si Shift + Entrée est pressé -> Le comportement naturel (saut de ligne) se fait tout seul
 });
+
+function toggleEmojiPicker() {
+  const input = document.getElementById('chat-input');
+  if(input) input.focus();
+  alert("Astuce : Utilisez Touche Windows + ; (Windows) ou Cmd + Ctrl + Espace (Mac) pour les emojis !");
+}
 
 // 2. ENVOI DES MESSAGES
 function sendChatMessage() {
@@ -1321,11 +1296,11 @@ function sendChatMessage() {
         timestamp: Date.now()
     }).then(() => {
         input.value = "";
-        input.style.height = 'auto'; // Remet le textarea à sa taille d'origine
+        input.style.height = 'auto'; 
     }).catch(err => alert("Erreur d'envoi : " + err.message));
 }
 
-// 3. ÉCOUTE ET AFFICHAGE (Le "Cerveau" du chat)
+// 3. ÉCOUTE ET AFFICHAGE
 db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
     const container = document.getElementById('chat-messages');
     if (!container) return;
@@ -1334,22 +1309,20 @@ db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
     container.innerHTML = ""; 
 
     if (data) {
-        // Transformation de l'objet Firebase en tableau pour l'affichage
         Object.keys(data).forEach(key => {
             const m = data[key];
             const div = document.createElement('div');
             div.className = "chat-msg";
-            // On utilise innerText pour le message pour éviter les failles XSS 
-            // tout en gardant le format HTML pour la structure
+            
+            // Structure sécurisée pour éviter les injections de code
             div.innerHTML = `<span class="author">${m.user}</span><div class="text"></div>`;
             div.querySelector('.text').innerText = m.text; 
+            
             container.appendChild(div);
         });
-        // Scroll automatique vers le bas
         container.scrollTop = container.scrollHeight;
     }
 });
-
 // On lance l'application
 loadApp();
 </script>
