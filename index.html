@@ -132,7 +132,7 @@
 .round-col:not(:has(.conf-header))::before {
   content: '';
   display: block;
-  height: 80px; /* Identique au min-height du header */
+  height: 90px; /* Doit être identique au min-height de .conf-header */
 }
 
 /* Ajustement pour le bloc central des Finales NBA */
@@ -145,21 +145,21 @@
   /* --- MODIFS LOGOS CONFÉRENCES --- */
 .conf-header { 
   text-align: center; 
-  min-height: 80px; /* Réduit de 130px à 100px */
+  min-height: 90px; /* Hauteur fixe pour le logo */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end; /* On pousse le logo vers le bas, près du texte */
   align-items: center;
-  margin-bottom: 0px; /* On supprime la marge basse */
+  margin: 0; 
+  padding: 0;
 }
 
 .conf-logo-big { 
-  width: 70px; /* Légèrement réduit pour gagner de la place */
+  width: 70px; 
   height: 70px; 
   object-fit: contain; 
-  margin-bottom: 12px; 
+  margin-bottom: 5px; /* Petit espace entre le logo et le titre en dessous */
   display: block;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.1));
 }
 
 .finals-logo-big { 
@@ -169,14 +169,19 @@
   display: block;
 }
 
-  .round-label { 
+.round-label { 
   font-family: 'Bebas Neue', sans-serif; 
   font-size: 16px; 
   color: var(--orange); 
   text-align: center; 
   text-transform: uppercase; 
   letter-spacing: 1.5px;
-  margin-bottom: 10px; /* Espace réduit sous le titre (1er tour, Demis...) */
+  
+  /* On gère l'espace de manière chirurgicale */
+  margin: 0; /* On annule toute marge automatique */
+  padding-top: 15px; /* Espace au-dessus du titre (vers le logo) */
+  padding-bottom: 15px; /* Espace en-dessous du titre (vers le 1er match) */
+  
   line-height: 1;
 }
 
