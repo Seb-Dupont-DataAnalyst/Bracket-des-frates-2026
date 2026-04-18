@@ -236,11 +236,19 @@
   font-style: italic;
   animation: pulse 1.5s infinite;
 }
+    
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 @keyframes pulse-red {
   0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.5); }
   70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
   100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
+
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
 }
 
 .stat-small {
@@ -410,6 +418,7 @@
   color: #2ecc71;
   border: 1px solid rgba(46, 204, 113, 0.4);
   box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+  animation: pulse-green 2s infinite;
 }
 
 .phase-badge.locked {
@@ -425,6 +434,51 @@
   background: var(--red-bg);
   border: 1px solid var(--red-br);
   color: var(--red);
+}
+
+.chat-container {
+    background: #1a1a1a;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+    max-width: 500px;
+    margin: 10px auto;
+    overflow: hidden;
+}
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: radial-gradient(circle at center, #222 0%, #111 100%);
+}
+.chat-msg {
+    background: #252525;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border-bottom: 2px solid var(--orange);
+    animation: fadeIn 0.3s ease;
+}
+.chat-msg .author {
+    font-family: 'Bebas Neue';
+    color: var(--orange);
+    font-size: 14px;
+    margin-bottom: 4px;
+    display: block;
+}
+.chat-msg .text { color: #eee; font-size: 15px; }
+.chat-input-area { padding: 15px; background: #111; display: flex; gap: 10px; }
+#chat-input { 
+    flex: 1; background: #222; border: 1px solid var(--border); 
+    color: #fff; padding: 10px; border-radius: 8px; 
+}
+#chat-send { 
+    background: var(--orange); border: none; color: #000; 
+    font-family: 'Bebas Neue'; padding: 0 20px; border-radius: 8px; cursor: pointer;
 }
     
 </style>
@@ -464,6 +518,7 @@
   <button class="tab" onclick="showTab('my-bracket')">✏️ Mon Bracket</button>
   <button class="tab" onclick="showTab('leaderboard')">🏅 Classement</button>
   <button class="tab" onclick="showTab('view-others')">👀 Bracket des concurrents</button>
+  <button class="tab" onclick="showTab('chat')">💬 Trash-Talk</button>
   <button class="tab" onclick="showTab('rules')">📋 Règles</button>
 </div>
 
@@ -540,6 +595,7 @@
       <p>Les résultats officiels et le classement sont mis à jour automatiquement chaque matin.</p>
     </div>
   </div>
+</div>
 
 <div class="panel" id="panel-view-others">
   <div class="pseudo-input">
@@ -552,6 +608,16 @@
     <div class="bracket" id="other-bracket-render"></div>
   </div>
 </div>
+<div class="panel" id="panel-chat">
+    <h2 style="font-family:'Bebas Neue'; color:var(--orange); text-align:center;">🏀 SALON DE TRASH-TALK</h2>
+    <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+            </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Écris un message..." maxlength="150">
+            <button onclick="sendChatMessage()" id="chat-send">ENVOYER</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1026,7 +1092,8 @@ function showTab(id){
   if(id === 'my-bracket') tabs[1].classList.add('active');
   if(id === 'leaderboard') tabs[2].classList.add('active');
   if(id === 'view-others') tabs[3].classList.add('active');
-  if(id === 'rules') tabs[4].classList.add('active'); // Ajout pour les règles
+  if(id === 'chat') tabs[4].classList.add('active');
+  if(id === 'rules') tabs[5].classList.add('active'); // Ajout pour les règles
 }
 
   // 1. Remplit la liste déroulante avec les participants enregistrés
@@ -1165,7 +1232,43 @@ function updateCountdown() {
 // On relance le timer (Juste avant loadApp comme vu précédemment)
 setInterval(updateCountdown, 1000);
 updateCountdown();
-  
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!myName) return alert("Saisis d'abord ton pseudo dans 'Mon Bracket' !");
+    if (!msg) return;
+
+    db.ref('chat_2026').push({
+        user: myName,
+        text: msg,
+        timestamp: Date.now()
+    });
+    input.value = "";
+}
+
+// Écoute des messages
+db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+    container.innerHTML = "";
+    const data = snap.val();
+    if (data) {
+        Object.values(data).forEach(m => {
+            const div = document.createElement('div');
+            div.className = "chat-msg";
+            div.innerHTML = `<span class="author">${m.user}</span><span class="text">${m.text}</span>`;
+            container.appendChild(div);
+        });
+        container.scrollTop = container.scrollHeight;
+    }
+});
+
+// Entrée pour envoyer
+document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendChatMessage();
+});
+
 // On lance l'application
 loadApp();
 </script>
