@@ -1101,7 +1101,7 @@ function updateCountdown() {
     const secs = Math.floor((diff % (1000 * 60)) / 1000);
 
     // AFFICHAGE FORMATÉ
-    let timerStr = "Verrouillage des saisies dans : ";
+    let timerStr = "Verrouillage dans : ";
     if (days > 0) timerStr += `<span class="cd-val">${days}j</span> `;
     timerStr += `<span class="cd-val">${hours}h ${mins}m ${secs}s</span>`;
     
