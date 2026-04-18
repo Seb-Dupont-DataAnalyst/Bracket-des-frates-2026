@@ -132,7 +132,7 @@
 .round-col:not(:has(.conf-header))::before {
   content: '';
   display: block;
-  height: 90px; /* Doit être identique au min-height de .conf-header */
+  height: 90px;
 }
 
 /* Ajustement pour le bloc central des Finales NBA */
@@ -144,22 +144,20 @@
   
   /* --- MODIFS LOGOS CONFÉRENCES --- */
 .conf-header { 
-  text-align: center; 
-  min-height: 90px; /* Hauteur fixe pour le logo */
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* On pousse le logo vers le bas, près du texte */
   align-items: center;
-  margin: 0; 
+  justify-content: flex-end;
+  min-height: 90px;
+  margin: 0;
   padding: 0;
 }
 
 .conf-logo-big { 
   width: 70px; 
   height: 70px; 
-  object-fit: contain; 
-  margin-bottom: 5px; /* Petit espace entre le logo et le titre en dessous */
-  display: block;
+  object-fit: contain;
+  margin-bottom: 5px;
 }
 
 .finals-logo-big { 
@@ -176,22 +174,19 @@
   text-align: center; 
   text-transform: uppercase; 
   letter-spacing: 1.5px;
-  
-  /* On gère l'espace de manière chirurgicale */
-  margin: 0; /* On annule toute marge automatique */
-  padding-top: 15px; /* Espace au-dessus du titre (vers le logo) */
-  padding-bottom: 15px; /* Espace en-dessous du titre (vers le 1er match) */
-  
+  margin: 0;
+  padding: 10px 0; /* Un padding léger et uniforme */
   line-height: 1;
+  border: none; /* On s'assure qu'il n'y a pas de bordure ici */
 }
 
-  .round-label::after {
+.round-col::after {
   content: '';
   display: block;
-  width: 30px;
+  width: 40px;
   height: 2px;
-  background: var(--border2);
-  margin: 4px auto 0;
+  background: var(--border2); /* Ta couleur de bordure subtile */
+  margin: 0 auto 20px auto; /* Centre la ligne et crée l'espace vers le 1er match */
   border-radius: 2px;
 }
 
