@@ -556,6 +556,10 @@ function el(t,c){ const e=document.createElement(t); if(c)e.className=c; return 
 // ==========================================
 // LOGIQUE FIREBASE
 // ==========================================
+// ==========================================
+// LOGIQUE FIREBASE
+// ==========================================
+
 function cleanPseudo(name) {
   if (!name) return "";
   return name
@@ -564,6 +568,7 @@ function cleanPseudo(name) {
     .replace(/\s/g, '_')
     .replace(/[^a-zA-Z0-9_]/g, '');
 }
+
 db.ref('participants_2026').on('value', (snap) => {
   const data = snap.val();
   if(data) {
@@ -580,7 +585,6 @@ db.ref('participants_2026').on('value', (snap) => {
 function saveMyBracket() {
   if (!myName) return alert("Choisis un pseudo !");
   
-  // SÉCURITÉ : On bloque si la deadline est passée
   if (new Date() > new Date(DEADLINE)) {
     return alert("Trop tard ! Les brackets sont verrouillés. 🏀");
   }
@@ -592,7 +596,6 @@ function saveMyBracket() {
   msg.textContent = "⏳ ENREGISTREMENT...";
   msg.className = "save-status-msg";
 
-  // Utilisation correcte du chemin avec cleanPseudo
   db.ref('participants_2026/' + cleanPseudo(myName)).set({
     name: myName,
     picks: myPicks,
@@ -619,7 +622,6 @@ function setPseudo() {
   
   document.getElementById('my-bracket-hint').textContent = `Connexion en cours...`;
 
-  // On utilise aussi cleanPseudo ici pour charger le bon dossier
   db.ref('participants_2026/' + cleanPseudo(myName)).once('value', (snap) => {
     const data = snap.val();
     if (data && data.picks) {
@@ -630,11 +632,9 @@ function setPseudo() {
       document.getElementById('my-bracket-hint').textContent = `Bienvenue ${myName} ! À toi de jouer.`;
     }
     renderMyBracket();
+    renderLeaderboard();
   });
 }
-
-// Utilisation dans saveMyBracket et setPseudo :
-db.ref('participants_2026/' + cleanPseudo(myName)).set({ ... });
 
 // ==========================================
 // FONCTIONS DE RENDU
