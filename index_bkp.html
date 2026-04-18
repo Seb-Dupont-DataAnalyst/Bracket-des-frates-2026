@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bracket des Frates 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #07080c; --bg2: #0e1018; --bg3: #161922;
+    --glass: rgba(255,255,255,0.04); --glass2: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+    --text: #f0f2f8; --muted: #5a6070; --muted2: #8892a4;
+    --orange: #ff5f1f; --orange2: #ff8c00; --amber: #f59e0b;
+    --green: #10b981; --green-bg: rgba(16,185,129,0.1); --green-br: rgba(16,185,129,0.25);
+    --red: #f43f5e; --red-bg: rgba(244,63,94,0.1); --red-br: rgba(244,63,94,0.25);
+    --blue: #38bdf8; --blue-bg: rgba(56,189,248,0.1); --blue-br: rgba(56,189,248,0.25);
+    --amber-bg: rgba(245,158,11,0.1); --amber-br: rgba(245,158,11,0.25);
+    --r: 10px; --r2: 14px;
+  }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    background-size: 180px 180px; opacity: .6;
+  }
+
+  .bg-orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(120px); opacity: .12; }
+  .bg-orb-1 { width: 600px; height: 600px; background: var(--orange); top: -200px; left: -200px; }
+  .bg-orb-2 { width: 500px; height: 500px; background: #3b82f6; bottom: -150px; right: -150px; }
+  .wrap { position: relative; z-index: 1; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; padding: 18px 28px;
+    background: rgba(14,16,24,0.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+  }
+  .header-brand { display: flex; align-items: baseline; gap: 10px; }
+  .header-logo {
+    font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: .06em; line-height: 1;
+    background: linear-gradient(135deg, var(--orange) 0%, var(--amber) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-year { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted2); border: 1px solid var(--border2); border-radius: 6px; padding: 2px 7px; }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .sync-status { font-family: 'DM Mono', monospace; font-size: 11px; }
+  .sync-status.ok { color: var(--green); }
+  .sync-status.err { color: var(--red); }
+  .spin { display: inline-block; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .phase-bar { padding: 10px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; background: var(--glass); border-bottom: 1px solid var(--border); }
+  .phase-badge { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; border-radius: 20px; font-family: 'DM Mono', monospace; font-weight: 500; font-size: 11px; text-transform: uppercase; }
+  .phase-badge.open { background: var(--green-bg); border: 1px solid var(--green-br); color: var(--green); }
+  .phase-badge.locked { background: var(--red-bg); border: 1px solid var(--red-br); color: var(--red); }
+  .phase-badge.soon { background: var(--amber-bg); border: 1px solid var(--amber-br); color: var(--amber); }
+  .phase-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .phase-dot.pulse { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
+  .countdown { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted2); }
+  .countdown .cd-val { color: var(--amber); }
+
+  .banner { margin: 12px 28px 0; padding: 10px 16px; border-radius: var(--r); font-size: 12px; backdrop-filter: blur(10px); }
+  .banner.info { background: var(--blue-bg); border: 1px solid var(--blue-br); color: var(--blue); }
+  .banner.success { background: var(--green-bg); border: 1px solid var(--green-br); color: var(--green); }
+
+  .tabs { display: flex; padding: 0 28px; border-bottom: 1px solid var(--border); margin-top: 16px; gap: 0; overflow-x: auto; }
+  .tab { padding: 11px 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--muted); border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap; }
+  .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+  .panel { display: none; padding: 24px 28px; }
+  .panel.active { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+  .bracket-wrap { overflow-x: auto; padding-bottom: 16px; }
+  
+  /* --- MODIFS ALIGNEMENT --- */
+.bracket { 
+  display: grid; 
+  grid-template-columns: 1fr auto 1fr; 
+  min-width: 1100px; 
+  align-items: stretch; /* Très important pour l'alignement vertical */
+  justify-items: center;
+  min-height: 600px; /* Optionnel : donne une hauteur minimale pour respirer */
+}
+
+.conf-section { 
+  display: flex; 
+  flex-direction: row; 
+  align-items: center;
+  gap: 0;
+  width: 100%; /* Important pour que le 1fr de la grille fonctionne */
+}
+
+/* On s'assure que l'Ouest pousse vers la droite et l'Est vers la gauche */
+.conf-section.west { justify-content: flex-end; }
+.conf-section.east { justify-content: flex-start; }
+
+.finals-col-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.round-col { 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: space-around; 
+  min-width: 175px; 
+  flex: 1;
+  /* On s'assure que toutes les colonnes commencent à la même hauteur, 
+     même celles qui n'ont pas de logo en haut */
+  padding-top: 10px; 
+}
+
+.round-col:not(:has(.conf-header))::before {
+  content: '';
+  display: block;
+  height: 110px; /* Même hauteur que .conf-header */
+}
+
+/* Ajustement pour le bloc central des Finales NBA */
+.finals-col-inner::before {
+  content: '';
+  display: block;
+  height: 110px; 
+}
+  
+  /* --- MODIFS LOGOS CONFÉRENCES --- */
+.conf-header { 
+  text-align: center; 
+  height: 110px; /* On fixe la hauteur du bloc logo+titre */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 15px;
+}
+
+.conf-logo-big { 
+  width: 80px; 
+  height: 80px; 
+  object-fit: contain; 
+  margin-bottom: 8px; 
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.finals-logo-big { 
+  width: 100px; 
+  height: auto; 
+  margin-bottom: 20px; 
+  display: block;
+}
+
+  .round-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); text-align: center; text-transform: uppercase; margin-top: 5px;}
+  
+  .matchup { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--glass); backdrop-filter: blur(8px); }
+  .matchup.synced { border-color: rgba(16,185,129,0.3); box-shadow: 0 0 12px rgba(16,185,129,0.06); }
+  
+  .team-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; cursor: pointer; transition: background .12s; }
+  .team-row:hover:not(.locked):not(.tbd) { background: var(--glass2); }
+  .team-row.winner { background: rgba(255,95,31,0.12); }
+  .t-logo { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 0 2px rgba(0,0,0,0.4)); }
+  .tname { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 500; }
+  .seed { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); min-width: 12px; }
+
+  .score-row { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); }
+  .score-btns { display: flex; gap: 4px; }
+  .sbtn { padding: 2px 6px; font-family: 'DM Mono', monospace; font-size: 10px; border: 1px solid var(--border2); border-radius: 5px; background: transparent; color: var(--muted); cursor: pointer; }
+  .sbtn.active { background: var(--orange); color: #fff; border-color: var(--orange); }
+
+  .api-badge { font-family: 'DM Mono', monospace; font-size: 8px; padding: 1px 5px; border-radius: 4px; background: var(--green-bg); color: var(--green); border: 1px solid var(--green-br); }
+  .check { font-size: 10px; color: var(--green); }
+
+  .lb { width: 100%; border-collapse: collapse; }
+  .lb th { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); padding: 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .lb td { padding: 12px 10px; border-bottom: 1px solid var(--border); }
+  .rank-badge { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; align-items: center; justify-content: center; font-size: 11px; background: var(--glass2); }
+  .pts-big { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--orange); }
+
+  .pseudo-input { display: flex; gap: 10px; margin-bottom: 16px; }
+  .pseudo-input input { padding: 8px 14px; border-radius: var(--r); border: 1px solid var(--border2); background: var(--glass); color: #fff; outline: none; }
+  .btn { padding: 8px 16px; border-radius: var(--r); border: 1px solid var(--border2); background: var(--glass); color: #fff; cursor: pointer; font-weight: 500; }
+  .btn.primary { background: var(--orange); border-color: var(--orange); }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+.tname:contains('Chargement...') {
+  color: #555;
+  font-style: italic;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+.stat-small {
+  font-family: 'Bebas Neue', sans-serif;
+  color: #ccc;
+}
+
+.bonus-badge {
+  background: rgba(255, 165, 0, 0.1);
+  color: var(--orange);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.85em;
+}
+
+/* On centre les colonnes de stats */
+#lb-body td:nth-child(3),
+#lb-body td:nth-child(4),
+#lb-body td:nth-child(5) {
+  text-align: center;
+}
+
+.rules-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+.rules-section {
+  margin-bottom: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 15px;
+}
+
+.rules-section h3 {
+  color: var(--orange);
+  margin-bottom: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+}
+
+.rules-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+.rules-table th, .rules-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.rules-section ul {
+  padding-left: 20px;
+}
+/* Conteneur pour espacer le bouton */
+.save-container {
+  text-align: center;
+  margin: 30px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Le bouton style NBA */
+.nba-btn {
+  background-color: #ff9800; /* Orange NBA */
+  color: #1a1a1a; /* Texte sombre pour le contraste */
+  border: none;
+  padding: 14px 28px;
+  font-family: 'Bebas Neue', sans-serif; /* Si tu l'as chargé, sinon 'Arial Black' */
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Effet au survol */
+.nba-btn:hover {
+  background-color: #e68a00;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.5);
+}
+
+/* État désactivé (pendant l'envoi) */
+.nba-btn:disabled {
+  background-color: #555;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-icon {
+  font-size: 1.4rem;
+}
+
+/* Message de succès/erreur sous le bouton */
+.save-status-msg {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  height: 20px; /* Évite que le contenu saute quand le texte apparaît */
+  transition: all 0.3s ease;
+}
+
+.save-status-msg.success {
+  color: #4CAF50; /* Vert succès */
+}
+
+.save-status-msg.error {
+  color: #f44336; /* Rouge erreur */
+}  
+</style>
+</head>
+<body>
+
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<div class="wrap">
+<header>
+  <div>
+    <div class="header-brand">
+      <div class="header-logo">Bracket des Frates</div>
+      <div class="header-year">2026</div>
+    </div>
+    <div class="header-sub">NBA Playoffs · Sync Cloud & Logos</div>
+  </div>
+  <div class="header-right">
+    <button class="btn" onclick="loadFromSheet()">⟳ Sync Résultats</button>
+    <span class="sync-status" id="sync-status"></span>
+  </div>
+</header>
+
+<div class="phase-bar">
+  <div id="phase-badge" class="phase-badge open">
+    <span class="phase-dot pulse"></span>
+    <span id="phase-text">SAISIE OUVERTE</span>
+  </div>
+  <div class="countdown" id="countdown"></div>
+</div>
+
+<div id="main-banner" class="banner info" style="display:none"></div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('bracket')">🏆 Bracket Officiel</button>
+  <button class="tab" onclick="showTab('my-bracket')">✏️ Mon Bracket</button>
+  <button class="tab" onclick="showTab('leaderboard')">🏅 Classement</button>
+  <button class="tab" onclick="showTab('rules')">📋 Règles</button>
+</div>
+
+<div class="panel active" id="panel-bracket">
+  <div class="bracket-wrap">
+    <div class="bracket" id="main-bracket"></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-my-bracket">
+  <div class="pseudo-input">
+    <input type="text" id="pseudo-field" placeholder="Ton pseudo...">
+    <button class="btn primary" onclick="setPseudo()">OK</button>
+  </div>
+  <div id="my-bracket-hint" style="margin-bottom:10px; color:var(--muted)">Saisis ton pseudo pour commencer.</div>
+  
+  <div class="bracket-wrap">
+    <div class="bracket" id="my-bracket-render"></div>
+  </div>
+
+  <div class="save-container">
+    <button id="save-btn" onclick="saveMyBracket()" class="nba-btn">
+      <span class="btn-icon">💾</span> ENREGISTRER MON BRACKET
+    </button>
+    <div id="save-msg" class="save-status-msg"></div>
+  </div>
+</div> <div class="panel" id="panel-leaderboard">
+  <table class="lb"> <thead>
+      <tr>
+        <th>Pos</th>
+        <th>Joueur</th>
+        <th>Pts</th>
+        <th>Pronos</th>
+        <th>Bonus</th>
+        <th>Champion</th>
+      </tr>
+    </thead>
+    <tbody id="lb-body">
+      </tbody>
+  </table>
+</div>
+
+<div id="panel-rules" class="panel">
+  <div class="rules-container">
+    <h2>🏀 Règlement du Bracket 2026</h2>
+    
+    <div class="rules-section">
+      <h3>1. Remplissage</h3>
+      <ul>
+        <li>Choisissez le vainqueur de chaque série en cliquant sur le nom de l'équipe.</li>
+        <li>Sélectionnez obligatoirement le score de la série (ex: 4-2) pour valider le match.</li>
+        <li><strong>Date limite :</strong> Votre bracket doit être enregistré avant le coup d'envoi du premier match des Playoffs.</li>
+      </ul>
+    </div>
+
+    <div class="rules-section">
+      <h3>2. Attribution des Points</h3>
+      <table class="rules-table">
+        <tr><th>Tour</th><th>Points par bon vainqueur</th></tr>
+        <tr><td>1er Tour</td><td>10 pts</td></tr>
+        <tr><td>Demi-finales</td><td>12 pts</td></tr>
+        <tr><td>Finales de Conférence</td><td>15 pts</td></tr>
+        <tr><td>Finales NBA</td><td>20 pts</td></tr>
+      </table>
+    </div>
+
+    <div class="rules-section">
+      <h3>3. Bonus "Score Exact"</h3>
+      <p>Si vous trouvez le <strong>bon vainqueur</strong> ET le <strong>score exact</strong> de la série, vous gagnez un <strong>bonus de +2 points</strong>.</p>
+    </div>
+
+    <div class="rules-section">
+      <h3>4. Mise à jour</h3>
+      <p>Les résultats officiels et le classement sont mis à jour automatiquement chaque matin.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// CONFIGURATION FIREBASE - REMPLACE LES INFOS CI-DESSOUS
+// ================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAMh3W8S3tvYVN_5E8JJRlEVsQuknkFNcQ",
+  authDomain: "bracket-des-frates.firebaseapp.com",
+  databaseURL: "https://bracket-des-frates-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bracket-des-frates",
+  storageBucket: "bracket-des-frates.firebasestorage.app",
+  messagingSenderId: "1081035472880",
+  appId: "1:1081035472880:web:92864c5119985c0ef3a735"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// CONFIG GÉNÉRALE
+const SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=0&single=true&output=csv';
+const STANDINGS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRf8bRhqurQmQsLJiqb0ujUylKjul28oUyMasWIXFsm3sskmLgCw_Akxhip2zvDutTWcOjmDfD67WCV/pub?gid=2053918089&single=true&output=csv'; // Lien de l'onglet Standings
+const DEADLINE  = '2026-04-19T00:00:00';
+const CONF_LOGOS = {
+  // Logos Conférences (toujours les bons)
+  east: 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/scoreboard/east.png&w=200&h=200',
+  west: 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/scoreboard/west.png&w=200&h=200',
+  
+  // LE LOGO DES FINALS (Le vrai script doré)
+  final: 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500/nba.png'
+};
+
+const TEAM_LOGOS = {
+  'Cavaliers':'cle','Heat':'mia','Pacers':'ind','Bucks':'mil','Knicks':'ny','Pistons':'det','Celtics':'bos','Magic':'orl',
+  'Thunder':'okc','Grizzlies':'mem','Nuggets':'den','Clippers':'lac','Timberwolves':'min','Mavericks':'dal','Rockets':'hou','Warriors':'gs',
+  '76ers':'phi','Nets':'bkn','Raptors':'tor','Bulls':'chi','Hawks':'atl','Hornets':'cha','Wizards':'was','Magic':'orl',
+  'Suns':'phx','Kings':'sac','Pelicans':'no','Lakers':'lal','Jazz':'uta','Trail Blazers':'por','Spurs':'sas'
+};
+// Équipes par défaut (Squelette de chargement)
+let EAST_TEAMS = Array(8).fill(null).map((_, i) => ({ seed: [1,8,4,5,3,6,2,7][i], name: 'Chargement...' }));
+let WEST_TEAMS = Array(8).fill(null).map((_, i) => ({ seed: [1,8,4,5,3,6,2,7][i], name: 'Chargement...' }));
+//const EAST_TEAMS = [{seed:1,name:'Cavaliers'},{seed:8,name:'Heat'},{seed:4,name:'Pacers'},{seed:5,name:'Bucks'},{seed:3,name:'Knicks'},{seed:6,name:'Pistons'},{seed:2,name:'Celtics'},{seed:7,name:'Magic'}];
+//const WEST_TEAMS = [{seed:1,name:'Thunder'},{seed:8,name:'Grizzlies'},{seed:4,name:'Nuggets'},{seed:5,name:'Clippers'},{seed:3,name:'Timberwolves'},{seed:6,name:'Mavericks'},{seed:2,name:'Rockets'},{seed:7,name:'Warriors'}];
+const ROUND_PTS = [10, 12, 15, 20];
+const SCORE_BONUS = 2;
+
+// ==========================================
+// ÉTAT GLOBAL
+// ==========================================
+let official = emptyPicks();
+let participants = [];
+let myName = localStorage.getItem('brkt_pseudo') || '';
+let myPicks = emptyPicks();
+
+function emptyPicks(){
+  return {
+    east: Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+    west: Array(7).fill(null).map(()=>({winner:null,score:null,fromApi:false})),
+    final: {winner:null,score:null,fromApi:false}
+  };
+}
+
+function getLogo(n){ const c=TEAM_LOGOS[n]; return c?`https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/${c}.png`:''; }
+function el(t,c){ const e=document.createElement(t); if(c)e.className=c; return e; }
+
+// ==========================================
+// LOGIQUE FIREBASE
+// ==========================================
+db.ref('participants_2026').on('value', (snap) => {
+  const data = snap.val();
+  if(data) {
+    participants = Object.values(data);
+    localStorage.setItem('brkt_leaderboard_backup', JSON.stringify(participants));
+    renderLeaderboard();
+    // ... reste du code
+  } else {
+    // Cas où la base 2026 est vide au début
+    participants = [];
+    localStorage.removeItem('brkt_leaderboard_backup');
+    renderLeaderboard();
+  }
+});
+
+function saveMyBracket() {
+  if (!myName) return alert("Choisis un pseudo !");
+  
+  const btn = document.getElementById('save-btn');
+  const msg = document.getElementById('save-msg');
+  
+  btn.disabled = true;
+  msg.textContent = "⏳ ENREGISTREMENT...";
+  msg.className = "save-status-msg"; // Reset des classes
+
+  db.ref('participants_2026/' + myName.replace(/\s/g, '_')).set({
+    name: myName,
+    picks: myPicks,
+    updated: Date.now()
+  }).then(() => {
+    btn.disabled = false;
+    msg.textContent = "✓ SAUVEGARDÉ DANS LE CLOUD !";
+    msg.className = "save-status-msg success";
+    
+    // TRÈS IMPORTANT : On relance le rendu du classement ici
+    renderLeaderboard(); 
+    
+    setTimeout(() => { msg.textContent = ""; }, 3000);
+  }).catch((err) => {
+    btn.disabled = false;
+    msg.textContent = "❌ ERREUR";
+    msg.className = "save-status-msg error";
+    console.error(err);
+  });
+}
+
+function setPseudo() {
+  const val = document.getElementById('pseudo-field').value.trim();
+  if (!val) return;
+  
+  myName = val;
+  localStorage.setItem('brkt_pseudo', myName); // Sauvegarde locale pour le refresh
+  
+  // On affiche un petit message de chargement
+  document.getElementById('my-bracket-hint').textContent = `Connexion en cours pour ${myName}...`;
+
+  // On va chercher tes données spécifiquement dans Firebase
+  db.ref('participants_2026/' + myName.replace(/\s/g, '_')).once('value', (snap) => {
+    const data = snap.val();
+    if (data && data.picks) {
+      myPicks = data.picks;
+      document.getElementById('my-bracket-hint').textContent = `Content de te revoir ${myName} ! Tes pronos ont été chargés.`;
+    } else {
+      myPicks = emptyPicks();
+      document.getElementById('my-bracket-hint').textContent = `Bienvenue ${myName} ! Crée ton bracket et n'oublie pas d'enregistrer.`;
+    }
+    renderMyBracket();
+    renderLeaderboard(); // Pour mettre à jour ton score immédiatement
+  });
+}
+
+// ==========================================
+// FONCTIONS DE RENDU
+// ==========================================
+function buildBracket(containerId, picks, onUpdate, readOnly){
+  const c = document.getElementById(containerId); 
+  c.innerHTML = '';
+  
+  const ws = el('div','conf-section west'); 
+  buildConf(ws,'west',picks,onUpdate,readOnly);
+  
+  const fs = el('div','finals-col'); 
+  buildFinals(fs,picks,onUpdate,readOnly);
+  
+  const es = el('div','conf-section east'); 
+  buildConf(es,'east',picks,onUpdate,readOnly);
+  
+  c.append(ws, fs, es);
+}
+
+function buildConf(sec, conf, picks, onUpdate, readOnly){
+  const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
+  const col1 = makeCol('1er tour');
+
+  // Le header doit être dans col1 pour que notre CSS s'applique
+  const confHeader = el('div', 'conf-header');
+  confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big">
+                          <div class="round-label">${conf === 'east' ? 'Eastern' : 'Western'} Conference</div>`;
+  col1.appendChild(confHeader);
+
+  for(let i=0; i<4; i++){
+  col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
+    picks[conf][i].winner=w; 
+    picks[conf][i].score=s; 
+    cascade(picks,conf); // C'est ça qui fait monter l'équipe !
+    renderMyBracket();   // Et ça qui affiche le changement
+  }, readOnly));
+}
+  
+  // Colonne 2 : Demis
+  const col2 = makeCol('Demis');
+  for(let i=0; i<2; i++){
+    const t1={name:picks[conf][i*2].winner||'?'}, t2={name:picks[conf][i*2+1].winner||'?'};
+    col2.appendChild(buildMatchup(picks[conf][4+i], t1, t2, (w,s)=>{
+      picks[conf][4+i].winner=w; picks[conf][4+i].score=s; cascade(picks,conf); onUpdate();
+    }, readOnly || t1.name==='?' || t2.name==='?'));
+  }
+  
+  // Colonne 3 : Finale Conf
+  const col3 = makeCol('Finale');
+  const t1_f={name:picks[conf][4].winner||'?'}, t2_f={name:picks[conf][5].winner||'?'};
+  col3.appendChild(buildMatchup(picks[conf][6], t1_f, t2_f, (w,s)=>{
+    picks[conf][6].winner=w; picks[conf][6].score=s; onUpdate();
+  }, readOnly || t1_f.name==='?' || t2_f.name==='?'));
+
+  if(conf==='west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
+}
+
+function buildFinals(sec, picks, onUpdate, readOnly){
+  const inner = el('div', 'finals-col-inner'); // On crée un conteneur interne
+  
+  const finalsHeader = el('div', 'finals-header');
+  finalsHeader.innerHTML = `<img src="${CONF_LOGOS.final}" class="finals-logo-big">`;
+  inner.appendChild(finalsHeader);
+
+  const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
+  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?'));
+  
+  const champ = el('div','champion-box');
+  champ.innerHTML = `<div style="font-size:30px">🏆</div><div style="font-family:'Bebas Neue'; font-size:22px; color:var(--orange)">${picks.final.winner||'?'}</div>`;
+  inner.appendChild(champ);
+
+  sec.appendChild(inner); // On ajoute le tout au parent
+}
+
+function buildMatchup(md, t1, t2, onSet, locked) {
+  const wrap = el('div', 'matchup' + (md.fromApi ? ' synced' : ''));
+  
+  const mkRow = (t) => {
+    const isW = md.winner === t.name;
+    const isTbd = t.name === '?';
+    const r = el('div', 'team-row' + (isW ? ' winner' : '') + (locked || isTbd ? ' locked' : ''));
+    const logo = getLogo(t.name);
+    
+    r.innerHTML = `<span class="seed">${t.seed || ''}</span>
+                   ${logo ? `<img src="${logo}" class="t-logo">` : ''} 
+                   <span class="tname">${t.name}</span>
+                   ${isW && md.fromApi ? '<span class="check">✓</span>' : ''}`;
+
+    if (!locked && !isTbd) {
+      r.onclick = () => {
+        md.winner = t.name; // On définit le vainqueur
+        renderMyBracket();  // On rafraîchit pour afficher la sélection en orange
+      };
+    }
+    return r;
+  };
+
+  wrap.append(mkRow(t1), el('div', 'divider-h'), mkRow(t2));
+
+  // Si une équipe est sélectionnée, on affiche les scores
+  if (md.winner && t1.name !== '?' && t2.name !== '?') {
+    const srow = el('div', 'score-row');
+    const sbtns = el('div', 'score-btns');
+    ['4-0', '4-1', '4-2', '4-3'].forEach(s => {
+      const b = el('button', 'sbtn' + (md.score === s ? ' active' : ''));
+      b.textContent = s;
+      
+      if (!locked && !md.fromApi) {
+        b.onclick = (e) => {
+          e.stopPropagation(); // Empêche le clic de se propager à la ligne de l'équipe
+          md.score = s;       // On définit le score
+          onSet(md.winner, s); // On déclenche la montée au tour suivant
+          renderMyBracket();  // On rafraîchit tout le bracket
+        };
+      }
+      sbtns.appendChild(b);
+    });
+    srow.appendChild(sbtns);
+    wrap.appendChild(srow);
+  }
+  return wrap;
+}
+
+function makeCol(l){ const c=el('div','round-col'); const lbl=el('div','round-label'); lbl.textContent=l; c.appendChild(lbl); return c; }
+
+function cascade(p,c){
+  for(let i=0; i<2; i++){ 
+    if(p[c][4+i].winner && p[c][4+i].winner!==p[c][i*2].winner && p[c][4+i].winner!==p[c][i*2+1].winner){ 
+       p[c][4+i].winner=null; p[c][4+i].score=null; 
+    }
+  }
+  if(p[c][6].winner && p[c][6].winner!==p[c][4].winner && p[c][6].winner!==p[c][5].winner){ 
+     p[c][6].winner=null; p[c][6].score=null; 
+  }
+}
+
+// ==========================================
+// CALCUL & SYNC
+// ==========================================
+function computeScore(p) {
+  let totalPts = 0;
+  let correctSeries = 0;
+  let totalBonus = 0;
+  let totalSeriesMatch = 0;
+
+  // Protection si les picks sont mal formés
+  if (!p || !p.east || !p.west) return { pts: 0, correct: 0, bonus: 0, total: 0 };
+
+  const check = (pm, om, r) => {
+    if (!om || !om.winner) return; // Pas de résultat officiel
+    
+    totalSeriesMatch++;
+
+    if (pm && pm.winner === om.winner) {
+      correctSeries++;
+      totalPts += ROUND_PTS[r];
+      
+      if (pm.score === om.score) {
+        totalBonus += SCORE_BONUS;
+        totalPts += SCORE_BONUS;
+      }
+    }
+  };
+
+  // On check tout
+  for (let i = 0; i < 7; i++) {
+    const r = i < 4 ? 0 : i < 6 ? 1 : 2;
+    check(p.east[i], official.east[i], r);
+    check(p.west[i], official.west[i], r);
+  }
+  check(p.final, official.final, 3);
+
+  return { pts: totalPts, correct: correctSeries, bonus: totalBonus, total: totalSeriesMatch };
+}
+
+async function loadFromSheet() {
+  const st = document.getElementById('sync-status');
+  st.innerHTML = '<span class="spin">⟳</span>';
+  try {
+    const res = await fetch(SHEET_CSV + '&t=' + Date.now());
+    const text = await res.text();
+    const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
+    const data = rows[0][0].toLowerCase() === 'winner' ? rows.slice(1) : rows;
+    
+    official = emptyPicks()
+    ; 
+    const entries = data.filter(r => r[0] && r[1]).map(r => ({winner: r[0], score: r[1], used: false}));
+
+    const pickRes = (t1, t2) => {
+      const e = entries.find(e => !e.used && (e.winner === t1 || e.winner === t2));
+      if (e) e.used = true;
+      return e;
+    };
+
+    ['east', 'west'].forEach(conf => {
+      const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
+      for (let i = 0; i < 4; i++) {
+        const e = pickRes(teams[i*2].name, teams[i*2+1].name);
+        if (e) official[conf][i] = { winner: e.winner, score: e.score, fromApi: true };
+      }
+      for (let i = 0; i < 2; i++) {
+        const t1 = official[conf][i*2].winner, t2 = official[conf][i*2+1].winner;
+        if (t1 && t2) {
+          const e = pickRes(t1, t2);
+          if (e) official[conf][4+i] = { winner: e.winner, score: e.score, fromApi: true };
+        }
+      }
+      const t1_f = official[conf][4].winner, t2_f = official[conf][5].winner;
+      if (t1_f && t2_f) {
+        const e = pickRes(t1_f, t2_f);
+        if (e) official[conf][6] = { winner: e.winner, score: e.score, fromApi: true };
+      }
+    });
+
+    const ef = official.east[6].winner, wf = official.west[6].winner;
+    if (ef && wf) {
+      const e = pickRes(ef, wf);
+      if (e) official.final = { winner: e.winner, score: e.score, fromApi: true };
+    }
+
+    localStorage.setItem('brkt_official_2026', JSON.stringify(official));
+    st.className = 'sync-status ok';
+    st.textContent = "✓ " + new Date().toLocaleTimeString();
+    
+    renderOfficialBracket();
+    renderLeaderboard();
+  } catch (e) { st.textContent = "Erreur Sync"; }
+}
+async function loadTeams() {
+  try {
+    // Vérifie bien que cette URL est celle de l'onglet "Classement" en CSV
+    const res = await fetch(STANDINGS_CSV + '&t=' + Date.now());
+    const text = await res.text();
+    
+    // On transforme le CSV en tableau
+    const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
+    
+    let tempEast = [];
+    let tempWest = [];
+    
+    rows.forEach(row => {
+      const conf = row[0].toLowerCase();
+      const team = { seed: parseInt(row[1]), name: row[2] };
+      if (conf === 'east') tempEast.push(team);
+      else if (conf === 'west') tempWest.push(team);
+    });
+
+    // Ordre NBA pour le dessin du bracket (1vs8, 4vs5, 3vs6, 2vs7)
+    const bracketOrder = [1, 8, 4, 5, 3, 6, 2, 7];
+    
+    EAST_TEAMS = bracketOrder.map(s => tempEast.find(t => t.seed === s) || {seed:s, name:'?'});
+    WEST_TEAMS = bracketOrder.map(s => tempWest.find(t => t.seed === s) || {seed:s, name:'?'});
+    renderOfficialBracket();
+  } catch (e) {
+    console.error("Erreur au chargement des équipes :", e);
+  }
+}
+function renderLeaderboard() {
+  const tbody = document.getElementById('lb-body');
+  if (!tbody) return; 
+
+  tbody.innerHTML = '';
+
+  // Si on n'a personne, on affiche un message propre
+  if (!participants || participants.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">En attente de participants...</td></tr>';
+    return;
+  }
+
+  try {
+    // On calcule les scores et on trie
+    const sorted = participants.map(p => {
+      // Sécurité : si p n'a pas de picks, on crée un objet vide
+      const pPicks = p.picks || emptyPicks();
+      const stats = computeScore(pPicks);
+      return { ...p, ...stats, safePicks: pPicks };
+    }).sort((a, b) => b.pts - a.pts);
+
+    sorted.forEach((p, i) => {
+      const tr = document.createElement('tr');
+      
+      // Sécurité sur le ratio
+      const pronoRatio = (p.total > 0) ? `${p.correct} / ${p.total}` : '0 / 0';
+      
+      // Sécurité sur le nom du champion
+      const champName = (p.safePicks && p.safePicks.final && p.safePicks.final.winner) 
+                        ? p.safePicks.final.winner 
+                        : '—';
+
+      tr.innerHTML = `
+        <td><span class="rank-badge">${i + 1}</span></td>
+        <td style="font-weight:bold; color:#fff;">${p.name || 'Anonyme'}</td>
+        <td><span class="pts-big" style="color:var(--orange)">${p.pts}</span></td>
+        <td><span class="stat-small">${pronoRatio}</span></td>
+        <td><span class="bonus-badge">+${p.bonus}</span></td>
+        <td style="font-size: 0.9em; color: var(--orange)">${champName}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    console.error("Erreur critique Leaderboard:", e);
+    tbody.innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erreur de calcul des scores</td></tr>';
+  }
+}
+
+function renderOfficialBracket(){ buildBracket('main-bracket', official, ()=>{}, true); }
+function renderMyBracket(){ if(myName) buildBracket('my-bracket-render', myPicks, ()=>{ renderLeaderboard(); }, false); }
+
+function showTab(id){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  
+  document.getElementById('panel-' + id).classList.add('active');
+  
+  // On active le bon bouton de navigation
+  const tabs = document.querySelectorAll('.tab');
+  if(id === 'bracket') tabs[0].classList.add('active');
+  if(id === 'my-bracket') tabs[1].classList.add('active');
+  if(id === 'leaderboard') tabs[2].classList.add('active');
+  if(id === 'rules') tabs[3].classList.add('active'); // Ajout pour les règles
+}
+
+// ==========================================
+// INITIALISATION FINALE
+// ==========================================
+
+async function loadApp() {
+  // 1. On charge d'abord les backups locaux pour l'affichage instantané
+  const bracketBackup = localStorage.getItem('brkt_official_2026');
+  if (bracketBackup) {
+    official = JSON.parse(bracketBackup);
+  }
+
+  const lbBackup = localStorage.getItem('brkt_leaderboard_backup');
+  if (lbBackup) {
+    participants = JSON.parse(lbBackup);
+  }
+
+  // 2. Premier rendu (avec backup ou teams par défaut)
+  renderOfficialBracket();
+  renderLeaderboard();
+  if (myName) setPseudo();
+
+  // 3. SYNCHRO LIVE : On va chercher les vraies infos sur le Sheet
+  try {
+    // On attend d'avoir les équipes AVANT de calculer les résultats
+    await loadTeams();     
+    await loadFromSheet(); 
+    
+    // Une fois tout reçu, on rafraîchit l'affichage
+    renderOfficialBracket();
+    renderLeaderboard();
+    if (myName) renderMyBracket();
+    
+    console.log("Sync complète terminée");
+  } catch (err) {
+    console.error("Échec de la synchro live:", err);
+  }
+}
+
+// On lance l'application
+loadApp();
+</script>
+</body>
+</html>
