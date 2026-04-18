@@ -460,18 +460,28 @@ db.ref('participants_2026').on('value', (snap) => {
   }
 });
 
-function saveMyBracket(){
-  if(!myName) return alert("Pseudo requis");
+function saveMyBracket() {
+  if (!myName) return alert("Choisis un pseudo d'abord !");
+  
   const btn = document.getElementById('save-btn');
+  const msg = document.getElementById('save-msg');
+  
   btn.disabled = true;
+  msg.textContent = "⏳ Enregistrement...";
+
+  // BIEN VÉRIFIER LE NOM DU DOSSIER ICI (participants_2026)
   db.ref('participants_2026/' + myName.replace(/\s/g, '_')).set({
     name: myName,
     picks: myPicks,
     updated: Date.now()
   }).then(() => {
     btn.disabled = false;
-    document.getElementById('save-msg').textContent = "✓ Sauvegardé dans le Cloud !";
-    setTimeout(()=> document.getElementById('save-msg').textContent="", 3000);
+    msg.textContent = "✓ Sauvegardé dans le Cloud !";
+    setTimeout(() => msg.textContent = "", 3000);
+  }).catch((error) => {
+    btn.disabled = false;
+    msg.textContent = "❌ Erreur Firebase";
+    console.error("Erreur sauvegarde:", error);
   });
 }
 
