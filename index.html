@@ -377,7 +377,9 @@
 </div>
 
 <div class="panel active" id="panel-bracket">
-  <div class="bracket-wrap"><div class="bracket" id="main-bracket"></div></div>
+  <div class="bracket-wrap">
+    <div class="bracket" id="main-bracket"></div>
+  </div>
 </div>
 
 <div class="panel" id="panel-my-bracket">
@@ -386,26 +388,33 @@
     <button class="btn primary" onclick="setPseudo()">OK</button>
   </div>
   <div id="my-bracket-hint" style="margin-bottom:10px; color:var(--muted)">Saisis ton pseudo pour commencer.</div>
-  <div class="bracket-wrap"><div class="bracket" id="my-bracket-render"></div></div>
+  
+  <div class="bracket-wrap">
+    <div class="bracket" id="my-bracket-render"></div>
+  </div>
+
   <div class="save-container">
-  <button id="save-btn" onclick="saveMyBracket()" class="nba-btn">
-    <span class="btn-icon">💾</span> ENREGISTRER MON BRACKET
-  </button>
-  <div id="save-msg" class="save-status-msg"></div>
+    <button id="save-btn" onclick="saveMyBracket()" class="nba-btn">
+      <span class="btn-icon">💾</span> ENREGISTRER MON BRACKET
+    </button>
+    <div id="save-msg" class="save-status-msg"></div>
+  </div>
+</div> <div class="panel" id="panel-leaderboard">
+  <table class="lb"> <thead>
+      <tr>
+        <th>Pos</th>
+        <th>Joueur</th>
+        <th>Pts</th>
+        <th>Pronos</th>
+        <th>Bonus</th>
+        <th>Champion</th>
+      </tr>
+    </thead>
+    <tbody id="lb-body">
+      </tbody>
+  </table>
 </div>
 
-<table class="leaderboard-table">
-  <thead>
-    <tr>
-      <th>Pos</th>
-      <th>Joueur</th>
-      <th>Pts</th>
-      <th>Pronos</th>
-      <th>Bonus</th>
-      <th>Champion</th>
-    </tr>
-  </thead>
-  <tbody id="lb-body"></tbody> </table>
 <div id="panel-rules" class="panel">
   <div class="rules-container">
     <h2>🏀 Règlement du Bracket 2026</h2>
@@ -432,15 +441,14 @@
 
     <div class="rules-section">
       <h3>3. Bonus "Score Exact"</h3>
-      <p>Si vous trouvez le <strong>bon vainqueur</strong> ET le <strong>score exact</strong> de la série (ex: vous avez mis 4-1 et la série finit à 4-1), vous gagnez un <strong>bonus de +2 points</strong>.</p>
+      <p>Si vous trouvez le <strong>bon vainqueur</strong> ET le <strong>score exact</strong> de la série, vous gagnez un <strong>bonus de +2 points</strong>.</p>
     </div>
 
     <div class="rules-section">
       <h3>4. Mise à jour</h3>
-      <p>Les résultats officiels et le classement sont mis à jour automatiquement chaque matin entre 7h et 8h.</p>
+      <p>Les résultats officiels et le classement sont mis à jour automatiquement chaque matin.</p>
     </div>
   </div>
-</div>
 </div>
 
 <script>
