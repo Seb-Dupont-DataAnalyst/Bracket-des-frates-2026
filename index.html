@@ -556,17 +556,23 @@ function el(t,c){ const e=document.createElement(t); if(c)e.className=c; return 
 // ==========================================
 // LOGIQUE FIREBASE
 // ==========================================
+function cleanPseudo(name) {
+  if (!name) return "";
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s/g, '_')
+    .replace(/[^a-zA-Z0-9_]/g, '');
+}
 db.ref('participants_2026').on('value', (snap) => {
   const data = snap.val();
   if(data) {
     participants = Object.values(data);
     localStorage.setItem('brkt_leaderboard_backup', JSON.stringify(participants));
     renderLeaderboard();
-    // ... reste du code
+    updateParticipantList(); 
   } else {
-    // Cas où la base 2026 est vide au début
     participants = [];
-    localStorage.removeItem('brkt_leaderboard_backup');
     renderLeaderboard();
   }
 });
@@ -574,14 +580,20 @@ db.ref('participants_2026').on('value', (snap) => {
 function saveMyBracket() {
   if (!myName) return alert("Choisis un pseudo !");
   
+  // SÉCURITÉ : On bloque si la deadline est passée
+  if (new Date() > new Date(DEADLINE)) {
+    return alert("Trop tard ! Les brackets sont verrouillés. 🏀");
+  }
+
   const btn = document.getElementById('save-btn');
   const msg = document.getElementById('save-msg');
   
   btn.disabled = true;
   msg.textContent = "⏳ ENREGISTREMENT...";
-  msg.className = "save-status-msg"; // Reset des classes
+  msg.className = "save-status-msg";
 
-  db.ref('participants_2026/' + myName.replace(/\s/g, '_')).set({
+  // Utilisation correcte du chemin avec cleanPseudo
+  db.ref('participants_2026/' + cleanPseudo(myName)).set({
     name: myName,
     picks: myPicks,
     updated: Date.now()
@@ -589,14 +601,10 @@ function saveMyBracket() {
     btn.disabled = false;
     msg.textContent = "✓ SAUVEGARDÉ DANS LE CLOUD !";
     msg.className = "save-status-msg success";
-    
-    // TRÈS IMPORTANT : On relance le rendu du classement ici
-    renderLeaderboard(); 
-    
     setTimeout(() => { msg.textContent = ""; }, 3000);
   }).catch((err) => {
     btn.disabled = false;
-    msg.textContent = "❌ ERREUR";
+    msg.textContent = "❌ ERREUR FIREBASE";
     msg.className = "save-status-msg error";
     console.error(err);
   });
@@ -607,34 +615,22 @@ function setPseudo() {
   if (!val) return;
   
   myName = val;
-  localStorage.setItem('brkt_pseudo', myName); // Sauvegarde locale pour le refresh
+  localStorage.setItem('brkt_pseudo', myName); 
   
-  // On affiche un petit message de chargement
-  document.getElementById('my-bracket-hint').textContent = `Connexion en cours pour ${myName}...`;
+  document.getElementById('my-bracket-hint').textContent = `Connexion en cours...`;
 
-  // On va chercher tes données spécifiquement dans Firebase
-  db.ref('participants_2026/' + myName.replace(/\s/g, '_')).once('value', (snap) => {
+  // On utilise aussi cleanPseudo ici pour charger le bon dossier
+  db.ref('participants_2026/' + cleanPseudo(myName)).once('value', (snap) => {
     const data = snap.val();
     if (data && data.picks) {
       myPicks = data.picks;
-      document.getElementById('my-bracket-hint').textContent = `Content de te revoir ${myName} ! Tes pronos ont été chargés.`;
+      document.getElementById('my-bracket-hint').textContent = `Content de te revoir ${myName} ! Pronos chargés.`;
     } else {
       myPicks = emptyPicks();
-      document.getElementById('my-bracket-hint').textContent = `Bienvenue ${myName} ! Crée ton bracket et n'oublie pas d'enregistrer.`;
+      document.getElementById('my-bracket-hint').textContent = `Bienvenue ${myName} ! À toi de jouer.`;
     }
     renderMyBracket();
-    renderLeaderboard(); // Pour mettre à jour ton score immédiatement
-    updateParticipantList();
   });
-}
-
-// Cette fonction transforme "Briçou" en "Bricou" et "Élite" en "Elite"
-function cleanPseudo(name) {
-  return name
-    .normalize("NFD") // Sépare les accents des lettres
-    .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
-    .replace(/\s/g, '_') // Remplace les espaces par _
-    .replace(/[^a-zA-Z0-9_]/g, ''); // Supprime tout ce qui n'est pas lettre, chiffre ou _
 }
 
 // Utilisation dans saveMyBracket et setPseudo :
