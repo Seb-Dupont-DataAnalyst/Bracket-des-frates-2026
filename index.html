@@ -394,17 +394,20 @@
   <div id="save-msg" class="save-status-msg"></div>
 </div>
 
-<div class="panel" id="panel-leaderboard">
-  <table class="lb">
+<div id="panel-leaderboard" class="panel">
+  <table class="leaderboard-table">
     <thead>
-  <tr>
-    <th>Pos</th>
-    <th>Joueur</th>
-    <th>Pts</th>
-    <th>Pronos</th> <th>Bonus</th>  <th>Champion</th>
-  </tr>
-</thead>
-    <tbody id="lb-body"></tbody>
+      <tr>
+        <th>Pos</th>
+        <th>Joueur</th>
+        <th>Pts</th>
+        <th>Pronos</th>
+        <th>Bonus</th>
+        <th>Champion</th>
+      </tr>
+    </thead>
+    <tbody id="lb-body">
+      </tbody>
   </table>
 </div>
 <div id="panel-rules" class="panel">
@@ -723,39 +726,36 @@ function computeScore(p) {
   let totalPts = 0;
   let correctSeries = 0;
   let totalBonus = 0;
-  let totalSeriesMatch = 0; // Nombre de séries où l'API a un résultat
+  let totalSeriesMatch = 0;
+
+  // Protection si les picks sont mal formés
+  if (!p || !p.east || !p.west) return { pts: 0, correct: 0, bonus: 0, total: 0 };
 
   const check = (pm, om, r) => {
-    if (!om.winner) return; // Pas encore de résultat officiel pour cette série
+    if (!om || !om.winner) return; // Pas de résultat officiel
     
-    totalSeriesMatch++; // On incrémente le nombre de séries terminées officiellement
+    totalSeriesMatch++;
 
-    if (pm.winner === om.winner) {
-      correctSeries++; // +1 prono correct
+    if (pm && pm.winner === om.winner) {
+      correctSeries++;
       totalPts += ROUND_PTS[r];
       
       if (pm.score === om.score) {
-        totalBonus += SCORE_BONUS; // +2 bonus
+        totalBonus += SCORE_BONUS;
         totalPts += SCORE_BONUS;
       }
     }
   };
 
-  // On check les conférences
+  // On check tout
   for (let i = 0; i < 7; i++) {
     const r = i < 4 ? 0 : i < 6 ? 1 : 2;
     check(p.east[i], official.east[i], r);
     check(p.west[i], official.west[i], r);
   }
-  // On check la finale
   check(p.final, official.final, 3);
 
-  return { 
-    pts: totalPts, 
-    correct: correctSeries, 
-    bonus: totalBonus, 
-    total: totalSeriesMatch 
-  };
+  return { pts: totalPts, correct: correctSeries, bonus: totalBonus, total: totalSeriesMatch };
 }
 
 async function loadFromSheet() {
@@ -841,37 +841,39 @@ async function loadTeams() {
   }
 }
 function renderLeaderboard() {
-  // 1. On s'assure que participants n'est pas vide
+  const tbody = document.getElementById('lb-body');
+  if (!tbody) return; // Sécurité si l'élément n'existe pas encore
+  
+  tbody.innerHTML = '';
+
   if (!participants || participants.length === 0) {
-    document.getElementById('lb-body').innerHTML = '<tr><td colspan="6" style="text-align:center">Aucun participant pour le moment</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">En attente de participants...</td></tr>';
     return;
   }
 
   try {
     const sorted = participants.map(p => {
       const stats = computeScore(p.picks);
-      // On s'assure que computeScore renvoie bien un objet avec pts, correct, etc.
       return { ...p, ...stats };
     }).sort((a, b) => b.pts - a.pts);
 
-    const tbody = document.getElementById('lb-body');
-    tbody.innerHTML = '';
-
     sorted.forEach((p, i) => {
-      const tr = el('tr');
+      const tr = document.createElement('tr'); // Utilisation de document.createElement par sécurité
       const pronoRatio = `${p.correct} / ${p.total}`;
+      
       tr.innerHTML = `
         <td><span class="rank-badge">${i + 1}</span></td>
         <td style="font-weight:bold">${p.name}</td>
         <td><span class="pts-big">${p.pts}</span></td>
         <td><span class="stat-small">${pronoRatio}</span></td>
         <td><span class="bonus-badge">+${p.bonus}</span></td>
-        <td style="font-size: 0.9em; color: var(--orange)">${p.picks.final.winner || '—'}</td>
+        <td style="font-size: 0.9em; color: var(--orange)">${(p.picks && p.picks.final) ? (p.picks.final.winner || '—') : '—'}</td>
       `;
       tbody.appendChild(tr);
     });
   } catch (e) {
-    console.error("Erreur dans renderLeaderboard:", e);
+    console.error("Erreur critique Leaderboard:", e);
+    tbody.innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erreur d\'affichage du classement</td></tr>';
   }
 }
 
