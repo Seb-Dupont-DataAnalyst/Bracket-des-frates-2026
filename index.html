@@ -470,11 +470,37 @@
     margin-bottom: 4px;
     display: block;
 }
-.chat-msg .text { color: #eee; font-size: 15px; }
-.chat-input-area { padding: 15px; background: #111; display: flex; gap: 10px; }
-#chat-input { 
-    flex: 1; background: #222; border: 1px solid var(--border); 
-    color: #fff; padding: 10px; border-radius: 8px; 
+.chat-msg .text {
+    white-space: pre-wrap; /* Crucial : respecte les espaces et les retours à la ligne */
+    color: #eee;
+    font-size: 15px;
+}
+.chat-input-area {
+    display: flex;
+    align-items: flex-end; /* Aligne les boutons en bas si le texte grandit */
+    gap: 10px;
+    padding: 12px;
+}
+
+#chat-input {
+    flex: 1;
+    background: #222;
+    border: 1px solid var(--border);
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    resize: none; /* Empêche l'utilisateur de redimensionner manuellement */
+    font-family: inherit;
+    line-height: 1.4;
+    max-height: 100px; /* Évite que l'input ne prenne tout l'écran */
+}
+
+.emoji-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding-bottom: 5px;
 }
 #chat-send { 
     background: var(--orange); border: none; color: #000; 
@@ -614,9 +640,10 @@
         <div class="chat-messages" id="chat-messages">
             </div>
         <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Écris un message..." maxlength="150">
-            <button onclick="sendChatMessage()" id="chat-send">ENVOYER</button>
-        </div>
+          <button onclick="toggleEmojiPicker()" class="emoji-btn">😊</button>
+          <textarea id="chat-input" placeholder="Écris un message... (Shift + Entrée pour sauter une ligne)" rows="1" maxlength="300"></textarea>
+          <button onclick="sendChatMessage()" id="chat-send">ENVOYER</button>
+</div>
     </div>
 </div>
 
@@ -1233,41 +1260,58 @@ function updateCountdown() {
 setInterval(updateCountdown, 1000);
 updateCountdown();
 
+// --- LOGIQUE AVANCÉE DU CLAVIER ---
+const chatInput = document.getElementById('chat-input');
+
+chatInput?.addEventListener('keydown', (e) => {
+    // Si on appuie sur Entrée
+    if (e.key === 'Enter') {
+        // Si Shift est enfoncé : on laisse faire le comportement naturel (saut de ligne)
+        if (e.shiftKey) {
+          return; 
+        } 
+        // Sinon : on envoie le message et on annule le saut de ligne par défaut
+        else {
+          e.preventDefault();
+          sendChatMessage();
+        }
+    }
+});
+
+// --- ACCÈS AUX EMOJIS ---
+// Cette fonction déclenche le sélecteur d'emojis natif sur la plupart des systèmes modernes
+function toggleEmojiPicker() {
+  const input = document.getElementById('chat-input');
+  input.focus();
+  
+  // Astuce : sur Windows (Win + .) ou Mac (Cmd + Ctrl + Space), 
+  // on ne peut pas forcer l'ouverture en JS pur, mais on peut informer l'utilisateur.
+  // Cependant, sur mobile, le clavier emoji s'ouvre via le clavier standard.
+  
+  // Si tu veux un vrai sélecteur d'emoji intégré, il faudrait une bibliothèque, 
+  // mais c'est lourd. Le plus simple est de laisser les gens utiliser leur clavier.
+  // On peut juste ajouter un petit aide-mémoire :
+  alert("Astuce : Utilisez Win + . (Windows) ou Cmd + Ctrl + Espace (Mac) pour les emojis !");
+}
+
+// Mise à jour de la fonction d'envoi pour supporter les retours à la ligne (préservation du format)
 function sendChatMessage() {
     const input = document.getElementById('chat-input');
+    // On garde les retours à la ligne (\n)
     const msg = input.value.trim();
-    if (!myName) return alert("Saisis d'abord ton pseudo dans 'Mon Bracket' !");
+    
+    if (!myName) return alert("Connecte-toi d'abord !");
     if (!msg) return;
 
     db.ref('chat_2026').push({
         user: myName,
-        text: msg,
+        text: msg, // Le texte contient les \n
         timestamp: Date.now()
     });
+    
     input.value = "";
+    input.style.height = 'auto'; // Réinitialise la taille
 }
-
-// Écoute des messages
-db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
-    const container = document.getElementById('chat-messages');
-    if (!container) return;
-    container.innerHTML = "";
-    const data = snap.val();
-    if (data) {
-        Object.values(data).forEach(m => {
-            const div = document.createElement('div');
-            div.className = "chat-msg";
-            div.innerHTML = `<span class="author">${m.user}</span><span class="text">${m.text}</span>`;
-            container.appendChild(div);
-        });
-        container.scrollTop = container.scrollHeight;
-    }
-});
-
-// Entrée pour envoyer
-document.getElementById('chat-input')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendChatMessage();
-});
 
 // On lance l'application
 loadApp();
