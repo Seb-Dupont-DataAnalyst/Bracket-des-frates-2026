@@ -1300,7 +1300,7 @@ function sendChatMessage() {
     }).catch(err => alert("Erreur d'envoi : " + err.message));
 }
 
-// 3. ÉCOUTE ET AFFICHAGE
+// 3. ÉCOUTE ET AFFICHAGE (Version avec support GIF par lien)
 db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
     const container = document.getElementById('chat-messages');
     if (!container) return;
@@ -1314,9 +1314,16 @@ db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
             const div = document.createElement('div');
             div.className = "chat-msg";
             
-            // Structure sécurisée pour éviter les injections de code
-            div.innerHTML = `<span class="author">${m.user}</span><div class="text"></div>`;
-            div.querySelector('.text').innerText = m.text; 
+            // On vérifie si le texte est un lien vers un GIF
+            const isGif = m.text.startsWith('http') && (m.text.includes('.gif') || m.text.includes('giphy.com/media'));
+
+            if (isGif) {
+              div.innerHTML = `<span class="author">${m.user}</span>
+                               <img src="${m.text}" style="max-width:100%; border-radius:8px; margin-top:5px; display:block;">`;
+            } else {
+              div.innerHTML = `<span class="author">${m.user}</span><div class="text"></div>`;
+              div.querySelector('.text').innerText = m.text; 
+            }
             
             container.appendChild(div);
         });
