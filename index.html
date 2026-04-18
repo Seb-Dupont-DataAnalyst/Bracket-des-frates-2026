@@ -628,6 +628,18 @@ function setPseudo() {
   });
 }
 
+// Cette fonction transforme "Briçou" en "Bricou" et "Élite" en "Elite"
+function cleanPseudo(name) {
+  return name
+    .normalize("NFD") // Sépare les accents des lettres
+    .replace(/[\u0300-\u036f]/g, "") // Supprime les accents
+    .replace(/\s/g, '_') // Remplace les espaces par _
+    .replace(/[^a-zA-Z0-9_]/g, ''); // Supprime tout ce qui n'est pas lettre, chiffre ou _
+}
+
+// Utilisation dans saveMyBracket et setPseudo :
+db.ref('participants_2026/' + cleanPseudo(myName)).set({ ... });
+
 // ==========================================
 // FONCTIONS DE RENDU
 // ==========================================
