@@ -842,38 +842,49 @@ async function loadTeams() {
 }
 function renderLeaderboard() {
   const tbody = document.getElementById('lb-body');
-  if (!tbody) return; // Sécurité si l'élément n'existe pas encore
-  
+  if (!tbody) return; 
+
   tbody.innerHTML = '';
 
+  // Si on n'a personne, on affiche un message propre
   if (!participants || participants.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">En attente de participants...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#888;">En attente de participants...</td></tr>';
     return;
   }
 
   try {
+    // On calcule les scores et on trie
     const sorted = participants.map(p => {
-      const stats = computeScore(p.picks);
-      return { ...p, ...stats };
+      // Sécurité : si p n'a pas de picks, on crée un objet vide
+      const pPicks = p.picks || emptyPicks();
+      const stats = computeScore(pPicks);
+      return { ...p, ...stats, safePicks: pPicks };
     }).sort((a, b) => b.pts - a.pts);
 
     sorted.forEach((p, i) => {
-      const tr = document.createElement('tr'); // Utilisation de document.createElement par sécurité
-      const pronoRatio = `${p.correct} / ${p.total}`;
+      const tr = document.createElement('tr');
       
+      // Sécurité sur le ratio
+      const pronoRatio = (p.total > 0) ? `${p.correct} / ${p.total}` : '0 / 0';
+      
+      // Sécurité sur le nom du champion
+      const champName = (p.safePicks && p.safePicks.final && p.safePicks.final.winner) 
+                        ? p.safePicks.final.winner 
+                        : '—';
+
       tr.innerHTML = `
         <td><span class="rank-badge">${i + 1}</span></td>
-        <td style="font-weight:bold">${p.name}</td>
-        <td><span class="pts-big">${p.pts}</span></td>
+        <td style="font-weight:bold; color:#fff;">${p.name || 'Anonyme'}</td>
+        <td><span class="pts-big" style="color:var(--orange)">${p.pts}</span></td>
         <td><span class="stat-small">${pronoRatio}</span></td>
         <td><span class="bonus-badge">+${p.bonus}</span></td>
-        <td style="font-size: 0.9em; color: var(--orange)">${(p.picks && p.picks.final) ? (p.picks.final.winner || '—') : '—'}</td>
+        <td style="font-size: 0.9em; color: var(--orange)">${champName}</td>
       `;
       tbody.appendChild(tr);
     });
   } catch (e) {
     console.error("Erreur critique Leaderboard:", e);
-    tbody.innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erreur d\'affichage du classement</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="color:red; text-align:center;">Erreur de calcul des scores</td></tr>';
   }
 }
 
