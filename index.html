@@ -525,29 +525,33 @@ db.ref('participants_2026').on('value', (snap) => {
 });
 
 function saveMyBracket() {
-  if (!myName) return alert("Choisis un pseudo d'abord !");
+  if (!myName) return alert("Choisis un pseudo !");
   
   const btn = document.getElementById('save-btn');
   const msg = document.getElementById('save-msg');
   
   btn.disabled = true;
-  msg.textContent = "⏳ Enregistrement...";
+  msg.textContent = "⏳ ENREGISTREMENT...";
+  msg.className = "save-status-msg"; // Reset des classes
 
-  // BIEN VÉRIFIER LE NOM DU DOSSIER ICI (participants_2026)
   db.ref('participants_2026/' + myName.replace(/\s/g, '_')).set({
     name: myName,
     picks: myPicks,
     updated: Date.now()
   }).then(() => {
     btn.disabled = false;
-    msg.textContent = "✓ Sauvegardé dans le Cloud !"
-    msg.className = "save-status-msg success";;
-    setTimeout(() => msg.textContent = "", 3000);
-  }).catch((error) => {
+    msg.textContent = "✓ SAUVEGARDÉ DANS LE CLOUD !";
+    msg.className = "save-status-msg success";
+    
+    // TRÈS IMPORTANT : On relance le rendu du classement ici
+    renderLeaderboard(); 
+    
+    setTimeout(() => { msg.textContent = ""; }, 3000);
+  }).catch((err) => {
     btn.disabled = false;
-    msg.textContent = "❌ ERREUR DE CONNEXION";
+    msg.textContent = "❌ ERREUR";
     msg.className = "save-status-msg error";
-    console.error("Erreur sauvegarde:", error);
+    console.error(err);
   });
 }
 
@@ -837,31 +841,38 @@ async function loadTeams() {
   }
 }
 function renderLeaderboard() {
-  // On calcule les scores détaillés pour tout le monde
-  const sorted = participants.map(p => {
-    const stats = computeScore(p.picks);
-    return { ...p, ...stats };
-  }).sort((a, b) => b.pts - a.pts);
+  // 1. On s'assure que participants n'est pas vide
+  if (!participants || participants.length === 0) {
+    document.getElementById('lb-body').innerHTML = '<tr><td colspan="6" style="text-align:center">Aucun participant pour le moment</td></tr>';
+    return;
+  }
 
-  const tbody = document.getElementById('lb-body');
-  tbody.innerHTML = '';
+  try {
+    const sorted = participants.map(p => {
+      const stats = computeScore(p.picks);
+      // On s'assure que computeScore renvoie bien un objet avec pts, correct, etc.
+      return { ...p, ...stats };
+    }).sort((a, b) => b.pts - a.pts);
 
-  sorted.forEach((p, i) => {
-    const tr = el('tr');
-    
-    // On affiche "X / Y" pour les pronos (ex: 5/8 séries terminées)
-    const pronoRatio = `${p.correct} / ${p.total}`;
-    
-    tr.innerHTML = `
-      <td><span class="rank-badge">${i + 1}</span></td>
-      <td style="font-weight:bold">${p.name}</td>
-      <td><span class="pts-big">${p.pts}</span></td>
-      <td><span class="stat-small">${pronoRatio}</span></td>
-      <td><span class="bonus-badge">+${p.bonus}</span></td>
-      <td style="font-size: 0.9em; color: var(--orange)">${p.picks.final.winner || '—'}</td>
-    `;
-    tbody.appendChild(tr);
-  });
+    const tbody = document.getElementById('lb-body');
+    tbody.innerHTML = '';
+
+    sorted.forEach((p, i) => {
+      const tr = el('tr');
+      const pronoRatio = `${p.correct} / ${p.total}`;
+      tr.innerHTML = `
+        <td><span class="rank-badge">${i + 1}</span></td>
+        <td style="font-weight:bold">${p.name}</td>
+        <td><span class="pts-big">${p.pts}</span></td>
+        <td><span class="stat-small">${pronoRatio}</span></td>
+        <td><span class="bonus-badge">+${p.bonus}</span></td>
+        <td style="font-size: 0.9em; color: var(--orange)">${p.picks.final.winner || '—'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    console.error("Erreur dans renderLeaderboard:", e);
+  }
 }
 
 function renderOfficialBracket(){ buildBracket('main-bracket', official, ()=>{}, true); }
