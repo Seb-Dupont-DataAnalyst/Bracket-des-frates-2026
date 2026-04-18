@@ -325,8 +325,10 @@
   <div id="my-bracket-hint" style="margin-bottom:10px; color:var(--muted)">Saisis ton pseudo pour commencer.</div>
   <div class="bracket-wrap"><div class="bracket" id="my-bracket-render"></div></div>
   <div style="margin-top:20px; display:flex; align-items:center; gap:15px;">
-    <button class="btn primary" id="save-btn" onclick="saveMyBracket()">Enregistrer mon bracket</button>
-    <span id="save-msg" style="color:var(--green); font-family:'DM Mono'"></span>
+   <button id="save-btn" onclick="saveMyBracket()" class="save-btn">
+  💾 Enregistrer mon bracket
+</button>
+<span id="save-msg"></span>
   </div>
 </div>
 
