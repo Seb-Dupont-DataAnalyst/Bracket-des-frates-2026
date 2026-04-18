@@ -273,7 +273,70 @@
 .rules-section ul {
   padding-left: 20px;
 }
-  
+/* Conteneur pour espacer le bouton */
+.save-container {
+  text-align: center;
+  margin: 30px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Le bouton style NBA */
+.nba-btn {
+  background-color: #ff9800; /* Orange NBA */
+  color: #1a1a1a; /* Texte sombre pour le contraste */
+  border: none;
+  padding: 14px 28px;
+  font-family: 'Bebas Neue', sans-serif; /* Si tu l'as chargé, sinon 'Arial Black' */
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Effet au survol */
+.nba-btn:hover {
+  background-color: #e68a00;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.5);
+}
+
+/* État désactivé (pendant l'envoi) */
+.nba-btn:disabled {
+  background-color: #555;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-icon {
+  font-size: 1.4rem;
+}
+
+/* Message de succès/erreur sous le bouton */
+.save-status-msg {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  height: 20px; /* Évite que le contenu saute quand le texte apparaît */
+  transition: all 0.3s ease;
+}
+
+.save-status-msg.success {
+  color: #4CAF50; /* Vert succès */
+}
+
+.save-status-msg.error {
+  color: #f44336; /* Rouge erreur */
+}  
 </style>
 </head>
 <body>
@@ -324,12 +387,11 @@
   </div>
   <div id="my-bracket-hint" style="margin-bottom:10px; color:var(--muted)">Saisis ton pseudo pour commencer.</div>
   <div class="bracket-wrap"><div class="bracket" id="my-bracket-render"></div></div>
-  <div style="margin-top:20px; display:flex; align-items:center; gap:15px;">
-   <button id="save-btn" onclick="saveMyBracket()" class="save-btn">
-  💾 Enregistrer mon bracket
-</button>
-<span id="save-msg"></span>
-  </div>
+  <div class="save-container">
+  <button id="save-btn" onclick="saveMyBracket()" class="nba-btn">
+    <span class="btn-icon">💾</span> ENREGISTRER MON BRACKET
+  </button>
+  <div id="save-msg" class="save-status-msg"></div>
 </div>
 
 <div class="panel" id="panel-leaderboard">
@@ -478,11 +540,13 @@ function saveMyBracket() {
     updated: Date.now()
   }).then(() => {
     btn.disabled = false;
-    msg.textContent = "✓ Sauvegardé dans le Cloud !";
+    msg.textContent = "✓ Sauvegardé dans le Cloud !"
+    msg.className = "save-status-msg success";;
     setTimeout(() => msg.textContent = "", 3000);
   }).catch((error) => {
     btn.disabled = false;
-    msg.textContent = "❌ Erreur Firebase";
+    msg.textContent = "❌ ERREUR DE CONNEXION";
+    msg.className = "save-status-msg error";
     console.error("Erreur sauvegarde:", error);
   });
 }
