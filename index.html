@@ -1291,27 +1291,64 @@ function toggleEmojiPicker() {
   // Si tu veux un vrai sélecteur d'emoji intégré, il faudrait une bibliothèque, 
   // mais c'est lourd. Le plus simple est de laisser les gens utiliser leur clavier.
   // On peut juste ajouter un petit aide-mémoire :
-  alert("Astuce : Utilisez Win + . (Windows) ou Cmd + Ctrl + Espace (Mac) pour les emojis !");
+  alert("Astuce : Utilisez Touche Windows + ";" ou Cmd + Ctrl + Espace (Mac) pour les emojis !");
 }
 
-// Mise à jour de la fonction d'envoi pour supporter les retours à la ligne (préservation du format)
+// ==========================================
+// LOGIQUE DU CHAT (VERSION FINALE)
+// ==========================================
+
+// 1. GESTION DU CLAVIER (Entrée vs Shift+Entrée)
+const chatInput = document.getElementById('chat-input');
+chatInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+    }
+});
+
+// 2. ENVOI DES MESSAGES
 function sendChatMessage() {
     const input = document.getElementById('chat-input');
-    // On garde les retours à la ligne (\n)
     const msg = input.value.trim();
     
-    if (!myName) return alert("Connecte-toi d'abord !");
+    if (!myName) return alert("Saisis d'abord ton pseudo dans l'onglet 'Mon Bracket' !");
     if (!msg) return;
 
     db.ref('chat_2026').push({
         user: myName,
-        text: msg, // Le texte contient les \n
+        text: msg,
         timestamp: Date.now()
-    });
-    
-    input.value = "";
-    input.style.height = 'auto'; // Réinitialise la taille
+    }).then(() => {
+        input.value = "";
+        input.style.height = 'auto'; // Remet le textarea à sa taille d'origine
+    }).catch(err => alert("Erreur d'envoi : " + err.message));
 }
+
+// 3. ÉCOUTE ET AFFICHAGE (Le "Cerveau" du chat)
+db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
+    const container = document.getElementById('chat-messages');
+    if (!container) return;
+
+    const data = snap.val();
+    container.innerHTML = ""; 
+
+    if (data) {
+        // Transformation de l'objet Firebase en tableau pour l'affichage
+        Object.keys(data).forEach(key => {
+            const m = data[key];
+            const div = document.createElement('div');
+            div.className = "chat-msg";
+            // On utilise innerText pour le message pour éviter les failles XSS 
+            // tout en gardant le format HTML pour la structure
+            div.innerHTML = `<span class="author">${m.user}</span><div class="text"></div>`;
+            div.querySelector('.text').innerText = m.text; 
+            container.appendChild(div);
+        });
+        // Scroll automatique vers le bas
+        container.scrollTop = container.scrollHeight;
+    }
+});
 
 // On lance l'application
 loadApp();
