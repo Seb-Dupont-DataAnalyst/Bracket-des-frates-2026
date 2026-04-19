@@ -946,7 +946,10 @@ function buildMatchup(md, t1, t2, onSet, locked) {
     const r = el('div', 'team-row' + (isW ? ' winner' : '') + (locked || isTbd ? ' locked' : ''));
     const logo = getLogo(t.name);
     
-    // Structure modifiée : Seed+Logo+Nom à gauche, Score à droite
+    // NOUVEAU : On appelle getLiveScore avec le nom de l'équipe actuelle (t.name)
+    // t.name = l'équipe de la ligne, t1.name/t2.name = les deux adversaires
+    const scoreHTML = getLiveScore(t.name, t1.name, t2.name, globalResults);
+
     r.innerHTML = `
       <div class="team-left-side">
         <span class="seed">${t.seed || ''}</span>
@@ -1263,19 +1266,29 @@ async function loadApp() {
 }
 
 // --- FONCTION UTILITAIRE POUR RÉCUPÉRER LE SCORE LIVE ---
-function getLiveScore(team1Name, team2Name, apiData) {
-    // On vérifie si apiData existe (globalResults)
-    if (!apiData || apiData.length === 0 || !team1Name || team1Name === '?') return "";
+function getLiveScore(currentTeamName, team1Name, team2Name, apiData) {
+    if (!apiData || apiData.length === 0 || !currentTeamName || currentTeamName === '?') return "";
     
-    // On cherche si un des deux noms d'équipe correspond à un vainqueur dans notre liste API
+    // On cherche le match qui correspond à ce duel
     const match = apiData.find(s => 
        (s.winner === team1Name || s.winner === team2Name)
     );
 
     if (match && match.score && match.score !== "0-0") {
         const isFinished = match.status === "FINISHED";
-        // On retourne le badge avec les classes CSS score-live ou score-finished
-        return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${match.score}</span>`;
+        
+        // On sépare le score (ex: "1-0" devient ["1", "0"])
+        const scores = match.score.split('-');
+        const leadScore = scores[0]; // Le score du meneur (ex: 1)
+        const loseScore = scores[1]; // Le score du mené (ex: 0)
+
+        // Si l'équipe qu'on affiche est celle qui gagne dans l'API
+        if (currentTeamName === match.winner) {
+            return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${leadScore}</span>`;
+        } else {
+            // Sinon, c'est l'autre équipe, on affiche le petit score
+            return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}" style="opacity:0.6">${loseScore}</span>`;
+        }
     }
     return "";
 }
