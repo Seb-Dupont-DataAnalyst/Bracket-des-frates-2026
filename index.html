@@ -775,6 +775,8 @@ const SCORE_BONUS = 2;
 // ==========================================
 // ÉTAT GLOBAL
 // ==========================================
+let window.globalResults = []; // On crée un tableau vide par défaut
+let globalResults = []; // Déclaration simple en haut du script
 let official = emptyPicks();
 let participants = [];
 let myName = localStorage.getItem('brkt_pseudo') || '';
@@ -1081,7 +1083,10 @@ async function loadFromSheet() {
     // --------------------------------
 
     official = emptyPicks();
-    const entries = data.filter(r => r[0] && r[1]).map(r => ({winner: r[0], score: r[1], used: false}));
+    // On ne crée une "entrée" de vainqueur que si la série est FINISHED
+    const entries = data
+      .filter(r => r[0] && r[1] && r[4] === 'FINISHED') // R[4] est le statut envoyé par Apps Script
+      .map(r => ({ winner: r[0], score: r[1], used: false }));
 
     const pickRes = (t1, t2) => {
       const e = entries.find(e => !e.used && (e.winner === t1 || e.winner === t2));
@@ -1261,58 +1266,44 @@ function loadOtherBracket() {
 // ==========================================
 
 async function loadApp() {
-  // 1. On charge d'abord les backups locaux pour l'affichage instantané
-  const bracketBackup = localStorage.getItem('brkt_official_2026');
-  if (bracketBackup) {
-    official = JSON.parse(bracketBackup);
-  }
+    // 1. Chargement des backups locaux pour ne pas avoir une page blanche
+    const bracketBackup = localStorage.getItem('brkt_official_2026');
+    if (bracketBackup) official = JSON.parse(bracketBackup);
 
-  const lbBackup = localStorage.getItem('brkt_leaderboard_backup');
-  if (lbBackup) {
-    participants = JSON.parse(lbBackup);
-  }
+    const lbBackup = localStorage.getItem('brkt_leaderboard_backup');
+    if (lbBackup) participants = JSON.parse(lbBackup);
 
-  // 2. Premier rendu (avec backup ou teams par défaut)
-  renderOfficialBracket();
-  renderLeaderboard();
-  if (myName) setPseudo();
-
-  // 3. SYNCHRO LIVE : On va chercher les vraies infos sur le Sheet
-  try {
-    // On attend d'avoir les équipes AVANT de calculer les résultats
-    await loadTeams();     
-    await loadFromSheet(); 
-    
-    // Une fois tout reçu, on rafraîchit l'affichage
+    // 2. Affichage immédiat (sans les scores live pour l'instant)
     renderOfficialBracket();
     renderLeaderboard();
-    if (myName) renderMyBracket();
-    
-    console.log("Sync complète terminée");
-  } catch (err) {
-    console.error("Échec de la synchro live:", err);
-  }
+    if (myName) setPseudo();
+
+    // 3. Récupération des données réelles
+    try {
+        await loadTeams();     // On récupère les seeds
+        await loadFromSheet(); // On récupère les scores et vainqueurs
+        
+        // Une fois que TOUT est chargé, on redessine avec les scores
+        console.log("Données reçues, on rafraîchit le bracket...");
+        renderOfficialBracket();
+        if (myName) renderMyBracket();
+        renderLeaderboard();
+    } catch (err) {
+        console.error("Erreur de chargement des données :", err);
+    }
 }
 
 // --- FONCTION UTILITAIRE POUR RÉCUPÉRER LE SCORE LIVE ---
 function getLiveScore(team1Name, team2Name, apiData) {
-    if (!apiData || !team1Name || !team2Name || team1Name === '?' || team2Name === '?') return "";
+    // Si apiData n'est pas encore chargé ou vide, on arrête tout de suite
+    if (!apiData || apiData.length === 0 || !team1Name || team1Name === '?') return "";
     
-    // On cherche la série par les noms (car buildMatchup utilise les noms ici)
-    const series = apiData.find(s => 
-        (s.winner === team1Name || s.winner === team2Name) && 
-        (m.text ? true : true) // bypass technique
+    // On cherche le match dans les données
+    const match = apiData.find(s => 
+       (s.winner === team1Name || s.winner === team2Name)
     );
 
-    // Alternative plus robuste si tu as les IDs dans tes constantes EAST_TEAMS / WEST_TEAMS
-    // Mais pour commencer, cherchons par les noms présents dans le sheet
-    const match = apiData.find(s => {
-       // On vérifie si les deux noms de l'API correspondent aux deux noms du match
-       // Note: winner dans ton sheet est le nom court (Celtics, Hawks...)
-       return (s.winner === team1Name || s.winner === team2Name);
-    });
-
-    if (match && match.score !== "0-0") {
+    if (match && match.score && match.score !== "0-0") {
         const isFinished = match.status === "FINISHED";
         return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${match.score}</span>`;
     }
