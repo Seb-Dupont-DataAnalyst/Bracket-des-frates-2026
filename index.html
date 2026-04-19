@@ -713,23 +713,6 @@
 
 <script>
 
-// Récupère le score live depuis les données synchronisées du Sheet
-function getLiveScoreHTML(teamId1, teamId2) {
-    // On suppose que globalResults contient ton JSON du Google Sheet
-    if (!window.globalResults) return "";
-    
-    const series = window.globalResults.find(s => 
-        (s.teamId1 == teamId1 && s.teamId2 == teamId2) || 
-        (s.teamId1 == teamId2 && s.teamId2 == teamId1)
-    );
-
-    if (series && series.score !== "0-0") {
-        const isFinished = series.status === "FINISHED";
-        const colorClass = isFinished ? "score-finished" : "score-live";
-        return `<span class="team-score-badge ${colorClass}">${series.score}</span>`;
-    }
-    return "";
-}
 // ================================================================
 // CONFIGURATION FIREBASE - REMPLACE LES INFOS CI-DESSOUS
 // ================================================================
@@ -955,7 +938,7 @@ function buildMatchup(md, t1, t2, onSet, locked) {
   
   // On récupère le score de la série une seule fois pour le match
   // On utilise window.globalResults qui est rempli dans loadFromSheet
-  const scoreHTML = getLiveScore(t1.name, t2.name, window.globalResults);
+  const scoreHTML = getLiveScore(t1.name, t2.name, globalResults);
 
   const mkRow = (t) => {
     const isW = md.winner === t.name;
@@ -1281,16 +1264,17 @@ async function loadApp() {
 
 // --- FONCTION UTILITAIRE POUR RÉCUPÉRER LE SCORE LIVE ---
 function getLiveScore(team1Name, team2Name, apiData) {
-    // Si apiData n'est pas encore chargé ou vide, on arrête tout de suite
+    // On vérifie si apiData existe (globalResults)
     if (!apiData || apiData.length === 0 || !team1Name || team1Name === '?') return "";
     
-    // On cherche le match dans les données
+    // On cherche si un des deux noms d'équipe correspond à un vainqueur dans notre liste API
     const match = apiData.find(s => 
        (s.winner === team1Name || s.winner === team2Name)
     );
 
     if (match && match.score && match.score !== "0-0") {
         const isFinished = match.status === "FINISHED";
+        // On retourne le badge avec les classes CSS score-live ou score-finished
         return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${match.score}</span>`;
     }
     return "";
@@ -1428,6 +1412,7 @@ db.ref('chat_2026').limitToLast(30).on('value', (snap) => {
         container.scrollTop = container.scrollHeight;
     }
 });
+  
 // On lance l'application
 loadApp();
 </script>
