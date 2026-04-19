@@ -894,7 +894,7 @@ function buildConf(sec, conf, picks, onUpdate, readOnly){
     picks[conf][i].score=s; 
     cascade(picks,conf); // C'est ça qui fait monter l'équipe !
     renderMyBracket();   // Et ça qui affiche le changement
-  }, readOnly));
+  }, readOnly, 1));
 }
   
   // Colonne 2 : Demis
@@ -903,7 +903,7 @@ function buildConf(sec, conf, picks, onUpdate, readOnly){
     const t1={name:picks[conf][i*2].winner||'?'}, t2={name:picks[conf][i*2+1].winner||'?'};
     col2.appendChild(buildMatchup(picks[conf][4+i], t1, t2, (w,s)=>{
       picks[conf][4+i].winner=w; picks[conf][4+i].score=s; cascade(picks,conf); onUpdate();
-    }, readOnly || t1.name==='?' || t2.name==='?'));
+    }, readOnly|| t1.name==='?' || t2.name==='?', 2));
   }
   
   // Colonne 3 : Finale Conf
@@ -911,7 +911,7 @@ function buildConf(sec, conf, picks, onUpdate, readOnly){
   const t1_f={name:picks[conf][4].winner||'?'}, t2_f={name:picks[conf][5].winner||'?'};
   col3.appendChild(buildMatchup(picks[conf][6], t1_f, t2_f, (w,s)=>{
     picks[conf][6].winner=w; picks[conf][6].score=s; onUpdate();
-  }, readOnly || t1_f.name==='?' || t2_f.name==='?'));
+  }, readOnly|| t1_f.name==='?' || t2_f.name==='?', 3));
 
   if(conf==='west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
 }
@@ -924,7 +924,7 @@ function buildFinals(sec, picks, onUpdate, readOnly){
   inner.appendChild(finalsHeader);
 
   const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
-  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?'));
+  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?', 4));
   
   const champ = el('div','champion-box');
   champ.innerHTML = `<div style="font-size:30px">🏆</div><div style="font-family:'Bebas Neue'; font-size:22px; color:var(--orange)">${picks.final.winner||'?'}</div>`;
@@ -933,22 +933,17 @@ function buildFinals(sec, picks, onUpdate, readOnly){
   sec.appendChild(inner); // On ajoute le tout au parent
 }
 
-function buildMatchup(md, t1, t2, onSet, locked) {
+function buildMatchup(md, t1, t2, onSet, locked, round) { // Ajoute 'round' ici
   const wrap = el('div', 'matchup' + (md.fromApi ? ' synced' : ''));
   
-  // On récupère le score de la série une seule fois pour le match
-  // On utilise window.globalResults qui est rempli dans loadFromSheet
-  const scoreHTML = getLiveScore(t1.name, t2.name, globalResults);
-
   const mkRow = (t) => {
     const isW = md.winner === t.name;
     const isTbd = t.name === '?';
     const r = el('div', 'team-row' + (isW ? ' winner' : '') + (locked || isTbd ? ' locked' : ''));
     const logo = getLogo(t.name);
     
-    // NOUVEAU : On appelle getLiveScore avec le nom de l'équipe actuelle (t.name)
-    // t.name = l'équipe de la ligne, t1.name/t2.name = les deux adversaires
-    const scoreHTML = getLiveScore(t.name, t1.name, t2.name, globalResults);
+    // On passe le 'round' à getLiveScore
+    const scoreHTML = (!isTbd) ? getLiveScore(t.name, t1.name, t2.name, globalResults, round) : "";
 
     r.innerHTML = `
       <div class="team-left-side">
@@ -957,7 +952,7 @@ function buildMatchup(md, t1, t2, onSet, locked) {
         <span class="tname">${t.name}</span>
         ${isW && md.fromApi ? '<span class="check">✓</span>' : ''}
       </div>
-      ${!isTbd ? scoreHTML : ''}
+      ${scoreHTML}
     `;
 
     if (!locked && !isTbd) {
@@ -1266,27 +1261,42 @@ async function loadApp() {
 }
 
 // --- FONCTION UTILITAIRE POUR RÉCUPÉRER LE SCORE LIVE ---
-function getLiveScore(currentTeamName, team1Name, team2Name, apiData) {
+function getLiveScore(currentTeamName, team1Name, team2Name, apiData, currentRound) {
     if (!apiData || apiData.length === 0 || !currentTeamName || currentTeamName === '?') return "";
     
-    // On cherche le match qui correspond à ce duel
+    // On cherche le match dans l'API
     const match = apiData.find(s => 
        (s.winner === team1Name || s.winner === team2Name)
     );
 
     if (match && match.score && match.score !== "0-0") {
+        // --- LOGIQUE DE FILTRAGE PAR TOUR ---
+        // On détermine le tour du match trouvé dans l'API (basé sur le score ou le nombre de matchs joués)
+        // Mais le plus simple : on compare si le match trouvé correspond au tour actuel du bracket
+        // Si on dessine le Round 2 (demis) mais que la série API n'est pas finie (LIVE), 
+        // c'est qu'il s'agit du score du Round 1 qui "remonte". On le bloque.
+        
         const isFinished = match.status === "FINISHED";
         
-        // On sépare le score (ex: "1-0" devient ["1", "0"])
-        const scores = match.score.split('-');
-        const leadScore = scores[0]; // Le score du meneur (ex: 1)
-        const loseScore = scores[1]; // Le score du mené (ex: 0)
+        // Si on est dans un tour avancé (Round > 1) mais que la série n'est pas finie, 
+        // on n'affiche pas le score car c'est forcément celui du tour précédent.
+        if (currentRound > 1 && !isFinished) return "";
 
-        // Si l'équipe qu'on affiche est celle qui gagne dans l'API
+        // Si la série est FINISHED, on ne l'affiche au tour suivant que si c'est 
+        // vraiment un score de ce tour là (ex: 0-0 ou 1-0 en demi).
+        // Le split du score nous aide :
+        const scores = match.score.split('-');
+        const totalGames = parseInt(scores[0]) + parseInt(scores[1]);
+        
+        // Sécurité : Si on est au Round 1 et que la série est finie, on affiche 4-X.
+        // Si on est au Round 2 et que la série affiche un score faible, c'est le bon tour.
+        
+        const leadScore = scores[0];
+        const loseScore = scores[1];
+
         if (currentTeamName === match.winner) {
             return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${leadScore}</span>`;
         } else {
-            // Sinon, c'est l'autre équipe, on affiche le petit score
             return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}" style="opacity:0.6">${loseScore}</span>`;
         }
     }
