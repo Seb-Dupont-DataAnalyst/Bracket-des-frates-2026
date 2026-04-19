@@ -775,7 +775,7 @@ const SCORE_BONUS = 2;
 // ==========================================
 // ÉTAT GLOBAL
 // ==========================================
-let window.globalResults = []; // On crée un tableau vide par défaut
+//let window.globalResults = []; // On crée un tableau vide par défaut
 let globalResults = []; // Déclaration simple en haut du script
 let official = emptyPicks();
 let participants = [];
@@ -1066,26 +1066,25 @@ async function loadFromSheet() {
   try {
     const res = await fetch(SHEET_CSV + '&t=' + Date.now());
     const text = await res.text();
-    
-    // 1. On transforme le CSV en tableau propre
     const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
+    
+    // On ignore l'en-tête si présent
     const data = rows[0][0].toLowerCase() === 'winner' ? rows.slice(1) : rows;
 
-    // --- AJOUT POUR LE SCORE LIVE ---
-    // On transforme les lignes du CSV en objets utilisables par notre fonction getLiveScoreHTML
-    window.globalResults = data.map(r => ({
+    // --- MISE À JOUR DES SCORES LIVE ---
+    globalResults = data.map(r => ({
       winner: r[0],
       score: r[1],
       teamId1: r[2],
       teamId2: r[3],
-      status: r[4] || "LIVE" // On récupère la 5ème colonne (status)
+      status: r[4] // FINISHED ou LIVE
     }));
-    // --------------------------------
 
     official = emptyPicks();
-    // On ne crée une "entrée" de vainqueur que si la série est FINISHED
+
+    // --- LOGIQUE CRUCIALE : On ne valide le vainqueur QUE si c'est FINISHED ---
     const entries = data
-      .filter(r => r[0] && r[1] && r[4] === 'FINISHED') // R[4] est le statut envoyé par Apps Script
+      .filter(r => r[0] && r[1] && r[4] === 'FINISHED') 
       .map(r => ({ winner: r[0], score: r[1], used: false }));
 
     const pickRes = (t1, t2) => {
@@ -1094,30 +1093,17 @@ async function loadFromSheet() {
       return e;
     };
 
-    // ... (Ta logique existante pour remplir l'objet 'official' ne change pas) ...
-    ['east', 'west'].forEach(conf => {
-      const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
-      for (let i = 0; i < 4; i++) {
-        const e = pickRes(teams[i*2].name, teams[i*2+1].name);
-        if (e) official[conf][i] = { winner: e.winner, score: e.score, fromApi: true };
-      }
-      // ... etc (suite de tes boucles)
-    });
-
-    // ... (suite de ta logique final/localStorage)
-    localStorage.setItem('brkt_official_2026', JSON.stringify(official));
+    // ... reste de tes boucles East/West ...
     
+    localStorage.setItem('brkt_official_2026', JSON.stringify(official));
     st.className = 'sync-status ok';
     st.textContent = "✓ " + new Date().toLocaleTimeString();
     
-    // On relance le rendu
-    renderOfficialBracket(); // Pour le bracket officiel
-    renderMainBracket();     // Si tu as une fonction pour le bracket principal
+    renderOfficialBracket();
     renderLeaderboard();
-    
-  } catch (e) { 
-    console.error(e);
-    st.textContent = "Erreur Sync"; 
+  } catch (e) {
+    console.error("Erreur Sync:", e);
+    st.textContent = "Erreur Sync";
   }
 }
   
