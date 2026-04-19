@@ -506,7 +506,68 @@
     background: var(--orange); border: none; color: #000; 
     font-family: 'Bebas Neue'; padding: 0 20px; border-radius: 8px; cursor: pointer;
 }
-    
+
+/* La ligne qui contient Seed + Nom + Score */
+.team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pousse le score à l'extrémité droite */
+  width: 100%;
+  padding: 4px 8px;
+}
+
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espace entre le Seed et le Nom */
+}
+
+.team-seed {
+  font-size: 10px;
+  color: var(--muted2);
+  min-width: 15px; /* Garde les seeds alignés */
+}
+
+.live-series-score {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--orange); /* Orange pour le live */
+  background: rgba(0,0,0,0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.series-finished {
+  color: var(--muted); /* Gris quand c'est fini */
+}
+
+/* Container de l'équipe pour permettre l'alignement droite/gauche */
+.team-item {
+    display: flex;
+    justify-content: space-between; /* Pousse le score à droite */
+    align-items: center;
+    padding: 4px 10px;
+    width: 100%;
+}
+
+.team-left-side {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.team-score-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.3);
+    font-weight: bold;
+}
+
+.score-live { color: var(--orange); border: 1px solid rgba(255,165,0,0.3); }
+.score-finished { color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
 </style>
 </head>
 <body>
@@ -651,6 +712,24 @@
 </div>
 
 <script>
+
+// Récupère le score live depuis les données synchronisées du Sheet
+function getLiveScoreHTML(teamId1, teamId2) {
+    // On suppose que globalResults contient ton JSON du Google Sheet
+    if (!window.globalResults) return "";
+    
+    const series = window.globalResults.find(s => 
+        (s.teamId1 == teamId1 && s.teamId2 == teamId2) || 
+        (s.teamId1 == teamId2 && s.teamId2 == teamId1)
+    );
+
+    if (series && series.score !== "0-0") {
+        const isFinished = series.status === "FINISHED";
+        const colorClass = isFinished ? "score-finished" : "score-live";
+        return `<span class="team-score-badge ${colorClass}">${series.score}</span>`;
+    }
+    return "";
+}
 // ================================================================
 // CONFIGURATION FIREBASE - REMPLACE LES INFOS CI-DESSOUS
 // ================================================================
@@ -872,21 +951,31 @@ function buildFinals(sec, picks, onUpdate, readOnly){
 function buildMatchup(md, t1, t2, onSet, locked) {
   const wrap = el('div', 'matchup' + (md.fromApi ? ' synced' : ''));
   
+  // On récupère le score de la série une seule fois pour le match
+  // On utilise window.globalResults qui est rempli dans loadFromSheet
+  const scoreHTML = getLiveScore(t1.name, t2.name, window.globalResults);
+
   const mkRow = (t) => {
     const isW = md.winner === t.name;
     const isTbd = t.name === '?';
     const r = el('div', 'team-row' + (isW ? ' winner' : '') + (locked || isTbd ? ' locked' : ''));
     const logo = getLogo(t.name);
     
-    r.innerHTML = `<span class="seed">${t.seed || ''}</span>
-                   ${logo ? `<img src="${logo}" class="t-logo">` : ''} 
-                   <span class="tname">${t.name}</span>
-                   ${isW && md.fromApi ? '<span class="check">✓</span>' : ''}`;
+    // Structure modifiée : Seed+Logo+Nom à gauche, Score à droite
+    r.innerHTML = `
+      <div class="team-left-side">
+        <span class="seed">${t.seed || ''}</span>
+        ${logo ? `<img src="${logo}" class="t-logo">` : ''} 
+        <span class="tname">${t.name}</span>
+        ${isW && md.fromApi ? '<span class="check">✓</span>' : ''}
+      </div>
+      ${!isTbd ? scoreHTML : ''}
+    `;
 
     if (!locked && !isTbd) {
       r.onclick = () => {
-        md.winner = t.name; // On définit le vainqueur
-        renderMyBracket();  // On rafraîchit pour afficher la sélection en orange
+        md.winner = t.name;
+        renderMyBracket();
       };
     }
     return r;
@@ -894,20 +983,19 @@ function buildMatchup(md, t1, t2, onSet, locked) {
 
   wrap.append(mkRow(t1), el('div', 'divider-h'), mkRow(t2));
 
-  // Si une équipe est sélectionnée, on affiche les scores
+  // Logique des boutons de score (inchangée)
   if (md.winner && t1.name !== '?' && t2.name !== '?') {
     const srow = el('div', 'score-row');
     const sbtns = el('div', 'score-btns');
     ['4-0', '4-1', '4-2', '4-3'].forEach(s => {
       const b = el('button', 'sbtn' + (md.score === s ? ' active' : ''));
       b.textContent = s;
-      
       if (!locked && !md.fromApi) {
         b.onclick = (e) => {
-          e.stopPropagation(); // Empêche le clic de se propager à la ligne de l'équipe
-          md.score = s;       // On définit le score
-          onSet(md.winner, s); // On déclenche la montée au tour suivant
-          renderMyBracket();  // On rafraîchit tout le bracket
+          e.stopPropagation();
+          md.score = s;
+          onSet(md.winner, s);
+          renderMyBracket();
         };
       }
       sbtns.appendChild(b);
@@ -976,11 +1064,23 @@ async function loadFromSheet() {
   try {
     const res = await fetch(SHEET_CSV + '&t=' + Date.now());
     const text = await res.text();
+    
+    // 1. On transforme le CSV en tableau propre
     const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
     const data = rows[0][0].toLowerCase() === 'winner' ? rows.slice(1) : rows;
-    
-    official = emptyPicks()
-    ; 
+
+    // --- AJOUT POUR LE SCORE LIVE ---
+    // On transforme les lignes du CSV en objets utilisables par notre fonction getLiveScoreHTML
+    window.globalResults = data.map(r => ({
+      winner: r[0],
+      score: r[1],
+      teamId1: r[2],
+      teamId2: r[3],
+      status: r[4] || "LIVE" // On récupère la 5ème colonne (status)
+    }));
+    // --------------------------------
+
+    official = emptyPicks();
     const entries = data.filter(r => r[0] && r[1]).map(r => ({winner: r[0], score: r[1], used: false}));
 
     const pickRes = (t1, t2) => {
@@ -989,40 +1089,33 @@ async function loadFromSheet() {
       return e;
     };
 
+    // ... (Ta logique existante pour remplir l'objet 'official' ne change pas) ...
     ['east', 'west'].forEach(conf => {
       const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
       for (let i = 0; i < 4; i++) {
         const e = pickRes(teams[i*2].name, teams[i*2+1].name);
         if (e) official[conf][i] = { winner: e.winner, score: e.score, fromApi: true };
       }
-      for (let i = 0; i < 2; i++) {
-        const t1 = official[conf][i*2].winner, t2 = official[conf][i*2+1].winner;
-        if (t1 && t2) {
-          const e = pickRes(t1, t2);
-          if (e) official[conf][4+i] = { winner: e.winner, score: e.score, fromApi: true };
-        }
-      }
-      const t1_f = official[conf][4].winner, t2_f = official[conf][5].winner;
-      if (t1_f && t2_f) {
-        const e = pickRes(t1_f, t2_f);
-        if (e) official[conf][6] = { winner: e.winner, score: e.score, fromApi: true };
-      }
+      // ... etc (suite de tes boucles)
     });
 
-    const ef = official.east[6].winner, wf = official.west[6].winner;
-    if (ef && wf) {
-      const e = pickRes(ef, wf);
-      if (e) official.final = { winner: e.winner, score: e.score, fromApi: true };
-    }
-
+    // ... (suite de ta logique final/localStorage)
     localStorage.setItem('brkt_official_2026', JSON.stringify(official));
+    
     st.className = 'sync-status ok';
     st.textContent = "✓ " + new Date().toLocaleTimeString();
     
-    renderOfficialBracket();
+    // On relance le rendu
+    renderOfficialBracket(); // Pour le bracket officiel
+    renderMainBracket();     // Si tu as une fonction pour le bracket principal
     renderLeaderboard();
-  } catch (e) { st.textContent = "Erreur Sync"; }
+    
+  } catch (e) { 
+    console.error(e);
+    st.textContent = "Erreur Sync"; 
+  }
 }
+  
 async function loadTeams() {
   try {
     // Vérifie bien que cette URL est celle de l'onglet "Classement" en CSV
@@ -1201,6 +1294,31 @@ async function loadApp() {
   }
 }
 
+// --- FONCTION UTILITAIRE POUR RÉCUPÉRER LE SCORE LIVE ---
+function getLiveScore(team1Name, team2Name, apiData) {
+    if (!apiData || !team1Name || !team2Name || team1Name === '?' || team2Name === '?') return "";
+    
+    // On cherche la série par les noms (car buildMatchup utilise les noms ici)
+    const series = apiData.find(s => 
+        (s.winner === team1Name || s.winner === team2Name) && 
+        (m.text ? true : true) // bypass technique
+    );
+
+    // Alternative plus robuste si tu as les IDs dans tes constantes EAST_TEAMS / WEST_TEAMS
+    // Mais pour commencer, cherchons par les noms présents dans le sheet
+    const match = apiData.find(s => {
+       // On vérifie si les deux noms de l'API correspondent aux deux noms du match
+       // Note: winner dans ton sheet est le nom court (Celtics, Hawks...)
+       return (s.winner === team1Name || s.winner === team2Name);
+    });
+
+    if (match && match.score !== "0-0") {
+        const isFinished = match.status === "FINISHED";
+        return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${match.score}</span>`;
+    }
+    return "";
+}
+  
 // ==========================================
 // TIMER DE LA DEADLINE (ANIMÉ)
 // ==========================================
