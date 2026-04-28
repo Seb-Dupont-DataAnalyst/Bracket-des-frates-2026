@@ -1055,21 +1055,16 @@ async function loadFromSheet() {
     const text = await res.text();
     const rows = text.trim().split('\n').map(line => line.split(',').map(c => c.trim()));
     
-    // On ignore l'en-tête si présent
     const data = rows[0][0].toLowerCase() === 'winner' ? rows.slice(1) : rows;
 
-    // --- MISE À JOUR DES SCORES LIVE ---
+    // 1. Stockage pour l'affichage des scores live (1-0, 2-1, etc.)
     globalResults = data.map(r => ({
-      winner: r[0],
-      score: r[1],
-      teamId1: r[2],
-      teamId2: r[3],
-      status: r[4] // FINISHED ou LIVE
+      winner: r[0], score: r[1], teamId1: r[2], teamId2: r[3], status: r[4]
     }));
 
     official = emptyPicks();
 
-    // --- LOGIQUE CRUCIALE : On ne valide le vainqueur QUE si c'est FINISHED ---
+    // 2. Filtrage des séries terminées pour faire monter les vainqueurs
     const entries = data
       .filter(r => r[0] && r[1] && r[4] === 'FINISHED') 
       .map(r => ({ winner: r[0], score: r[1], used: false }));
@@ -1080,14 +1075,56 @@ async function loadFromSheet() {
       return e;
     };
 
-    // ... reste de tes boucles East/West ...
-    
+    // 3. REMPLISSAGE DU BRACKET OFFICIEL
+    ['east', 'west'].forEach(conf => {
+      const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
+      
+      // Round 1 : On check les 4 premiers matchs
+      for (let i = 0; i < 4; i++) {
+        const e = pickRes(teams[i*2].name, teams[i*2+1].name);
+        if (e) {
+          official[conf][i] = { winner: e.winner, score: e.score, fromApi: true };
+        }
+      }
+
+      // Round 2 (Demis) : On regarde les vainqueurs du Round 1
+      for (let i = 0; i < 2; i++) {
+        const t1 = official[conf][i*2].winner;
+        const t2 = official[conf][i*2+1].winner;
+        if (t1 && t2) {
+          const e = pickRes(t1, t2);
+          if (e) official[conf][4+i] = { winner: e.winner, score: e.score, fromApi: true };
+        }
+      }
+
+      // Round 3 (Finale Conf)
+      const t1_f = official[conf][4].winner;
+      const t2_f = official[conf][5].winner;
+      if (t1_f && t2_f) {
+        const e = pickRes(t1_f, t2_f);
+        if (e) official[conf][6] = { winner: e.winner, score: e.score, fromApi: true };
+      }
+    });
+
+    // Finales NBA
+    const ef = official.east[6].winner;
+    const wf = official.west[6].winner;
+    if (ef && wf) {
+      const e = pickRes(ef, wf);
+      if (e) official.final = { winner: e.winner, score: e.score, fromApi: true };
+    }
+
+    // 4. SAUVEGARDE ET MISE À JOUR INTERFACE
     localStorage.setItem('brkt_official_2026', JSON.stringify(official));
+    
     st.className = 'sync-status ok';
     st.textContent = "✓ " + new Date().toLocaleTimeString();
     
-    renderOfficialBracket();
-    renderLeaderboard();
+    renderOfficialBracket(); // Affiche les vainqueurs dans le 1er onglet
+    renderLeaderboard();     // Recalcule les points de tout le monde !
+    
+    if (myName) renderMyBracket(); // Optionnel : rafraîchit ton bracket perso
+
   } catch (e) {
     console.error("Erreur Sync:", e);
     st.textContent = "Erreur Sync";
