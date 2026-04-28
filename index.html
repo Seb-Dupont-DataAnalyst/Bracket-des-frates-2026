@@ -898,13 +898,16 @@ function buildConf(sec, conf, picks, onUpdate, readOnly){
 }
   
   // Colonne 2 : Demis
-  const col2 = makeCol('Demis');
-  for(let i=0; i<2; i++){
-    const t1={name:picks[conf][i*2].winner||'?'}, t2={name:picks[conf][i*2+1].winner||'?'};
+const col2 = makeCol('Demis');
+for(let i=0; i<2; i++){
+    // ICI : On récupère le winner du match i*2 et i*2+1 du tour précédent
+    const t1 = { name: picks[conf][i*2].winner || '?' };
+    const t2 = { name: picks[conf][i*2+1].winner || '?' };
+    
     col2.appendChild(buildMatchup(picks[conf][4+i], t1, t2, (w,s)=>{
       picks[conf][4+i].winner=w; picks[conf][4+i].score=s; cascade(picks,conf); onUpdate();
-    }, readOnly|| t1.name==='?' || t2.name==='?', 2));
-  }
+    }, readOnly || t1.name==='?' || t2.name==='?', 2)); // Le chiffre 2 pour le Round
+}
   
   // Colonne 3 : Finale Conf
   const col3 = makeCol('Finale');
