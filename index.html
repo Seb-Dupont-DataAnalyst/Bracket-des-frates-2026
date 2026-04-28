@@ -1313,27 +1313,20 @@ function getLiveScore(currentTeamName, team1Name, team2Name, apiData, currentRou
     );
 
     if (match && match.score && match.score !== "0-0") {
-        // --- LOGIQUE DE FILTRAGE PAR TOUR ---
-        // On détermine le tour du match trouvé dans l'API (basé sur le score ou le nombre de matchs joués)
-        // Mais le plus simple : on compare si le match trouvé correspond au tour actuel du bracket
-        // Si on dessine le Round 2 (demis) mais que la série API n'est pas finie (LIVE), 
-        // c'est qu'il s'agit du score du Round 1 qui "remonte". On le bloque.
-        
         const isFinished = match.status === "FINISHED";
-        
-        // Si on est dans un tour avancé (Round > 1) mais que la série n'est pas finie, 
-        // on n'affiche pas le score car c'est forcément celui du tour précédent.
-        if (currentRound > 1 && !isFinished) return "";
 
-        // Si la série est FINISHED, on ne l'affiche au tour suivant que si c'est 
-        // vraiment un score de ce tour là (ex: 0-0 ou 1-0 en demi).
-        // Le split du score nous aide :
+        // --- SÉCURITÉ ANTI-REMONTEE DU SCORE ---
+        // Si on dessine un tour supérieur au Round 1 (ex: Demis = 2)
+        // ET que le match trouvé dans l'API est marqué FINISHED,
+        // alors ce score appartient au tour précédent. On ne l'affiche pas ici.
+        if (currentRound > 1 && isFinished) {
+            return ""; 
+        }
+        
+        // Alternative : Si on est au Round 1 et que c'est FINISHED, on affiche le score final (ex: 4)
+        // Si on est au Round 2 et que ce n'est PAS fini, on affiche le score en cours (ex: 1)
+
         const scores = match.score.split('-');
-        const totalGames = parseInt(scores[0]) + parseInt(scores[1]);
-        
-        // Sécurité : Si on est au Round 1 et que la série est finie, on affiche 4-X.
-        // Si on est au Round 2 et que la série affiche un score faible, c'est le bon tour.
-        
         const leadScore = scores[0];
         const loseScore = scores[1];
 
