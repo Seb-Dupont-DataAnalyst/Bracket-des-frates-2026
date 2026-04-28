@@ -991,15 +991,18 @@ function buildMatchup(md, t1, t2, onSet, locked, round) { // Ajoute 'round' ici
 
 function makeCol(l){ const c=el('div','round-col'); const lbl=el('div','round-label'); lbl.textContent=l; c.appendChild(lbl); return c; }
 
-function cascade(p,c){
-  for(let i=0; i<2; i++){ 
-    if(p[c][4+i].winner && p[c][4+i].winner!==p[c][i*2].winner && p[c][4+i].winner!==p[c][i*2+1].winner){ 
-       p[c][4+i].winner=null; p[c][4+i].score=null; 
+function cascade(p, c) {
+    // Round 1 vers Round 2
+    for (let i = 0; i < 2; i++) {
+        // Si les deux matchs du Round 1 qui nourrissent une demi-finale sont finis
+        const matchA = p[c][i * 2];
+        const matchB = p[c][i * 2 + 1];
+        
+        // On ne peut pas "forcer" le Round 2 ici, car le Round 2 est un nouveau matchup 
+        // dont le vainqueur n'est pas encore connu dans l'API.
+        // Par contre, buildConf s'occupe d'afficher les noms dans les cases du Round 2
+        // SI le Round 1 a un winner.
     }
-  }
-  if(p[c][6].winner && p[c][6].winner!==p[c][4].winner && p[c][6].winner!==p[c][5].winner){ 
-     p[c][6].winner=null; p[c][6].score=null; 
-  }
 }
 
 // ==========================================
