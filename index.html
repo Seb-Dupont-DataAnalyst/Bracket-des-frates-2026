@@ -1308,34 +1308,38 @@ async function loadApp() {
 function getLiveScore(currentTeamName, team1Name, team2Name, apiData, currentRound) {
     if (!apiData || apiData.length === 0 || !currentTeamName || currentTeamName === '?') return "";
     
-    // 1. On filtre le CSV pour ne garder que ce qui nous intéresse pour ce match précis
+    // 1. On filtre les données pour ce duel
     const potentialMatches = apiData.filter(s => 
         (s.winner === team1Name || s.winner === team2Name)
     );
 
     let match = null;
 
-    // 2. Logique de sélection du match selon le tour du bracket
+    // 2. Sélection du match selon le tour
     if (currentRound === 1) {
-        // Au 1er tour, on veut PRIORITAIREMENT la ligne FINISHED (le score final 4-1, etc.)
+        // Au 1er tour, on cherche d'abord si c'est FINISHED
         match = potentialMatches.find(s => s.status === "FINISHED");
-        // Si la série n'est pas encore finie, on prend le LIVE du 1er tour
-        if (!match) match = potentialMatches.find(s => s.status === "LIVE");
+        // Si c'est fini, on retourne vide pour laisser le badge orange faire le job
+        if (match) return ""; 
+        
+        // Si ce n'est pas fini, on prend le LIVE
+        match = potentialMatches.find(s => s.status === "LIVE");
     } else {
-        // Aux tours suivants (2, 3, 4), on ne veut QUE le score LIVE du duel actuel
-        // On ignore les lignes FINISHED car elles appartiennent aux tours précédents
+        // Pour les tours suivants (Demis, etc.), on ne veut QUE le LIVE
         match = potentialMatches.find(s => s.status === "LIVE");
     }
 
+    // 3. Affichage du score si un match LIVE a été trouvé
     if (match && match.score && match.score !== "0-0") {
-        const isFinished = match.status === "FINISHED";
+        const scores = match.score.split('-');
+        const s1 = scores[0].trim();
+        const s2 = scores[1].trim();
 
-        // --- AJOUT DE LA RÈGLE D'ÉPURATION ---
-        // Si la série est finie, on ne renvoie rien pour ne pas surcharger 
-        // l'affichage à côté du nom, puisque le badge orange sera en dessous.
-        if (isFinished) return ""; 
-
-        // ... (reste de la fonction avec les splits de scores) ...
+        if (currentTeamName === match.winner) {
+            return `<span class="live-series-score">${s1}</span>`;
+        } else {
+            return `<span class="live-series-score" style="opacity:0.6">${s2}</span>`;
+        }
     }
     return "";
 }
