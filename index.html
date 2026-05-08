@@ -1307,38 +1307,34 @@ async function loadApp() {
 function getLiveScore(currentTeamName, team1Name, team2Name, apiData, currentRound) {
     if (!apiData || apiData.length === 0 || !currentTeamName || currentTeamName === '?') return "";
     
-    // 1. On cherche d'abord s'il y a un match en cours (LIVE) pour ce duel précis
-    let match = apiData.find(s => 
-        s.status === "LIVE" && 
-        (s.winner === team1Name || s.winner === team2Name) &&
-        (s.winner === currentTeamName || true) // Priorité au match actuel
+    // 1. On filtre le CSV pour ne garder que ce qui nous intéresse pour ce match précis
+    const potentialMatches = apiData.filter(s => 
+        (s.winner === team1Name || s.winner === team2Name)
     );
 
-    // 2. Si on ne trouve pas de LIVE, on cherche une série FINISHED
-    if (!match) {
-        match = apiData.find(s => 
-            s.status === "FINISHED" && 
-            (s.winner === team1Name || s.winner === team2Name)
-        );
+    let match = null;
+
+    // 2. Logique de sélection du match selon le tour du bracket
+    if (currentRound === 1) {
+        // Au 1er tour, on veut PRIORITAIREMENT la ligne FINISHED (le score final 4-1, etc.)
+        match = potentialMatches.find(s => s.status === "FINISHED");
+        // Si la série n'est pas encore finie, on prend le LIVE du 1er tour
+        if (!match) match = potentialMatches.find(s => s.status === "LIVE");
+    } else {
+        // Aux tours suivants (2, 3, 4), on ne veut QUE le score LIVE du duel actuel
+        // On ignore les lignes FINISHED car elles appartiennent aux tours précédents
+        match = potentialMatches.find(s => s.status === "LIVE");
     }
 
     if (match && match.score && match.score !== "0-0") {
         const isFinished = match.status === "FINISHED";
-
-        // --- SÉCURITÉ ROUND ---
-        // Si on est au Round 2 (Demis) mais que le match trouvé est FINISHED,
-        // c'est que c'est le résultat du Round 1. On ne l'affiche pas.
-        if (currentRound > 1 && isFinished) return "";
-
         const scores = match.score.split('-');
-        // On s'assure de récupérer les scores proprement
         const s1 = scores[0].trim();
         const s2 = scores[1].trim();
 
         if (currentTeamName === match.winner) {
             return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${s1}</span>`;
         } else {
-            // Si l'équipe actuelle n'est pas le "winner" de la ligne, elle a le score s2
             return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}" style="opacity:0.6">${s2}</span>`;
         }
     }
