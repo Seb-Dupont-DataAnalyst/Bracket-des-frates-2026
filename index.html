@@ -866,14 +866,18 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
   const c = document.getElementById(containerId); 
   c.innerHTML = '';
   
+  // On détermine si c'est le bracket officiel : 
+  // C'est le cas si c'est en lecture seule ET que l'ID est 'main-bracket'
+  const isOfficial = (readOnly && containerId === 'main-bracket');
+
   const ws = el('div','conf-section west'); 
-  buildConf(ws,'west',picks,onUpdate,readOnly);
+  buildConf(ws, 'west', picks, onUpdate, readOnly, isOfficial);
   
   const fs = el('div','finals-col'); 
-  buildFinals(fs,picks,onUpdate,readOnly);
+  buildFinals(fs, picks, onUpdate, readOnly, isOfficial);
   
   const es = el('div','conf-section east'); 
-  buildConf(es,'east',picks,onUpdate,readOnly);
+  buildConf(es, 'east', picks, onUpdate, readOnly, isOfficial);
   
   c.append(ws, fs, es);
 }
@@ -1202,7 +1206,9 @@ function renderLeaderboard() {
 }
 
 function renderOfficialBracket(){ buildBracket('main-bracket', official, ()=>{}, true); }
-function renderMyBracket(){ if(myName) buildBracket('my-bracket-render', myPicks, ()=>{ renderLeaderboard(); }, false); }
+function renderMyBracket(){ 
+  if(myName) buildBracket('my-bracket-render', myPicks, ()=>{ renderLeaderboard(); }, false); 
+}
 
 function showTab(id){
   const now = new Date();
@@ -1259,8 +1265,9 @@ function loadOtherBracket() {
   const user = participants.find(p => p.name === name);
   if (user && user.picks) {
     hint.textContent = `Bracket de ${name} (Points actuels : ${computeScore(user.picks).pts})`;
-    // On utilise buildBracket en mode "readOnly = true" (le dernier paramètre)
-    buildBracket('other-bracket-render', user.picks, () => {}, true);
+    // AJOUT DU FALSE ICI : pour dire "readOnly = true" mais "isOfficial = false"
+    // On modifie l'appel pour envoyer picks, onUpdate, readOnly
+    buildBracket('other-bracket-render', user.picks, () => {}, true); 
   }
 }
 
