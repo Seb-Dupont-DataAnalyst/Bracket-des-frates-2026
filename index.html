@@ -866,9 +866,8 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
   const c = document.getElementById(containerId); 
   c.innerHTML = '';
   
-  // On détermine si c'est le bracket officiel : 
-  // C'est le cas si c'est en lecture seule ET que l'ID est 'main-bracket'
-  const isOfficial = (readOnly && containerId === 'main-bracket');
+  // LOGIQUE CRUCIALES : On n'autorise les scores live QUE si l'ID est 'main-bracket'
+  const isOfficial = (containerId === 'main-bracket');
 
   const ws = el('div','conf-section west'); 
   buildConf(ws, 'west', picks, onUpdate, readOnly, isOfficial);
@@ -882,19 +881,15 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
   c.append(ws, fs, es);
 }
 
-function buildConf(sec, conf, picks, onUpdate, readOnly) {
+function buildConf(sec, conf, picks, onUpdate, readOnly, isOfficial) { // Ajoute isOfficial ici
   const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
-  
   const col1 = makeCol('1er tour');
-  const confHeader = el('div', 'conf-header');
-  confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big">
-                          <div class="round-label">${conf === 'east' ? 'Eastern' : 'Western'} Conference</div>`;
-  col1.appendChild(confHeader);
+  // ... (ton code header)
 
   for (let i = 0; i < 4; i++) {
     col1.appendChild(buildMatchup(picks[conf][i], teams[i * 2], teams[i * 2 + 1], (w, s) => {
       picks[conf][i].winner = w; picks[conf][i].score = s; cascade(picks, conf); renderMyBracket();
-    }, readOnly, 1, readOnly)); // 'readOnly' passé ici en tant qu'isOfficial
+    }, readOnly, 1, isOfficial)); // Transmets isOfficial ici
   }
   
   const col2 = makeCol('Demis');
@@ -903,7 +898,7 @@ function buildConf(sec, conf, picks, onUpdate, readOnly) {
     const t2 = { name: picks[conf][i * 2 + 1].winner || '?' };
     col2.appendChild(buildMatchup(picks[conf][4 + i], t1, t2, (w, s) => {
       picks[conf][4 + i].winner = w; picks[conf][4 + i].score = s; cascade(picks, conf); onUpdate();
-    }, readOnly || t1.name === '?' || t2.name === '?', 2, readOnly));
+    }, readOnly || t1.name === '?' || t2.name === '?', 2, isOfficial)); // Transmets isOfficial ici
   }
   
   const col3 = makeCol('Finale');
@@ -911,7 +906,7 @@ function buildConf(sec, conf, picks, onUpdate, readOnly) {
   const t2_f = { name: picks[conf][5].winner || '?' };
   col3.appendChild(buildMatchup(picks[conf][6], t1_f, t2_f, (w, s) => {
     picks[conf][6].winner = w; picks[conf][6].score = s; onUpdate();
-  }, readOnly || t1_f.name === '?' || t2_f.name === '?', 3, readOnly));
+  }, readOnly || t1_f.name === '?' || t2_f.name === '?', 3, isOfficial)); // Transmets isOfficial ici
 
   if (conf === 'west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
 }
@@ -924,9 +919,8 @@ function buildFinals(sec, picks, onUpdate, readOnly){
   inner.appendChild(finalsHeader);
 
   const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
-  // Ajout du paramètre 'readOnly' à la fin de buildMatchup
-  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?', 4, readOnly));
- 
+  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?', 4, isOfficial)); // Transmets isOfficial ici
+   
   const champ = el('div','champion-box');
   champ.innerHTML = `<div style="font-size:30px">🏆</div><div style="font-family:'Bebas Neue'; font-size:22px; color:var(--orange)">${picks.final.winner||'?'}</div>`;
   inner.appendChild(champ);
