@@ -1307,30 +1307,36 @@ async function loadApp() {
 function getLiveScore(currentTeamName, team1Name, team2Name, apiData, currentRound) {
     if (!apiData || apiData.length === 0 || !currentTeamName || currentTeamName === '?') return "";
     
-    // On cherche le match dans l'API
+    // On cherche le match spécifique entre ces deux adversaires précis
     const match = apiData.find(s => 
-       (s.winner === team1Name || s.winner === team2Name)
+       (s.winner === team1Name || s.winner === team2Name) &&
+       // On vérifie que les DEUX équipes du matchup sont présentes dans la série de l'API
+       (apiData.some(x => (x.teamId1 == s.teamId1 || x.teamId2 == s.teamId1) && (x.winner === team1Name || x.winner === team2Name)))
     );
 
-    if (match && match.score && match.score !== "0-0") {
-        const isFinished = match.status === "FINISHED";
+    // Si on ne trouve pas par les IDs, on fait une recherche plus simple sur le duel
+    // mais on ajoute une sécurité sur le score pour le Round 2+
+    const series = apiData.find(s => 
+        ((s.winner === team1Name && s.score.includes('-')) || (s.winner === team2Name && s.score.includes('-')))
+    );
 
-        // --- SÉCURITÉ ANTI-REMONTEE DU SCORE ---
-        // Si on dessine un tour supérieur au Round 1 (ex: Demis = 2)
-        // ET que le match trouvé dans l'API est marqué FINISHED,
-        // alors ce score appartient au tour précédent. On ne l'affiche pas ici.
+    if (series && series.score && series.score !== "0-0") {
+        const isFinished = series.status === "FINISHED";
+
+        // --- NOUVELLE LOGIQUE DE FILTRAGE ---
+        // Si on est en Demi-finale (Round 2) mais que l'API nous donne une série 
+        // déjà FINISHED, c'est que c'est le résultat du Round 1. On l'ignore.
         if (currentRound > 1 && isFinished) {
+            // Sauf si le score est un score de début de série (ex: 1-0) 
+            // mais normalement un FINISHED est toujours à 4-X
             return ""; 
         }
-        
-        // Alternative : Si on est au Round 1 et que c'est FINISHED, on affiche le score final (ex: 4)
-        // Si on est au Round 2 et que ce n'est PAS fini, on affiche le score en cours (ex: 1)
 
-        const scores = match.score.split('-');
+        const scores = series.score.split('-');
         const leadScore = scores[0];
         const loseScore = scores[1];
 
-        if (currentTeamName === match.winner) {
+        if (currentTeamName === series.winner) {
             return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${leadScore}</span>`;
         } else {
             return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}" style="opacity:0.6">${loseScore}</span>`;
