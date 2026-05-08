@@ -866,14 +866,14 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
   const c = document.getElementById(containerId); 
   c.innerHTML = '';
   
-  // LOGIQUE CRUCIALES : On n'autorise les scores live QUE si l'ID est 'main-bracket'
+  // LOGIQUE CRUCIALE : Seul le bracket principal affiche le live
   const isOfficial = (containerId === 'main-bracket');
 
   const ws = el('div','conf-section west'); 
   buildConf(ws, 'west', picks, onUpdate, readOnly, isOfficial);
   
   const fs = el('div','finals-col'); 
-  buildFinals(fs, picks, onUpdate, readOnly, isOfficial);
+  buildFinals(fs, picks, onUpdate, readOnly, isOfficial); // On passe isOfficial ici
   
   const es = el('div','conf-section east'); 
   buildConf(es, 'east', picks, onUpdate, readOnly, isOfficial);
@@ -911,7 +911,7 @@ function buildConf(sec, conf, picks, onUpdate, readOnly, isOfficial) { // Ajoute
   if (conf === 'west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
 }
 
-function buildFinals(sec, picks, onUpdate, readOnly){
+function buildFinals(sec, picks, onUpdate, readOnly, isOfficial){ // Ajoute bien isOfficial ici
   const inner = el('div', 'finals-col-inner'); 
   
   const finalsHeader = el('div', 'finals-header');
@@ -919,7 +919,11 @@ function buildFinals(sec, picks, onUpdate, readOnly){
   inner.appendChild(finalsHeader);
 
   const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
-  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?', 4, isOfficial)); // Transmets isOfficial ici
+  
+  // Utilisation de isOfficial pour le score à droite
+  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ 
+    picks.final.winner=w; picks.final.score=s; onUpdate(); 
+  }, readOnly || t1.name==='?' || t2.name==='?', 4, isOfficial));
    
   const champ = el('div','champion-box');
   champ.innerHTML = `<div style="font-size:30px">🏆</div><div style="font-family:'Bebas Neue'; font-size:22px; color:var(--orange)">${picks.final.winner||'?'}</div>`;
