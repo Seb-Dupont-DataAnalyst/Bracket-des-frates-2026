@@ -928,7 +928,8 @@ function buildFinals(sec, picks, onUpdate, readOnly){
   inner.appendChild(finalsHeader);
 
   const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
-  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?', 4));
+  inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?', 4, readOnly));
+ 
   
   const champ = el('div','champion-box');
   champ.innerHTML = `<div style="font-size:30px">🏆</div><div style="font-family:'Bebas Neue'; font-size:22px; color:var(--orange)">${picks.final.winner||'?'}</div>`;
