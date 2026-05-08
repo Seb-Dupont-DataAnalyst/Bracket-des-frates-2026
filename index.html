@@ -946,8 +946,11 @@ function buildMatchup(md, t1, t2, onSet, locked, round) { // Ajoute 'round' ici
     const logo = getLogo(t.name);
     
     // On passe le 'round' à getLiveScore
-    const scoreHTML = (!isTbd) ? getLiveScore(t.name, t1.name, t2.name, globalResults, round) : "";
-
+    // On n'affiche le score à droite QUE si la série n'est pas encore FINISHED
+    // Si elle est FINISHED, le badge orange en bas suffit.
+    const showRightScore = (match && match.status !== "FINISHED");
+    const scoreHTML = (locked && !isTbd && showRightScore) ? getLiveScore(t.name, t1.name, t2.name, globalResults, round) : "";
+  
     r.innerHTML = `
       <div class="team-left-side">
         <span class="seed">${t.seed || ''}</span>
