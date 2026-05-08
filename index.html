@@ -881,7 +881,6 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
 function buildConf(sec, conf, picks, onUpdate, readOnly) {
   const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
   
-  // --- COLONNE 1 : 1ER TOUR ---
   const col1 = makeCol('1er tour');
   const confHeader = el('div', 'conf-header');
   confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big">
@@ -891,51 +890,44 @@ function buildConf(sec, conf, picks, onUpdate, readOnly) {
   for (let i = 0; i < 4; i++) {
     col1.appendChild(buildMatchup(picks[conf][i], teams[i * 2], teams[i * 2 + 1], (w, s) => {
       picks[conf][i].winner = w; picks[conf][i].score = s; cascade(picks, conf); renderMyBracket();
-    }, readOnly, 1, readOnly)); 
+    }, readOnly, 1, readOnly)); // 'readOnly' passé ici en tant qu'isOfficial
   }
   
-  // --- COLONNE 2 : DEMIS DE CONFÉRENCE ---
   const col2 = makeCol('Demis');
   for (let i = 0; i < 2; i++) {
-    // On définit ici les équipes qui montent du Round 1
     const t1 = { name: picks[conf][i * 2].winner || '?' };
     const t2 = { name: picks[conf][i * 2 + 1].winner || '?' };
-    
     col2.appendChild(buildMatchup(picks[conf][4 + i], t1, t2, (w, s) => {
       picks[conf][4 + i].winner = w; picks[conf][4 + i].score = s; cascade(picks, conf); onUpdate();
     }, readOnly || t1.name === '?' || t2.name === '?', 2, readOnly));
   }
   
-  // --- COLONNE 3 : FINALE DE CONFÉRENCE ---
   const col3 = makeCol('Finale');
-  // On définit ici les équipes qui montent du Round 2 (index 4 et 5)
   const t1_f = { name: picks[conf][4].winner || '?' };
   const t2_f = { name: picks[conf][5].winner || '?' };
-  
   col3.appendChild(buildMatchup(picks[conf][6], t1_f, t2_f, (w, s) => {
     picks[conf][6].winner = w; picks[conf][6].score = s; onUpdate();
   }, readOnly || t1_f.name === '?' || t2_f.name === '?', 3, readOnly));
 
-  // Inversion de l'affichage pour l'esthétique du bracket (Est à gauche, Ouest à droite)
   if (conf === 'west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
 }
 
 function buildFinals(sec, picks, onUpdate, readOnly){
-  const inner = el('div', 'finals-col-inner'); // On crée un conteneur interne
+  const inner = el('div', 'finals-col-inner'); 
   
   const finalsHeader = el('div', 'finals-header');
   finalsHeader.innerHTML = `<img src="${CONF_LOGOS.final}" class="finals-logo-big">`;
   inner.appendChild(finalsHeader);
 
   const t1={name:picks.west[6].winner||'?'}, t2={name:picks.east[6].winner||'?'};
+  // Ajout du paramètre 'readOnly' à la fin de buildMatchup
   inner.appendChild(buildMatchup(picks.final, t1, t2, (w,s)=>{ picks.final.winner=w; picks.final.score=s; onUpdate(); }, readOnly || t1.name==='?' || t2.name==='?', 4, readOnly));
  
-  
   const champ = el('div','champion-box');
   champ.innerHTML = `<div style="font-size:30px">🏆</div><div style="font-family:'Bebas Neue'; font-size:22px; color:var(--orange)">${picks.final.winner||'?'}</div>`;
   inner.appendChild(champ);
 
-  sec.appendChild(inner); // On ajoute le tout au parent
+  sec.appendChild(inner);
 }
 
 function buildMatchup(md, t1, t2, onSet, locked, round, isOfficial = false) {
@@ -947,7 +939,7 @@ function buildMatchup(md, t1, t2, onSet, locked, round, isOfficial = false) {
     const r = el('div', 'team-row' + (isW ? ' winner' : '') + (locked || isTbd ? ' locked' : ''));
     const logo = getLogo(t.name);
     
-    // On n'affiche le score live QUE sur le bracket officiel
+    // CORRECTION : On n'appelle getLiveScore que si isOfficial est true
     const scoreHTML = (isOfficial && !isTbd) ? getLiveScore(t.name, t1.name, t2.name, globalResults, round) : "";
 
     r.innerHTML = `
