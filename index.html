@@ -878,45 +878,46 @@ function buildBracket(containerId, picks, onUpdate, readOnly){
   c.append(ws, fs, es);
 }
 
-function buildConf(sec, conf, picks, onUpdate, readOnly){
+function buildConf(sec, conf, picks, onUpdate, readOnly) {
   const teams = conf === 'east' ? EAST_TEAMS : WEST_TEAMS;
+  
+  // --- COLONNE 1 : 1ER TOUR ---
   const col1 = makeCol('1er tour');
-
-  // Le header doit être dans col1 pour que notre CSS s'applique
   const confHeader = el('div', 'conf-header');
   confHeader.innerHTML = `<img src="${CONF_LOGOS[conf]}" class="conf-logo-big">
                           <div class="round-label">${conf === 'east' ? 'Eastern' : 'Western'} Conference</div>`;
   col1.appendChild(confHeader);
 
-  for(let i=0; i<4; i++){
-  col1.appendChild(buildMatchup(picks[conf][i], teams[i*2], teams[i*2+1], (w,s)=>{
-    picks[conf][i].winner=w; 
-    picks[conf][i].score=s; 
-    cascade(picks,conf); // C'est ça qui fait monter l'équipe !
-    renderMyBracket();   // Et ça qui affiche le changement
-  }, readOnly, 1));
-}
+  for (let i = 0; i < 4; i++) {
+    col1.appendChild(buildMatchup(picks[conf][i], teams[i * 2], teams[i * 2 + 1], (w, s) => {
+      picks[conf][i].winner = w; picks[conf][i].score = s; cascade(picks, conf); renderMyBracket();
+    }, readOnly, 1, readOnly)); 
+  }
   
-  // Colonne 2 : Demis
-const col2 = makeCol('Demis');
-for(let i=0; i<2; i++){
-    // ICI : On récupère le winner du match i*2 et i*2+1 du tour précédent
-    const t1 = { name: picks[conf][i*2].winner || '?' };
-    const t2 = { name: picks[conf][i*2+1].winner || '?' };
+  // --- COLONNE 2 : DEMIS DE CONFÉRENCE ---
+  const col2 = makeCol('Demis');
+  for (let i = 0; i < 2; i++) {
+    // On définit ici les équipes qui montent du Round 1
+    const t1 = { name: picks[conf][i * 2].winner || '?' };
+    const t2 = { name: picks[conf][i * 2 + 1].winner || '?' };
     
-    col2.appendChild(buildMatchup(picks[conf][4+i], t1, t2, (w,s)=>{
-      picks[conf][4+i].winner=w; picks[conf][4+i].score=s; cascade(picks,conf); onUpdate();
-    }, readOnly || t1.name==='?' || t2.name==='?', 2)); // Le chiffre 2 pour le Round
-}
+    col2.appendChild(buildMatchup(picks[conf][4 + i], t1, t2, (w, s) => {
+      picks[conf][4 + i].winner = w; picks[conf][4 + i].score = s; cascade(picks, conf); onUpdate();
+    }, readOnly || t1.name === '?' || t2.name === '?', 2, readOnly));
+  }
   
-  // Colonne 3 : Finale Conf
+  // --- COLONNE 3 : FINALE DE CONFÉRENCE ---
   const col3 = makeCol('Finale');
-  const t1_f={name:picks[conf][4].winner||'?'}, t2_f={name:picks[conf][5].winner||'?'};
-  col3.appendChild(buildMatchup(picks[conf][6], t1_f, t2_f, (w,s)=>{
-    picks[conf][6].winner=w; picks[conf][6].score=s; onUpdate();
-  }, readOnly|| t1_f.name==='?' || t2_f.name==='?', 3));
+  // On définit ici les équipes qui montent du Round 2 (index 4 et 5)
+  const t1_f = { name: picks[conf][4].winner || '?' };
+  const t2_f = { name: picks[conf][5].winner || '?' };
+  
+  col3.appendChild(buildMatchup(picks[conf][6], t1_f, t2_f, (w, s) => {
+    picks[conf][6].winner = w; picks[conf][6].score = s; onUpdate();
+  }, readOnly || t1_f.name === '?' || t2_f.name === '?', 3, readOnly));
 
-  if(conf==='west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
+  // Inversion de l'affichage pour l'esthétique du bracket (Est à gauche, Ouest à droite)
+  if (conf === 'west') sec.append(col1, col2, col3); else sec.append(col3, col2, col1);
 }
 
 function buildFinals(sec, picks, onUpdate, readOnly){
@@ -936,7 +937,7 @@ function buildFinals(sec, picks, onUpdate, readOnly){
   sec.appendChild(inner); // On ajoute le tout au parent
 }
 
-function buildMatchup(md, t1, t2, onSet, locked, round) {
+function buildMatchup(md, t1, t2, onSet, locked, round, isOfficial = false) {
   const wrap = el('div', 'matchup' + (md.fromApi ? ' synced' : ''));
   
   const mkRow = (t) => {
@@ -945,9 +946,8 @@ function buildMatchup(md, t1, t2, onSet, locked, round) {
     const r = el('div', 'team-row' + (isW ? ' winner' : '') + (locked || isTbd ? ' locked' : ''));
     const logo = getLogo(t.name);
     
-    // Correction ici : On appelle getLiveScore directement. 
-    // C'est à l'intérieur de getLiveScore qu'on va gérer le masquage si c'est FINISHED.
-    const scoreHTML = (!isTbd) ? getLiveScore(t.name, t1.name, t2.name, globalResults, round) : "";
+    // On n'affiche le score live QUE sur le bracket officiel
+    const scoreHTML = (isOfficial && !isTbd) ? getLiveScore(t.name, t1.name, t2.name, globalResults, round) : "";
 
     r.innerHTML = `
       <div class="team-left-side">
@@ -970,7 +970,6 @@ function buildMatchup(md, t1, t2, onSet, locked, round) {
 
   wrap.append(mkRow(t1), el('div', 'divider-h'), mkRow(t2));
 
-  // Reste de la fonction (boutons de score) inchangé...
   if (md.winner && t1.name !== '?' && t2.name !== '?') {
     const srow = el('div', 'score-row');
     const sbtns = el('div', 'score-btns');
@@ -1308,28 +1307,27 @@ async function loadApp() {
 function getLiveScore(currentTeamName, team1Name, team2Name, apiData, currentRound) {
     if (!apiData || apiData.length === 0 || !currentTeamName || currentTeamName === '?') return "";
     
-    // 1. On filtre les données pour ce duel
+    // 1. Filtrage des données pour ce duel spécifique
     const potentialMatches = apiData.filter(s => 
         (s.winner === team1Name || s.winner === team2Name)
     );
 
     let match = null;
 
-    // 2. Sélection du match selon le tour
+    // 2. Sélection du match selon le tour du bracket
     if (currentRound === 1) {
-        // Au 1er tour, on cherche d'abord si c'est FINISHED
+        // Au 1er tour, si la série est FINISHED, on retourne vide (le badge orange suffit)
         match = potentialMatches.find(s => s.status === "FINISHED");
-        // Si c'est fini, on retourne vide pour laisser le badge orange faire le job
         if (match) return ""; 
         
-        // Si ce n'est pas fini, on prend le LIVE
+        // Sinon on cherche le match LIVE
         match = potentialMatches.find(s => s.status === "LIVE");
     } else {
-        // Pour les tours suivants (Demis, etc.), on ne veut QUE le LIVE
+        // Pour les tours suivants, on ne veut QUE le score LIVE du duel actuel
         match = potentialMatches.find(s => s.status === "LIVE");
     }
 
-    // 3. Affichage du score si un match LIVE a été trouvé
+    // 3. Extraction et affichage du score
     if (match && match.score && match.score !== "0-0") {
         const scores = match.score.split('-');
         const s1 = scores[0].trim();
