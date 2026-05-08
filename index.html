@@ -1329,15 +1329,13 @@ function getLiveScore(currentTeamName, team1Name, team2Name, apiData, currentRou
 
     if (match && match.score && match.score !== "0-0") {
         const isFinished = match.status === "FINISHED";
-        const scores = match.score.split('-');
-        const s1 = scores[0].trim();
-        const s2 = scores[1].trim();
 
-        if (currentTeamName === match.winner) {
-            return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}">${s1}</span>`;
-        } else {
-            return `<span class="live-series-score ${isFinished ? 'series-finished' : ''}" style="opacity:0.6">${s2}</span>`;
-        }
+        // --- AJOUT DE LA RÈGLE D'ÉPURATION ---
+        // Si la série est finie, on ne renvoie rien pour ne pas surcharger 
+        // l'affichage à côté du nom, puisque le badge orange sera en dessous.
+        if (isFinished) return ""; 
+
+        // ... (reste de la fonction avec les splits de scores) ...
     }
     return "";
 }
